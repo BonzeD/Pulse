@@ -1,0 +1,272 @@
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ac:#ff2d95;--ac2:#8b3dff;--ac3:#00e5ff;--r:22px}
+html,body{background:transparent;overflow:hidden;height:100%;font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;color:#f4f1ff;user-select:none}
+svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}svg.f{fill:currentColor;stroke:none}
+button{background:none;border:0;color:inherit;cursor:pointer;-webkit-app-region:no-drag;font:inherit}
+.w{position:absolute;inset:8px;border-radius:var(--r);overflow:hidden;display:grid;
+  background:rgba(14,11,24,.86);box-shadow:0 10px 30px -8px rgba(0,0,0,.6)}
+.bg{position:absolute;inset:-40%;background-size:cover;background-position:center;filter:blur(34px) saturate(2.2) brightness(.5);z-index:0;transition:background-image .8s}
+.tint{position:absolute;inset:0;z-index:0;background:linear-gradient(120deg,color-mix(in srgb,var(--ac) 22%,transparent),transparent 55%,color-mix(in srgb,var(--ac3) 14%,transparent))}
+.w::after{content:"";position:absolute;inset:0;border-radius:var(--r);padding:1px;background:linear-gradient(135deg,var(--ac),var(--ac2),var(--ac3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;opacity:.6;pointer-events:none;z-index:3}
+.theme-dark .bg{display:none}.theme-dark .w{background:#0e0b16}.theme-dark .tint{opacity:.5}
+.theme-neon .w{background:rgba(8,6,14,.92);box-shadow:0 0 22px -4px var(--ac)}.theme-neon .w::after{opacity:1}.theme-neon .bg{opacity:.5}
+.theme-clear .w{background:rgba(14,11,24,.45)}.theme-clear .bg{opacity:.55}
+.w>:where(:not(.bg,.tint,.drag-region)){position:relative;z-index:1}
+.cover{grid-area:cover;border-radius:calc(var(--r) - 8px);background:#1a1528 center/cover;box-shadow:0 8px 24px -6px rgba(0,0,0,.7);overflow:hidden;aspect-ratio:1;align-self:center;width:100%}
+.eq{position:absolute;right:6px;bottom:6px;display:flex;gap:2px;align-items:flex-end;height:14px;opacity:0;transition:.3s}
+.playing .eq{opacity:1}
+.eq i{width:3px;background:#fff;border-radius:2px;height:4px;animation:eq .6s ease-in-out infinite alternate;box-shadow:0 0 6px var(--ac)}
+.eq i:nth-child(2){animation-delay:-.2s}.eq i:nth-child(3){animation-delay:-.4s}.eq i:nth-child(4){animation-delay:-.1s}
+@keyframes eq{to{height:14px}}
+.info{grid-area:info;min-width:0;align-self:center}
+.t{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.a{font-size:12px;color:#b8b0d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ll{font-size:12.5px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:17px;color:#8f88ad;font-weight:600}
+.w .k{color:#fff;text-shadow:0 0 10px var(--ac)}
+.win{grid-area:win;display:flex;gap:2px;opacity:0;transition:.2s;align-self:start;justify-self:end}.w:hover .win{opacity:1}
+.win button{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#b8b0d6}.win svg{width:13px;height:13px}
+.win button:hover{background:rgba(255,255,255,.14);color:#fff}
+.ctl{grid-area:ctl;display:flex;align-items:center;gap:2px;min-width:0}
+.ctl button{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;transition:.15s;position:relative;flex-shrink:0}
+.ctl button:hover{background:rgba(255,255,255,.1)}
+.ctl .sm{color:#8f88ad}.ctl .sm svg{width:15px;height:15px}.ctl .sm.on{color:var(--ac)}
+.ctl #like.on svg{fill:var(--ac);stroke:var(--ac)}
+/* 2.0.4: «Не нравится» */
+.ctl #dislike svg{fill:none}.ctl #dislike.on svg{fill:currentColor;opacity:.9}
+.ctl b{position:absolute;font-size:8px;right:5px;top:5px;display:none;color:var(--ac)}.ctl .one b{display:block}
+.ctl .play{width:40px;height:40px;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 4px 18px -4px var(--ac);color:#fff}
+.ctl .play:hover{background:linear-gradient(135deg,var(--ac),var(--ac2));transform:scale(1.07)}
+.vol{display:flex;align-items:center;gap:6px;margin-left:auto;color:#8f88ad;-webkit-app-region:no-drag;padding-left:4px}
+.vol svg{width:15px;height:15px;flex-shrink:0}
+.vbar{width:70px;height:4px;border-radius:4px;background:rgba(255,255,255,.14);cursor:pointer;position:relative}
+.vbar::before{content:"";position:absolute;inset:-6px 0}
+.vfill{height:100%;border-radius:4px;background:#d6d0ee}
+.prog{grid-area:prog;display:flex;align-items:center;gap:8px;-webkit-app-region:no-drag}
+.tm{font-size:10.5px;color:#a9a1c8;font-variant-numeric:tabular-nums;min-width:28px}.tm:last-child{text-align:right}
+.bar{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.14);cursor:pointer;position:relative;transition:height .15s}
+.bar::before{content:"";position:absolute;inset:-6px 0}
+.bar:hover{height:6px}
+.fill{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac3));box-shadow:0 0 10px var(--ac);position:relative}
+.fill::after{content:"";position:absolute;right:-5px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#fff;opacity:0;transition:.15s;box-shadow:0 0 8px var(--ac)}
+.bar:hover .fill::after{opacity:1}
+.lyr{grid-area:lyr;display:none;flex-direction:column;justify-content:center;gap:4px;text-align:center;min-width:0;overflow:hidden}
+.lyr div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.3s}
+.lp,.ln{font-size:12.5px;color:#7d7699;font-weight:600}
+.lc{font-size:18px;font-weight:800;color:#6f6890;letter-spacing:-.01em;line-height:1.35}
+.lc span{transition:color .12s,text-shadow .12s}
+.lc .k{color:#fff;text-shadow:0 0 14px var(--ac),0 0 2px #fff}
+.lyr .none{color:#6f6890;font-size:13px;font-weight:600}
+.nolyr .lyr{display:none!important}
+
+/* --- мини 320×84 --- */
+.size-mini .w{grid-template:"cover info ctl" 1fr / 52px 1fr auto;gap:10px;padding:8px 10px 10px 8px}
+.size-mini .ll{display:none}.size-mini .a.lyric{color:#fff;font-weight:600}
+.size-mini .x,.size-mini .win #size{display:none}
+.size-mini .win{position:absolute;right:6px;top:3px;z-index:4}.size-mini .win button{width:18px;height:18px}
+.size-mini .ctl{align-self:end}
+.size-mini .ctl button{width:28px;height:28px}.size-mini .ctl .play{width:34px;height:34px}
+.size-mini .prog{position:absolute;left:0;right:0;bottom:0;gap:0}.size-mini .tm{display:none}
+.size-mini .bar{height:3px;border-radius:0;background:rgba(255,255,255,.08)}.size-mini .fill{border-radius:0}
+.size-mini .w{--r:18px}
+/* --- стандарт 420×156 --- */
+.size-standard .w{grid-template:"cover info win" auto "cover ctl ctl" auto "cover prog prog" auto / 108px 1fr auto;column-gap:14px;row-gap:4px;padding:12px 14px 12px 12px;align-content:center}
+.size-standard .vbar{width:54px}
+.size-standard .ll{margin-top:3px}
+.size-standard #shuffle{display:none}
+.nolyr.size-standard .ll{display:none}
+/* --- большой 460×300 --- */
+.size-large .w{grid-template:"cover info win" 76px "lyr lyr lyr" 1fr "prog prog prog" auto "ctl ctl ctl" auto / 76px 1fr auto;column-gap:14px;row-gap:8px;padding:14px 16px 12px}
+.size-large .lyr{display:flex}.size-large .ll{display:none}
+.size-large .ctl{justify-content:center;gap:6px}.size-large .ctl .play{width:44px;height:44px}
+.size-large .vol{position:absolute;right:0}.size-large #like{position:absolute;left:0}
+.nolyr.size-large .w{grid-template:"cover info win" 1fr "prog prog prog" auto "ctl ctl ctl" auto / 140px 1fr auto}
+.nolyr.size-large .t{font-size:18px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.size-large .t{font-size:16px}
+
+/* ---------- 1.9: настройки виджета ---------- */
+.bg{filter:blur(var(--wblur,34px)) saturate(2.2) brightness(.5)}
+.no-cover .cover{display:none}
+.no-cover.size-mini .w{grid-template:"info ctl" 1fr / 1fr auto}
+.no-cover.size-standard .w{grid-template:"info win" auto "ctl ctl" auto "prog prog" auto / 1fr auto}
+.no-cover.size-large .w{grid-template:"info info win" 76px "lyr lyr lyr" 1fr "prog prog prog" auto "ctl ctl ctl" auto / 76px 1fr auto}
+.no-cover.nolyr.size-large .w{grid-template:"info info win" 1fr "prog prog prog" auto "ctl ctl ctl" auto / 140px 1fr auto}
+.no-prog .prog{display:none}
+.no-time .tm{display:none}
+.no-extra .ctl .x:not(.vol){display:none}
+.no-vol .vol{display:none}
+.no-eq .eq{display:none}
+.locked .w{-webkit-app-region:no-drag}
+.dim-idle:not(.playing) .w{opacity:.55;transition:opacity .4s}.dim-idle:not(.playing) .w:hover{opacity:1}
+.al-center .info{text-align:center}
+.marquee .t{text-overflow:clip}
+.t.run{animation:mq 9s linear infinite;overflow:visible}
+@keyframes mq{0%,15%{transform:translateX(0)}70%,85%{transform:translateX(var(--mq))}100%{transform:translateX(0)}}
+.ctl button,.win button{transition:background .15s,transform .15s,color .15s}
+.ctl button:active{transform:scale(.92)}
+.marquee .info{overflow:hidden}
+
+/* ---------- 1.9.1: редактор виджета ---------- */
+body{font-family:var(--wfont,"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif)}
+.w .win{position:absolute;top:6px;right:8px;z-index:5}
+.size-mini .w .win{top:3px;right:6px}
+body .w .t{font-size:calc(var(--tB,14.5px) * var(--tS,1));color:var(--tC,inherit);font-weight:var(--tW,700)}
+.size-large{--tB:16px}.nolyr.size-large{--tB:18px}
+body .w .a{font-size:calc(12px * var(--aS,1));color:var(--aC,#b8b0d6)}
+body .w .ll{font-size:calc(12.5px * var(--lS,1))}
+body .w .lc{font-size:calc(18px * var(--lS,1))}
+body .w .lp,body .w .ln{font-size:calc(12.5px * var(--lS,1))}
+body .w .k,body .w .lc .k{color:var(--lC,#fff)}
+.ctl{zoom:var(--ctlS,1)}
+.ctl button:not(.play),.vol{color:var(--icC,inherit)}
+.ctl .sm{color:var(--icC,#8f88ad)}
+.ctl .hid{display:none!important}
+.size-large .vol,.size-large #like{position:relative;left:auto;right:auto}
+.size-large .vol{margin-left:6px}
+body.play-solid .ctl .play,body.play-solid .ctl .play:hover{background:var(--plC,var(--ac));box-shadow:none}
+body.play-ring .ctl .play,body.play-ring .ctl .play:hover{background:transparent;box-shadow:inset 0 0 0 2px var(--plC,var(--ac));color:var(--plC,var(--ac))}
+body.play-flat .ctl .play,body.play-flat .ctl .play:hover{background:rgba(255,255,255,.12);box-shadow:none;color:var(--plC,#fff)}
+body.play-grad .ctl .play{background:linear-gradient(135deg,var(--plC,var(--ac)),var(--ac2))}
+body .w .bar{height:var(--pH,4px)}
+body .w .bar:hover{height:calc(var(--pH,4px) + 2px)}
+body.pc-solid .fill{background:var(--pC);box-shadow:0 0 10px var(--pC)}
+.tint{background-color:color-mix(in srgb,var(--bgC,transparent) 45%,transparent)}
+.no-border .w::after{display:none}
+.no-shadow .w{box-shadow:none}
+body.shape-square .cover{border-radius:4px}
+body.shape-circle .cover{border-radius:50%}
+body.spin.playing.shape-circle .cover{animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* в предпросмотре: подсветка элементов и перетаскивание */
+body.pv .w{-webkit-app-region:no-drag}
+body.pv [data-ed],body.pv [data-k]{cursor:pointer}
+body.pv [data-row]{cursor:grab}
+body.pv [data-ed]:hover{outline:1px dashed rgba(255,255,255,.55);outline-offset:2px;border-radius:6px}
+body.pv .bg[data-ed]:hover{outline:none}
+body.pv .ed-on{outline:2px solid var(--ac)!important;outline-offset:2px;border-radius:6px}
+body.pv .bg.ed-on{outline:none!important}
+body.pv.ed-bg .w{box-shadow:0 0 0 2px var(--ac)}
+body.pv .ed-drag{opacity:.85;z-index:20;position:relative;pointer-events:none;transition:none!important}
+body.pv .ed-target{outline:2px dashed var(--ac)!important;outline-offset:3px;background:rgba(255,255,255,.08)}
+body.pv.dragging *{cursor:grabbing!important}
+body.pv .win{display:none}
+
+/* 1.9.1: свободное перемещение блоков */
+body.pv .ed-moving{z-index:30;position:relative;transition:none!important;outline:2px solid var(--ac)!important;outline-offset:2px;border-radius:6px;cursor:grabbing}
+body.pv:not(.dragging) [data-ed]{cursor:grab}
+
+/* 1.9.2: направляющая центра при перетаскивании */
+body.pv.snap-c .w::before{content:"";position:absolute;left:50%;top:4px;bottom:4px;width:0;border-left:1px dashed var(--ac);z-index:40;pointer-events:none}
+
+/* 1.9.3: поэлементный редактор */
+body:not(.edit) .fh{display:none!important}
+body.edit .fh{opacity:.3;outline:1px dashed rgba(255,255,255,.5);outline-offset:2px}
+body.pv .ed-hov{outline:1px dashed rgba(255,255,255,.75)!important;outline-offset:2px;border-radius:6px}
+.tint::after{content:"";position:absolute;left:4px;right:4px;top:50%;border-top:1px dashed var(--ac);display:none}
+body.pv.snap-m .tint::after{display:block}
+body.pv .w,body.pv .w *{-webkit-app-region:no-drag!important}
+
+/* ---------- 2.0: новый облик виджета в стиле приложения ----------
+   нейтральное тёмное стекло, тонкая рамка, белый/серый текст, акцент только в прогрессе и активных кнопках.
+   Тема «Неон» оставлена как была (старый вид). */
+body:not(.theme-neon){color:#fff;--w2-t2:rgba(255,255,255,.64);--w2-t3:rgba(255,255,255,.42)}
+body:not(.theme-neon) .w{background:rgba(18,18,20,.84);box-shadow:0 12px 32px -10px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.35)}
+body:not(.theme-neon) .w::after{background:rgba(255,255,255,.09);opacity:1}
+body:not(.theme-neon) .bg{filter:blur(var(--wblur,34px)) saturate(1.35) brightness(.42);opacity:.85}
+body:not(.theme-neon) .tint{background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.35))}
+body.theme-clear .w{background:rgba(18,18,20,.52)}body.theme-clear .bg{opacity:.7}
+body.theme-dark .w{background:#121214}body.theme-dark .tint{opacity:1;background-image:none}
+body:not(.theme-neon) .cover{background-color:#232326;box-shadow:0 6px 18px -6px rgba(0,0,0,.65)}
+body:not(.theme-neon) .w .a{color:var(--aC,var(--w2-t2))}
+body:not(.theme-neon) .w .ll{color:var(--w2-t3)}
+body:not(.theme-neon) .w .k,body:not(.theme-neon) .w .lc .k{color:var(--lC,#fff);text-shadow:none}
+body:not(.theme-neon) .eq i{box-shadow:none}
+body:not(.theme-neon) .win button{color:var(--w2-t2)}
+body:not(.theme-neon) .win button:hover{background:rgba(255,255,255,.1);color:#fff}
+body:not(.theme-neon) .ctl button:hover{background:rgba(255,255,255,.08)}
+body:not(.theme-neon) .ctl .sm{color:var(--icC,var(--w2-t2))}
+body:not(.theme-neon) .ctl .sm:hover{color:var(--icC,#fff)}
+body:not(.theme-neon) .ctl .sm.on{color:var(--ac)}
+body:not(.theme-neon) .vol{color:var(--icC,var(--w2-t2))}
+body:not(.theme-neon) .vbar,body:not(.theme-neon) .bar{background:rgba(255,255,255,.16)}
+body:not(.theme-neon) .vfill{background:#fff}
+body:not(.theme-neon) .tm{color:var(--w2-t3)}
+body:not(.theme-neon) .fill{background:var(--ac);box-shadow:none}
+body:not(.theme-neon).pc-solid .fill{background:var(--pC);box-shadow:none}
+body:not(.theme-neon) .fill::after{box-shadow:0 1px 4px rgba(0,0,0,.5)}
+body:not(.theme-neon) .lp,body:not(.theme-neon) .ln{color:var(--w2-t3)}
+body:not(.theme-neon) .lc{color:rgba(255,255,255,.4)}
+body:not(.theme-neon) .lyr .none{color:var(--w2-t3)}
+body:not(.theme-neon).size-mini .bar{background:rgba(255,255,255,.1)}
+/* стили кнопки Play: «Белая» — новая по умолчанию, как в плеере приложения */
+body.play-white .ctl .play,body.play-white .ctl .play:hover{background:var(--plC,#fff);color:#0b0b0c;box-shadow:0 4px 14px -4px rgba(0,0,0,.6)}
+body:not(.theme-neon).play-grad .ctl .play{box-shadow:0 4px 14px -6px var(--ac)}
+/* 2.0.12: тихий режим для игр (widget.js → calm) — мышь не над виджетом: анимации на паузе */
+html.calm .eq i,html.calm .cover{animation-play-state:paused!important}
+html.calm .t.run{animation:none!important}
+
+/* 1.0.0: mini is a clean transparent-window pill; no external or internal drop shadows. */
+body.size-mini .w,body.size-mini .cover,body.size-mini .ctl .play,body.size-mini .fill,body.size-mini .fill::after,body.size-mini .eq i{box-shadow:none!important;filter:none!important}
+body.no-shadow .w{box-shadow:none!important}
+
+/* 1.0.0: the desktop widget follows the same restrained motion language. */
+.ctl button,.win button{transition:background-color 140ms ease,color 140ms ease,transform 200ms cubic-bezier(.16,1,.3,1)}
+.ctl button:active,.win button:active{transform:scale(.96);transition-duration:80ms}
+.ctl button:focus-visible,.win button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.t.run{overflow:hidden}}
+
+/* 1.0.0: isolate native window dragging from interactive widget controls.
+   A draggable ancestor can swallow clicks on Windows after zoom/element transforms.
+   Only the background/title space drags; controls and SVG descendants never do. */
+.drag-region{position:absolute;inset:0;z-index:0;-webkit-app-region:drag;app-region:drag}
+/* A full-panel no-drag rectangle subtracts the background drag region in native
+   hit testing. Leave app-region UNSET on .w (explicit "none" serializes as
+   no-drag in Chromium). Explicitly include text surfaces,
+   which sit above the background. Never make a controls ancestor draggable. */
+.info,.info *,.lyr,.lyr *{-webkit-app-region:drag;app-region:drag}
+.bg,.tint,.eq{pointer-events:none}
+.win,.ctl,.prog,.vol,.cover,.win *,.ctl *,.prog *,.vol *,.cover *{
+  -webkit-app-region:no-drag;app-region:no-drag;
+}
+.locked .drag-region,.locked .info,.locked .info *,.locked .lyr,.locked .lyr *,body.pv .drag-region,body.pv .info,body.pv .info *,body.pv .lyr,body.pv .lyr *{-webkit-app-region:no-drag!important;app-region:no-drag!important}
+
+/* Pulse 1.0.0 — companion surface: same neutral page tint, soft rim and
+   restrained transport as the main player. Explicit Neon/custom styles survive. */
+body:not(.theme-neon){color:var(--wp-text,#fff);--w2-t2:rgba(255,255,255,.72);--w2-t3:rgba(255,255,255,.56)}
+body:not(.theme-neon) .w{background:var(--wp-panel,#141418);box-shadow:0 4px 16px rgba(0,0,0,.22)}
+body.theme-glass .w{background:color-mix(in srgb,var(--wp-panel,#141418) 90%,transparent)}
+body.theme-clear .w{background:color-mix(in srgb,var(--wp-panel,#141418) 72%,transparent)}
+body:not(.theme-neon) .w::after{background:linear-gradient(145deg,rgba(255,255,255,.24),rgba(255,255,255,.065) 45%,rgba(255,255,255,.13));opacity:1}
+body:not(.theme-neon) .bg{inset:-10%;filter:blur(var(--wblur,34px)) saturate(1.1) brightness(.65);opacity:.12}
+body:not(.theme-neon) .tint{background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--ac) 9%,transparent),transparent 68%);background-color:color-mix(in srgb,var(--bgC,transparent) 45%,transparent)}
+body:not(.theme-neon) .cover{box-shadow:none;background-color:rgba(255,255,255,.07);background-image:url('logo.png');border:1px solid rgba(255,255,255,.08)}
+body:not(.theme-neon) .ctl button{color:var(--icC,rgba(255,255,255,.88))}
+body:not(.theme-neon).play-white .ctl .play{background:var(--plC,rgba(255,255,255,.13));color:#fff;border:1px solid rgba(255,255,255,.16);box-shadow:none}
+body:not(.theme-neon).play-white .ctl .play:hover{background:var(--plC,rgba(255,255,255,.22));transform:none}
+body:not(.theme-neon) .fill{background:var(--pC,var(--ac));box-shadow:none}
+body:not(.theme-neon) .win{opacity:1}.win:focus-within{opacity:1}
+body:not(.theme-neon) .win button{color:rgba(255,255,255,.68)}
+body:not(.theme-neon) .info{padding-right:0}
+body:not(.theme-neon).size-standard .info{padding-right:18px}
+body:not(.theme-neon).size-standard .t{font-size:calc(14px * var(--tS,1))}
+body:not(.theme-neon).size-standard .w{column-gap:12px;row-gap:6px;padding:16px 14px}
+body:not(.theme-neon).size-standard .ctl{gap:0;justify-content:space-between}
+body:not(.theme-neon).size-standard .ctl button{width:28px;height:32px}
+body:not(.theme-neon).size-standard .ctl .play{width:36px;height:36px}
+body:not(.theme-neon).size-standard .vol{gap:4px;padding-left:2px}
+body:not(.theme-neon).size-standard .vbar{width:30px}
+body:not(.theme-neon).size-standard .win{top:4px;right:8px}
+body:not(.theme-neon).size-standard .win button{width:22px;height:22px}
+body:not(.theme-neon).size-large .w{padding:18px 18px 14px}
+body:not(.theme-neon).size-large .lyr{gap:6px}
+body:not(.theme-neon).size-mini .ctl{align-self:center}
+body:not(.theme-neon).size-mini .w{padding:8px 10px;gap:10px}
+@media(forced-colors:active){body .w{background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText}body .tint,body .bg{display:none}body .ctl button,body .win button,body .w .a,body .tm{color:CanvasText!important}body .ctl .play{background:ButtonFace!important;color:ButtonText!important;border:1px solid ButtonText}body .fill{background:Highlight!important}}
+body:not(.theme-neon).size-standard .w{padding:10px 14px}
+body:not(.theme-neon).size-standard .info{padding-right:96px}
+body:not(.theme-neon).size-mini .win{opacity:0}
+body:not(.theme-neon).size-mini .w:hover .win,body:not(.theme-neon).size-mini .win:focus-within{opacity:1}
+
+/* Shared interaction motion; no blur/layout animation. */
+body:not(.no-anim) :is(button,.cover,.info,.lyr){transition:opacity 180ms ease,background-color 140ms ease,color 140ms ease}
+body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){body *,body *::before,body *::after{animation:none!important;transition:none!important}}

@@ -1,0 +1,169 @@
+/* Pulse 1.8 — настройка интерфейса, текст, всплывающие панели, диджей-пульт и MIDI */
+body{font-family:var(--uiFont,inherit);font-size:var(--uiFs,14px);color:var(--txt,#fff)}
+.bar{background:var(--barBg,#212121)}
+/* окно входа */
+.opt.rec{border:1px solid rgba(var(--a1),.55);background:linear-gradient(135deg,rgba(var(--a1),.16),rgba(var(--a2),.1))}
+.badge{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:99px;font-size:11px;font-weight:700;font-style:normal;background:rgba(var(--a1),.22);color:#fff;white-space:nowrap;vertical-align:middle}
+.badge.live{background:var(--grad);box-shadow:0 0 14px -2px rgba(var(--a1),.8)}
+.badge.dim{background:rgba(255,255,255,.08);color:var(--mute)}
+.badge svg.i{width:12px;height:12px}
+/* текст песни */
+.ly-line{font-family:var(--lyFont,inherit);font-weight:var(--lyW,800);line-height:var(--lyLH,1.28);color:rgba(255,255,255,var(--lyDim,.28))}
+.ly-line.past{color:rgba(255,255,255,calc(var(--lyDim,.28) + .1))}
+.ly-line.cur{color:rgba(255,255,255,calc(var(--lyDim,.28) + .17))}
+.ly-colored .ly-line{color:rgba(var(--lyC),var(--lyDim,.28))}
+.ly-colored .ly-line.cur .w.on,.ly-colored .ly-lines .ly-line.cur .w{color:rgb(var(--lyC))}
+.ly-inner.free{transition:none!important}
+.lyrics{overflow:hidden;touch-action:none}
+.ly-scroll{cursor:grab}.ly-scroll:active{cursor:grabbing}
+.ly-back{position:absolute;left:50%;bottom:12px;transform:translate(-50%,20px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:99px;background:rgba(20,20,20,.85);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px);font-size:13px;font-weight:600;z-index:5;transition:.25s}
+.ly-back.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.ly-back svg.i{width:15px;height:15px}
+.ly-btn.ghost{font-weight:800;font-size:13px;min-width:30px}
+.ly-btn.on{color:#fff;border-color:rgba(var(--a1),.7);background:rgba(var(--a1),.15)}
+.vis-line{font-family:var(--lyFont,inherit);font-size:calc(clamp(18px,2vw,30px) * var(--lyS,1) * var(--visS,1))}
+/* анимации слова */
+body[data-lyanim=glow] .ly-line.cur .w.pop{transform:none}
+body[data-lyanim=glow] .ly-line.cur .w.on{text-shadow:0 0 calc(16px + var(--beat)*30px) rgba(var(--a1),1),0 0 50px rgba(var(--a2),.7)}
+body[data-lyanim=none] .ly-line .w,body[data-lyanim=none] .ly-line.cur .w.pop{transform:none!important;transition:color var(--wt)}
+/* всплывающие панели рядом с текстом и визуалом */
+.pop-panel{display:none;position:absolute;z-index:30;right:8px;bottom:56px;width:min(380px,calc(100% - 16px));max-height:min(70vh,560px);overflow-y:auto;backdrop-filter:blur(18px)}
+.pop-panel.on{display:block;animation:popIn .18s ease-out}
+.viz-pop{bottom:48px;right:0}
+@keyframes popIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.set-wrap.pop-in{padding:0;max-width:none}
+.pop-h{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:10px 10px 8px 16px;background:rgba(24,24,28,.97);border-bottom:1px solid rgba(255,255,255,.07)}
+.pop-h b{flex:1;font-size:14px}
+.pop-all{font-size:12px;color:var(--A1);cursor:pointer;font-weight:600}
+.pop-b{padding:2px 14px 12px}
+.pop-b .set-row{padding:9px 0;gap:10px}.pop-b .set-l b{font-size:13px}.pop-b .set-l span{font-size:11px}
+.pop-b .seg button{height:26px;padding:0 8px;font-size:12px}
+.pop-b .rng input{width:110px}
+/* выпадающие списки и цвета в настройках */
+.sel{height:32px;padding:0 10px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font:inherit;font-size:13px;min-width:150px;outline:0}
+.sel option{background:#202024;color:#fff}
+.colr{width:38px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.18);padding:0;background:none;cursor:pointer}
+.colr::-webkit-color-swatch-wrapper{padding:2px}.colr::-webkit-color-swatch{border:0;border-radius:6px}
+.css-box{width:100%;min-height:140px;font-family:Consolas,monospace;font-size:12px;resize:vertical;margin:8px 0}
+.hide-chips{flex-wrap:wrap;gap:6px;padding:8px 0}
+/* скругления, фон, стекло */
+.c-radius .card,.c-radius .chip,.c-radius .btn,.c-radius .set-sec,.c-radius .modal-box,.c-radius .opt,.c-radius .seg,.c-radius .menu,.c-radius .pop-panel,.c-radius .deck,.c-radius .dj-k{border-radius:var(--r)!important}
+.c-radius .art,.c-radius .cover img,.c-radius .tr img{border-radius:calc(var(--r) * .6)}
+.top{background:linear-gradient(var(--bg),rgba(var(--bgRGB,3,3,3),.92))}
+.glass .side,.glass .bar,.glass .top,.glass .modal-box,.glass .menu{background:rgba(var(--panRGB,33,33,33),var(--glassOp,.6))!important;backdrop-filter:blur(22px) saturate(1.4)}
+.glass .side{background:rgba(var(--bgRGB,3,3,3),var(--glassOp,.6))!important}
+.glass .set-sec{backdrop-filter:blur(14px)}
+/* фон из обложки и цвет музыки на всём приложении */
+.amb-all:not(.pp-open) #ambient .amb-img.on{opacity:var(--ambAllOp,.45)!important}
+.amb-all .side{background:rgba(var(--bgRGB,3,3,3),.55)}
+.amb-all .top{background:linear-gradient(rgba(var(--bgRGB,3,3,3),.75),rgba(var(--bgRGB,3,3,3),.35))}
+.amb-all .bar{background:rgba(var(--panRGB,33,33,33),.72);backdrop-filter:blur(20px)}
+#ambient::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:calc(var(--tint,.35) * (.35 + var(--gbeat,0) * .65));background:radial-gradient(ellipse at 20% 15%,rgba(var(--a1),.32),transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(var(--a2),.28),transparent 55%);transition:opacity .08s linear}
+.no-amb #ambient::after{display:none}
+/* размер обложки и её пульсация */
+.art-wrap{width:calc(min(88%,calc(100vh - 330px),600px) * var(--artK,1))}
+.art{transform:scale(calc(1 + var(--beat)*.025*var(--coverK,1)))}
+.mode-visual .pp-stage::before{content:"";position:absolute;inset:0;background:#000;opacity:var(--vizDim,0);pointer-events:none;z-index:0}
+/* спрятать элементы */
+.hide-net #net,.hide-widget #btnWidget,.hide-like #btnLike,.hide-dislike #btnDislike,.hide-dl #btnDlCur,.hide-more #btnMore,.hide-time .bar .time,.hide-dj #btnDj,.hide-vol .vol,.hide-shuffle #btnShuffle,.hide-repeat #btnRepeat{display:none!important}
+
+/* ---------- диджей-пульт ---------- */
+.dj-page{max-width:1240px}
+.dj-decks{grid-template-columns:minmax(0,1fr) 190px minmax(0,1fr);align-items:stretch}
+.deck{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);min-width:0}
+.deck.air{border-color:rgba(var(--a1),.5);box-shadow:0 10px 40px -18px rgba(var(--a1),.85)}
+.deck-top{display:flex;gap:12px;align-items:center;min-width:0}
+.deck .dd-art{width:74px;height:74px;flex-shrink:0;border-radius:50%;background-size:cover;background-position:center;background-color:#181818;box-shadow:0 0 0 3px rgba(0,0,0,.6),0 0 0 4px rgba(255,255,255,.08)}
+.playing .deck.air .dd-art{animation:vinyl 6s linear infinite}
+.deck .dd-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.deck .dd-info em{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);display:flex;gap:6px;align-items:center}
+.deck .dd-info b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.deck .dd-info b i{font-weight:500;color:var(--mute);font-style:normal}
+.deck .dd-info>span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck .dd-meta{display:flex;gap:6px;font-size:12px;font-variant-numeric:tabular-nums;color:#ddd;min-height:18px;align-items:center}
+.deck .dd-meta .bpm{color:var(--A1);font-weight:800}
+.beat4{display:inline-flex;gap:3px}.beat4 i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15)}.beat4 i.on{background:var(--A1);box-shadow:0 0 8px rgba(var(--a1),.9)}
+.dd-wave{display:block;width:100%;height:54px;border-radius:10px;background:rgba(0,0,0,.35);cursor:pointer}
+.deck-tr{display:flex;flex-wrap:wrap;gap:6px}
+.pb{height:34px;min-width:44px;padding:0 10px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:800;letter-spacing:.04em;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:.12s}
+.pb:hover{background:rgba(255,255,255,.14)}.pb:active{transform:scale(.95)}
+.pb.big{min-width:54px;background:var(--grad);border:0}.pb.big svg.i{width:20px;height:20px}
+.pb.wide{margin-left:auto}.pb svg.i{width:16px;height:16px}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pad-g{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.pad-g em{width:100%;font-style:normal;font-size:11px;color:var(--mute);font-weight:700}.pad-g em small{font-weight:500;opacity:.7}
+.pad{width:34px;height:30px;border-radius:7px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);font-size:12px;font-weight:800}
+.pad:hover{border-color:rgba(255,255,255,.3)}
+.pad.on{background:#ffc400;color:#000;border-color:#ffc400}
+.pad.hc.set:nth-of-type(1){background:#ff4d6d;color:#000}.pad.hc.set:nth-of-type(2){background:#4dd2ff;color:#000}.pad.hc.set:nth-of-type(3){background:#ffd24d;color:#000}.pad.hc.set:nth-of-type(4){background:#7dff8a;color:#000}
+.deck .dj-knobs{grid-template-columns:repeat(3,1fr);gap:8px;padding:0}
+.deck .dj-k{padding:8px 10px;gap:4px}
+.dj-mixer{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 10px;border-radius:18px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06)}
+.dj-xfp{width:100%;height:4px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.dj-xfp i{display:block;height:100%;width:0;background:#fff}
+.dj-fx{display:flex;flex-direction:column;gap:6px;width:100%}
+.dj-fx em{font-style:normal;font-size:11px;color:var(--mute);font-weight:700;margin-top:4px}
+.dj-fx input[type=range]{width:100%}
+.seg.mini{padding:2px;border-radius:8px}.seg.mini button{height:24px;padding:0 7px;font-size:11px}
+.dj-xf{width:auto;height:auto;overflow:visible;display:flex;align-items:center;gap:12px;margin:14px auto 0;max-width:520px;padding:10px 16px;border-radius:99px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07)}
+.dj-xf span{font-weight:800;color:var(--mute);font-size:12px}
+.dj-xf input{flex:1;accent-color:#fff;height:22px}
+.dj-pick{margin-top:18px}
+.pk-tabs{display:flex;align-items:center;gap:6px;padding:10px 0 6px;flex-wrap:wrap}
+.pk-hint{margin-left:auto;font-size:11px;color:var(--mute);display:flex;align-items:center;gap:4px}.pk-hint svg.i{width:12px;height:12px}
+.dj-q{max-height:420px;overflow-y:auto}
+.dj-qi .pk-act{flex:0 0 auto;display:flex;gap:4px;opacity:.55;transition:.12s}
+.dj-qi:hover .pk-act{opacity:1}
+.dj-qi .pk-act .btn{height:30px;padding:0 9px}
+.dj-qi .btn.ghost{background:none;opacity:.6}
+.dj-qi>.badge{flex:0 0 auto}
+.dj-qi.pl .pl-ic{flex:0 0 40px;width:40px;height:40px;border-radius:6px;display:grid;place-items:center;background:rgba(255,255,255,.07)}
+.pk-search{display:flex;gap:8px;padding:6px 0 8px}
+.pk-search input{flex:1;height:36px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font:inherit;outline:0}
+.pk-search input:focus{border-color:rgba(var(--a1),.6)}
+.pk-empty{color:var(--mute);padding:10px 4px;font-size:13px}
+/* MIDI */
+.dj-midi{margin-top:18px}
+.midi-dev{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0}
+.midi-last{font-size:12px;color:var(--mute);font-family:Consolas,monospace}
+.midi-hint{font-size:12px;color:var(--mute);line-height:1.5;margin:4px 0 10px}
+.midi-acts{display:flex;flex-direction:column;gap:10px}
+.midi-g{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.midi-g>em{width:100%;font-style:normal;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.midi-a{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);text-align:left;min-width:120px}
+.midi-a b{font-size:12px}.midi-a span{font-size:11px;color:var(--mute);font-family:Consolas,monospace}
+.midi-a.set{border-color:rgba(var(--a1),.5)}.midi-a.set span{color:var(--A1)}
+.midi-a.learn{background:rgba(255,196,0,.15);border-color:#ffc400;animation:learnB 1s infinite}
+@keyframes learnB{50%{box-shadow:0 0 0 3px rgba(255,196,0,.25)}}
+@media (max-width:1100px){.dj-decks{grid-template-columns:1fr}.dj-mixer{flex-direction:row;flex-wrap:wrap}.dj-fx{width:auto;flex:1}}
+.set-c .colr{width:40px!important;min-width:40px;height:30px!important;padding:0!important;flex:0 0 auto}
+/* 1.8.2: верхняя панель не просвечивает при прокрутке, иконки в пустых экранах, разделы настроек */
+.amb-all.scrolled .top,.glass.scrolled .top{background:rgba(var(--bgRGB,3,3,3),.9)!important;backdrop-filter:blur(26px) saturate(1.3);border-color:var(--line)}
+.empty div svg.i,.empty span svg.i{display:inline-block;width:1.15em;height:1.15em;margin:0 .15em;vertical-align:-.2em;color:#fff}
+.set-sec h3{display:flex;align-items:center;gap:10px}
+.set-reset{margin-left:auto;font-size:12px;font-weight:600;opacity:.75}.set-reset:hover{opacity:1}
+.set-reset svg.i{width:14px!important;height:14px!important;margin:0!important;filter:none!important}
+.btn.ghost{border:1px solid rgba(255,255,255,.12)}
+.pop-h .ib svg.i{width:16px;height:16px}
+/* диджей: шапка, вкладки, выключенный режим */
+.dj-hc{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dj-auto{cursor:pointer;user-select:none}
+.dj-tabs{display:flex;gap:4px;padding:4px;margin:6px 0 4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);width:max-content;max-width:100%;flex-wrap:wrap}
+.dj-tabs button{display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:10px;font-weight:700;font-size:14px;color:var(--mute);transition:.15s}
+.dj-tabs button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.dj-tabs button.on{background:var(--grad);color:#fff;box-shadow:0 6px 18px -8px rgba(var(--a1),.8)}
+.dj-tabs svg.i{width:18px;height:18px}
+.dj-off{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:70px 20px;margin-top:20px;border-radius:20px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14)}
+.dj-off>svg.i{width:56px;height:56px;color:var(--A1);opacity:.8}
+.dj-off b{font-size:20px}.dj-off span{color:var(--mute);max-width:520px;line-height:1.5;font-size:14px}
+.dj-off .btn{margin-top:8px}
+.dj-help{font-size:12px;color:var(--mute);text-align:center;margin:10px auto 0;max-width:640px}
+.deck.vacant .dd-info b{color:var(--mute);font-weight:600}
+.dj-pick.compact{padding-top:4px}
+.pk-h{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);padding:12px 0 4px}
+.pk-h a{font-size:12px;text-transform:none;letter-spacing:0;color:var(--A1);cursor:pointer;font-weight:600}
+.pk-target{display:flex;align-items:center;gap:8px;margin:12px 0 2px;padding:10px 12px;border-radius:12px;background:rgba(var(--a1),.14);border:1px solid rgba(var(--a1),.4);font-size:14px}
+.pk-target .btn{margin-left:auto}
+.dj-qi .btn.dk{gap:4px;font-weight:800;padding:0 8px}.dj-qi .btn.dk svg.i{width:14px;height:14px}
+.dj-qi .btn.dk.hl{background:var(--grad);color:#fff;border-color:transparent}
+.pk-target~.pk-tabs+.dj-q .pk-act,.pk-target~.dj-q .pk-act{opacity:1}
+.set-row.sub::before{content:"";position:absolute;left:6px;top:50%;width:9px;height:9px;border-left:2px solid rgba(255,255,255,.22);border-bottom:2px solid rgba(255,255,255,.22);border-bottom-left-radius:4px;transform:translateY(-70%)}
+.set-row.sub .set-l b{font-weight:600}

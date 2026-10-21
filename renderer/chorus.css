@@ -1,0 +1,27 @@
+/* 2.0.12: припевы — метки на полосе перемотки и кнопка */
+.seek .ch-marks{position:absolute;left:0;right:0;top:5px;height:6px;pointer-events:none;z-index:0}
+.seek .ch-marks i{position:absolute;top:0;height:100%;border-radius:3px;background:rgba(var(--a2,255,255,255),.38);box-shadow:0 0 8px rgba(var(--a2,255,255,255),.35)}
+.seek:hover .ch-marks{top:4px;height:8px}
+.seek-fill,.seek-buf{z-index:1}
+.ch-btn{display:none!important}
+.ch-btn.has,.ch-btn.on{display:inline-grid!important;place-items:center}
+.ch-btn.on{color:var(--A1);background:rgba(var(--a1),.16)}
+body.ch-only .seek .ch-marks i{background:rgba(var(--a1),.55)}
+
+/* A visible chorus must occupy an explicit slot, never an implicit third row. */
+@media(max-width:760px){
+body:not(.ui-clean):is(.main-bar,.lys-bar) #bar:has(#btnChorus:is(.has,.on)) .b-meta{grid-row:1!important;grid-column:2 / 5!important}
+body:not(.ui-clean):is(.main-bar,.lys-bar) #bar #btnChorus:is(.has,.on){grid-row:1!important;grid-column:5!important;justify-self:center;align-self:center}
+body.ui-clean #bar #btnChorus:is(.has,.on){grid-row:2!important;grid-column:4!important;justify-self:center;align-self:center}
+body.ui-clean #bar:has(#btnChorus:is(.has,.on)) .vol{grid-row:2!important;grid-column:5!important;width:44px;min-width:0;justify-self:center;justify-content:center}
+body.ui-clean #bar:has(#btnChorus:is(.has,.on)) .vol input{display:none!important}
+}
+@media(min-width:761px){
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)){grid-template-columns:46px minmax(80px,1fr) 36px 44px 52px 44px auto 44px!important}
+body.ui-clean.main-bar #bar #btnChorus:is(.has,.on){grid-column:3!important;grid-row:1!important;justify-self:center;align-self:center}
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)) #btnPrev{grid-column:4!important}
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)) #btnPlay{grid-column:5!important}
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)) #btnNext{grid-column:6!important}
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)) .vol{grid-column:7!important}
+body.ui-clean.main-bar #bar:has(#btnChorus:is(.has,.on)) #btnCleanActions{grid-column:8!important}
+}

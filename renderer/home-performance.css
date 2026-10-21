@@ -1,0 +1,10 @@
+/* Offscreen Home shelves retain their measured size and remain searchable and
+   keyboard accessible. Other routes and editor/custom layouts are unchanged. */
+@supports(content-visibility:auto){
+body[data-page=home]:not(.cz-edit) #page>.shelf{content-visibility:auto;contain-intrinsic-block-size:auto 320px}
+body[data-page=home]:not(.cz-edit) #page>.shelf:has(.qp){contain-intrinsic-block-size:auto 290px}
+body[data-page=home]:not(.cz-edit) #page>.shelf:has(.moods){contain-intrinsic-block-size:auto 280px}
+}
+/* An invisible play overlay needs no independent blurred backdrop. */
+body[data-page=home] #page .card:not(:hover):not(:focus-within) .cplay{backdrop-filter:none;-webkit-backdrop-filter:none}
+/* Cached Liquid Glass displacement remains active during scroll. Economy and accessibility fallbacks live in glass-material.css. */

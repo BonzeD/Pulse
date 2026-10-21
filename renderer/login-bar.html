@@ -1,0 +1,37 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>bar</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1b1b1d;color:#fff;font:13px "Segoe UI",Roboto,Arial,sans-serif;overflow:hidden;user-select:none}
+.b{display:flex;align-items:center;gap:4px;height:100%;padding:0 8px;border-bottom:1px solid rgba(255,255,255,.08);position:relative}
+button{width:34px;height:34px;border-radius:50%;border:0;background:none;color:#fff;cursor:pointer;display:grid;place-items:center;flex-shrink:0}
+button:hover{background:rgba(255,255,255,.1)}button:disabled{opacity:.3;pointer-events:none}
+button.t{width:auto;padding:0 12px;border-radius:99px;background:rgba(255,255,255,.08);font:600 12.5px inherit;font-family:inherit;color:#fff}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.u{flex:1;min-width:0;display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:99px;background:rgba(255,255,255,.06);margin:0 4px;color:rgba(255,255,255,.75)}
+.u svg{width:14px;height:14px;flex-shrink:0;color:#5ef2a0}
+.u span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u.err{color:#ffb4a8}.u.err svg{color:#ff6b6b}
+.pr{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:linear-gradient(90deg,#ff2d95,#8b3dff,#00e5ff);transition:width .4s,opacity .3s;opacity:0}
+.loading .pr{opacity:1;width:80%;transition:width 6s cubic-bezier(.1,.7,.2,1)}
+</style></head><body>
+<div class="b" id="b">
+  <button id="back" title="Назад (Alt+←)" disabled><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button id="fwd" title="Вперёд (Alt+→)" disabled><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  <button id="reload" title="Обновить (F5)"><svg viewBox="0 0 24 24" id="rIco"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
+  <div class="u" id="u"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span id="ut">Загрузка…</span></div>
+  <button class="t" id="home" title="Открыть вход с самого начала">Заново</button>
+  <div class="pr"></div>
+</div>
+<script>
+const $ = (i) => document.getElementById(i);
+['back', 'fwd', 'reload', 'home'].forEach((id) => ($(id).onclick = () => bar.cmd(id === 'reload' && document.body.classList.contains('loading') ? 'stop' : id)));
+const R = '<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/>', X = '<path d="M18 6L6 18M6 6l12 12"/>';
+bar.onState((s) => {
+  $('back').disabled = !s.back; $('fwd').disabled = !s.fwd;
+  document.body.classList.toggle('loading', !!s.loading); $('rIco').innerHTML = s.loading ? X : R;
+  let host = ''; try { host = new URL(s.url).host; } catch {}
+  $('u').classList.toggle('err', !!s.err);
+  $('ut').textContent = s.err ? 'Не загрузилось: ' + s.err + ' — нажми «Обновить»' : s.loading ? 'Загрузка… ' + host : (host ? host + (s.title ? ' · ' + s.title : '') : 'Вход в Google');
+});
+</script></body></html>

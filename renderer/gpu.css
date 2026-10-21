@@ -1,0 +1,23 @@
+/* ===================== Pulse 2.0.6 — графика на видеокарте ===================== */
+/* Элементы, которые двигаются, размываются или отражаются, получают собственный слой композитора.
+   Тогда сдвиг, прозрачность, blur(), рябь отражения и маска считаются видеокартой при сведении кадра,
+   а процессор не перерисовывает текст заново на каждом кадре анимации. */
+
+/* «Только текст»: отражение в воде — отдельный слой; фильтр (рябь + размытие) и маска затухания выполняются на GPU */
+.lys-refl{will-change:transform,filter,opacity;contain:layout paint style;isolation:isolate;backface-visibility:hidden}
+.lys-refl .lw,.lys-refl .lys-blk{will-change:auto!important}
+/* фон из обложки — слой видеокарты (уже размытая картинка, только масштаб) */
+.lys-bg{will-change:transform;backface-visibility:hidden}
+/* смена строки (уход вверх с размытием) и появление слов (подъём, размытие, пружина) — анимации композитора */
+.lys-main .lys-blk{will-change:transform,opacity,filter}
+.lys-main .lys-kin .lw{will-change:transform,opacity,filter}
+/* отражение обложки (-webkit-box-reflect) на слое — его рисует композитор */
+.lys-art{will-change:transform;backface-visibility:hidden}
+.lys-pt{will-change:transform}
+
+/* основной плеер: размытый фон и свечение обложки — на видеокарте */
+.amb-img,.pp-bg,.art-glow{backface-visibility:hidden}
+.ly-inner{backface-visibility:hidden}
+
+/* «Графика на видеокарте» выключена в настройках — без лишних слоёв */
+body.no-gpu .lys-refl,body.no-gpu .lys-bg,body.no-gpu .lys-main .lys-blk,body.no-gpu .lys-main .lys-kin .lw,body.no-gpu .lys-art,body.no-gpu .lys-pt{will-change:auto}

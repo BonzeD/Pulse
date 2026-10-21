@@ -1,0 +1,23 @@
+/* A shared compact transport, not a separate Immersion UI. */
+@media(max-width:600px){
+ body:is(.lys-bar,.main-bar) #bar{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:44px 48px;gap:8px 4px;width:calc(100vw - 32px)!important;height:132px!important;padding:18px 12px 10px!important;bottom:16px!important;align-items:center;justify-items:center}
+ body:is(.lys-bar,.main-bar) #bar :is(.bar-l,.bar-c,.bar-r){display:contents!important}
+ body:is(.lys-bar,.main-bar) #bar .seek{left:16px;right:16px;top:0}
+ body:is(.lys-bar,.main-bar) #bar #bArt{grid-area:1 / 1;width:40px;height:40px;margin:0}
+ body:is(.lys-bar,.main-bar) #bar .b-meta{grid-area:1 / 2 / 2 / 6;justify-self:stretch;min-width:0;max-width:none;width:auto;margin:0 4px;font-size:14px}
+ body:is(.lys-bar,.main-bar) #bar .b-title{font-size:14px}
+ body:is(.lys-bar,.main-bar) #bar #btnLike{grid-area:1 / 6;display:grid!important}
+ body:is(.lys-bar,.main-bar) #bar #btnPrev{grid-area:2 / 1;display:grid!important}
+ body:is(.lys-bar,.main-bar) #bar #btnPlay{grid-area:2 / 2;display:grid!important;margin:0;width:44px;height:44px}
+ body:is(.lys-bar,.main-bar) #bar #btnNext{grid-area:2 / 3;display:grid!important}
+ body:is(.lys-bar,.main-bar) #bar #btnLybQueue{grid-area:2 / 4;display:grid!important}
+ body:is(.lys-bar,.main-bar) #bar .vol{grid-area:2 / 5;display:flex!important;width:44px;min-width:0;margin:0}
+ body:is(.lys-bar,.main-bar) #bar .vol input{display:none!important}
+ body:is(.lys-bar,.main-bar) #bar :is(#btnLybAdd,#btnRepeat,#btnShuffle,#btnPP,#btnDj,#btnLybLy,#btnLybFs,#btnLybStyle,.lb-sp,.time){display:none!important}
+ body.lys-bar #bar #btnLybView,body.main-bar #bar #btnMore{grid-area:2 / 6;display:grid!important}
+ body.lys-bar #bar #btnMore,body.main-bar #bar #btnLybView{display:none!important}
+ body:is(.lys-bar,.main-bar) #bar .ib{width:44px;height:44px;min-width:0}
+ body.main-bar{--bar:148px}
+ body:is(.lys-bar,.main-bar) .toast{bottom:164px}
+ .lyb-q{bottom:164px;max-width:calc(100vw - 36px)}
+}

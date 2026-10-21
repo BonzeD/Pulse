@@ -1,0 +1,5 @@
+Microsoft.Windows.SDK.NET.Ref 10.0.19041.56
+Copyright Microsoft Corporation. All rights reserved.
+License terms: https://aka.ms/WinSDKLicenseURL
+Project: https://aka.ms/WinSDKProjectURL
+This helper uses redistributable Windows SDK .NET projections; it does not redistribute the entire SDK.

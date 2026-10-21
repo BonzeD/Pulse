@@ -1,0 +1,12 @@
+/* 1.0.0: one water horizon, padded live-twin sources; fade is applied AFTER distortion. */
+.lys-water{display:none;position:relative;flex:0 0 auto;height:calc(200px * var(--lysK));margin:4px -32px 0;align-self:stretch;pointer-events:none;contain:layout style;overflow:visible;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.72) 35%,transparent 96%),linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.72) 35%,transparent 96%),linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);-webkit-mask-composite:source-in;mask-composite:intersect}
+.lys.refl .lys-water{display:block}
+.lys .lys-water .lys-refl{display:block;position:absolute;top:-32px;left:0;right:0;height:var(--reflection-source-height,364px);margin:0;transform:scaleY(-1);transform-origin:50% 50%;animation:none!important;contain:layout style!important;overflow:visible!important;-webkit-mask-image:none;mask-image:none;will-change:auto}
+.lys .lys-refl .lys-blk{left:32px;right:32px;bottom:32px}
+.lys .lys-refl .lys-blk.out{transform:none!important;transition:opacity .28s}
+.lys .lys-refl2{display:none!important}
+.lys[data-refq=ultra] .lys-refl2,.lys[data-refq=glitch] .lys-refl2{display:block!important}
+.lys .lys-wl,.lys .lys-glint,.lys .lys-tint{display:none!important}
+body.no-anim .lys .lys-refl{filter:none!important}
+@media(prefers-reduced-motion:reduce){.lys .lys-refl{filter:none!important}}

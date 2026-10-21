@@ -1,0 +1,265 @@
+/* 2.0.10: новый вид Pulse. Берёт значения только из ds.css.
+   Часть 1 — компоненты (везде). Часть 2 — каркас «Панели» (body.ds-panels; «Классический» каркас — без этого класса).
+   Публичные id и классы (#bar, #pp, .ly-line, .w, .cur…) не меняются. */
+
+/* ================= 1. КОМПОНЕНТЫ ================= */
+html,body{font-size:var(--uiFs,14px)}
+::selection{background:rgba(var(--a1),.4)}
+/* видимый фокус с клавиатуры (мышью — без рамки) */
+:where(button,a,[tabindex],.toggle,.chip,.card,.tr,input,select,textarea):focus-visible{outline:none;box-shadow:var(--ds-focus);border-radius:var(--ds-r2)}
+.ib:focus-visible,.toggle:focus-visible{border-radius:var(--ds-rf)}
+
+/* кнопка-иконка */
+.ib{transition:background-color var(--ds-fast),color var(--ds-fast),opacity var(--ds-fast),transform var(--ds-fast) var(--ds-ease)}
+.ib:hover{background:var(--ds-s3)}
+.ib:active{background:var(--ds-s4);transform:scale(.94)}
+
+/* кнопки */
+.btn{height:36px;padding:0 var(--ds-4);gap:var(--ds-2);border-radius:var(--ds-rf);font-size:var(--ds-f3);font-weight:var(--ds-w2);background:var(--ds-s2);border:1px solid var(--ds-line);transition:background-color var(--ds-fast),border-color var(--ds-fast),transform var(--ds-fast) var(--ds-ease)}
+.btn:hover{background:var(--ds-s3);border-color:var(--ds-line2)}
+.btn:active{transform:scale(.97)}
+.btn.w{background:#fff;color:#0b0b0e;border-color:transparent}
+.btn.w:hover{background:#ececf0}
+.btn.acc{background:var(--ds-grad);border-color:transparent;color:#fff;box-shadow:0 6px 18px -8px rgba(var(--a1),.8)}
+.btn.ghost{background:transparent;border-color:var(--ds-line)}
+.btn.ghost:hover{background:var(--ds-s2)}
+.btn.sm{height:32px;padding:0 var(--ds-3);font-size:var(--ds-f2)}
+
+/* чипы — мягкие «таблетки» */
+.chip{height:32px;padding:0 var(--ds-3);gap:6px;border-radius:var(--ds-rf);background:var(--ds-s2);border:1px solid transparent;font-size:var(--ds-f2);font-weight:var(--ds-w1);color:var(--ds-t2)}
+.chip:hover{background:var(--ds-s3);color:var(--ds-t1)}
+.chip.on{background:var(--ds-t1);color:#0b0b0e;border-color:transparent}
+.chips{gap:var(--ds-2)}
+
+/* сегменты */
+.seg{background:var(--ds-s2);border:1px solid var(--ds-line);border-radius:var(--ds-r2);padding:3px;gap:2px}
+.seg button{height:28px;padding:0 var(--ds-3);border-radius:calc(var(--ds-r2) - 3px);font-size:var(--ds-f2);font-weight:var(--ds-w2);color:var(--ds-t2)}
+.seg button:hover{color:var(--ds-t1);background:var(--ds-s2)}
+.seg button.on{background:var(--ds-s4);color:var(--ds-t1);box-shadow:inset 0 0 0 1px rgba(var(--a1),.55),0 2px 10px -4px rgba(var(--a1),.6)}
+.seg:has(button.on){box-shadow:none}
+
+/* переключатель */
+.toggle{width:38px;height:22px;background:var(--ds-s4)}
+.toggle::after{top:3px;left:3px;width:16px;height:16px}
+.toggle.on{background:var(--ds-acc);box-shadow:none}
+.toggle.on::after{left:3px;transform:translateX(16px)}
+
+/* поля */
+.field,.xin,input.field{background:var(--ds-s2);border:1px solid var(--ds-line);border-radius:var(--ds-r2);transition:border-color var(--ds-fast),background-color var(--ds-fast)}
+.field:focus,.xin:focus{border-color:rgba(var(--a1),.7);background:var(--ds-s3)}
+
+/* меню, всплывашки, модальные окна, тосты — одна «поверхность» */
+.menu{background:var(--ds-pop);border:1px solid var(--ds-line2);border-radius:var(--ds-r3);box-shadow:var(--ds-sh3);padding:6px}
+.menu .mi,.menu>div:not(.sep),.menu>button{border-radius:var(--ds-r1)}
+.modal-box{background:var(--ds-pop);border:1px solid var(--ds-line2);border-radius:var(--ds-r4);box-shadow:var(--ds-sh3)}
+.pop-panel{background:var(--ds-pop);border:1px solid var(--ds-line2);border-radius:var(--ds-r3);box-shadow:var(--ds-sh3)}
+.toast{background:var(--ds-pop);border:1px solid var(--ds-line2);border-radius:var(--ds-rf);box-shadow:var(--ds-sh2)}
+
+/* заголовки и полки */
+.sh-title{font-size:var(--ds-f5);font-weight:var(--ds-w3);letter-spacing:-.01em}
+.sh-strap{font-size:var(--ds-f1);color:var(--ds-t3);font-weight:var(--ds-w2);text-transform:uppercase;letter-spacing:.06em}
+.pg-title{letter-spacing:-.02em}
+.shelf{margin-bottom:var(--ds-8)}
+
+/* карточки: обложка со скруглением, мягкий подъём при наведении */
+.card .ca{border-radius:var(--ds-r3);overflow:hidden;box-shadow:var(--ds-sh1);transition:transform var(--ds-med) var(--ds-ease),box-shadow var(--ds-med)}
+.card.round .ca{border-radius:50%}
+.card:hover .ca{transform:translateY(-3px);box-shadow:var(--ds-sh2)}
+.card .ct{font-size:var(--ds-f3);font-weight:var(--ds-w2);margin-top:var(--ds-2)}
+.card .cs{font-size:var(--ds-f2);color:var(--ds-t3)}
+.card .cplay{background:var(--ds-t1);color:#0b0b0e;box-shadow:var(--ds-sh2)}
+
+/* строки треков */
+.tr{border-radius:var(--ds-r2);transition:background-color var(--ds-fast)}
+.tr:hover{background:var(--ds-s2)}
+.tr.cur{background:var(--ds-accS)}
+.tr .ta img,.tr .ta{border-radius:var(--ds-r1)}
+.tr .ar,.tr .al,.tr .du{color:var(--ds-t3)}
+
+/* вкладки */
+.tabs button{font-weight:var(--ds-w2);letter-spacing:.04em}
+
+/* пустые состояния и загрузка */
+.empty{color:var(--ds-t2)}
+.empty b{font-size:var(--ds-f4);color:var(--ds-t1)}
+.empty svg.i{opacity:.55}
+/* скелетон: мерцание только по opacity */
+.ds-skel{background:var(--ds-s2);border-radius:var(--ds-r2);animation:dsSkel 1.4s ease-in-out infinite}
+@keyframes dsSkel{50%{opacity:.45}}
+body.no-anim .ds-skel{animation:none}
+.loading{min-height:240px}
+
+/* полосы прокрутки потоньше */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border:3px solid transparent;background-clip:content-box}
+
+/* ================= 2. КАРКАС «ПАНЕЛИ» ================= */
+body.ds-panels{--ds-bot:calc(var(--bar) + var(--ds-gap) * 2)}
+/* верхняя панель прозрачная — под ней обычный фон окна */
+body.ds-panels .top{background:transparent;border-color:transparent}
+body.ds-panels.scrolled .top{background:transparent;border-color:transparent;backdrop-filter:none}
+body.ds-panels .top-l{width:calc(var(--side) - 16px)}
+/* поиск — «таблетка» с подсказкой Ctrl+K */
+body.ds-panels .search{border-radius:var(--ds-rf);background:var(--ds-s2);border-color:var(--ds-line);height:40px;max-width:520px}
+body.ds-panels .search:focus-within{background:var(--ds-pop);border-color:var(--ds-line2)}
+body.ds-panels .search.open{border-radius:20px 20px 0 0}
+body.ds-panels .suggest{background:var(--ds-pop);border-color:var(--ds-line2);border-radius:0 0 20px 20px}
+.ds-kbd{font:600 11px/1 inherit;color:var(--ds-t3);border:1px solid var(--ds-line2);border-radius:6px;padding:4px 6px;white-space:nowrap;cursor:pointer}
+.search.has .ds-kbd,.search:focus-within .ds-kbd{display:none}
+
+/* левое меню — панель со скруглением */
+body.ds-panels .side{top:var(--top);left:var(--ds-gap);bottom:var(--ds-bot);width:calc(var(--side) - var(--ds-gap));border-right:0;border-radius:var(--ds-r3);background:var(--ds-s1);padding:var(--ds-2) var(--ds-2) var(--ds-3)}
+body.ds-panels .nv{height:40px;gap:var(--ds-4);padding:0 var(--ds-3);border-radius:var(--ds-r2);font-size:var(--ds-f3);color:var(--ds-t2);transition:background-color var(--ds-fast),color var(--ds-fast)}
+body.ds-panels .nv svg.i{width:22px;height:22px}
+body.ds-panels .nv:hover{background:var(--ds-s2);color:var(--ds-t1)}
+body.ds-panels .nv.on{background:var(--ds-s3);color:var(--ds-t1);font-weight:var(--ds-w2)}
+body.ds-panels .side-sep{margin:var(--ds-2) var(--ds-3)}
+body.ds-panels .new-pl{height:34px;margin:0 var(--ds-1) var(--ds-2);background:transparent;border:1px dashed var(--ds-line2);color:var(--ds-t2);font-size:var(--ds-f2)}
+body.ds-panels .new-pl:hover{background:var(--ds-s2);color:var(--ds-t1);border-style:solid}
+body.ds-panels .side-list::before{content:"Плейлисты";display:block;padding:var(--ds-2) var(--ds-3) var(--ds-1);font-size:11px;font-weight:var(--ds-w3);letter-spacing:.08em;text-transform:uppercase;color:var(--ds-t3)}
+body.ds-panels .side-list:empty::before{content:none}
+body.ds-panels.mini .side{width:calc(72px - var(--ds-gap))}
+body.ds-panels.mini .side{padding:var(--ds-2) 4px}
+body.ds-panels.mini .nv{height:60px;gap:4px;padding:0;flex-direction:column;justify-content:center;font-size:10px}
+body.ds-panels.mini .nv svg.i{width:22px;height:22px}
+body.ds-panels.mini .top-l{width:auto}
+
+/* основная область — панель */
+body.ds-panels .view{top:var(--top);left:calc(var(--side) + var(--ds-gap));right:var(--ds-gap);bottom:var(--ds-bot);padding-top:0;border-radius:var(--ds-r3);background:var(--ds-s1)}
+body.ds-panels .page{padding:var(--ds-6) var(--ds-10) var(--ds-12)}
+
+/* страница плеера — тоже панель на всё окно */
+body.ds-panels .pp{top:var(--top);left:var(--ds-gap);right:var(--ds-gap);bottom:var(--ds-bot);border-radius:var(--ds-r3);overflow:hidden;padding:var(--ds-4) var(--ds-10) var(--ds-6)}
+body.ds-panels.fs.pp-open .pp{top:0;left:0;right:0;bottom:0;border-radius:0}
+
+/* нижний плеер: слева — песня, по центру — управление и перемотка, справа — громкость и остальное */
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar{left:var(--ds-gap);right:var(--ds-gap);bottom:var(--ds-gap);border-radius:var(--ds-r3);background:var(--barBg,#141418);
+  grid-template-columns:minmax(0,1fr) minmax(320px,560px) minmax(0,1fr);grid-template-rows:1fr auto;column-gap:var(--ds-4);padding:6px var(--ds-3) 6px var(--ds-2);box-shadow:0 0 0 1px var(--ds-line)}
+body.ds-panels.amb-all:not(.lys-bar):not(.main-bar) .bar{background:rgba(var(--panRGB,20,20,24),.78)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-c{grid-column:1;grid-row:1 / 3;order:0;justify-content:flex-start;gap:var(--ds-1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l{grid-column:2;grid-row:1;justify-content:center;gap:var(--ds-2)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-r{grid-column:3;grid-row:1 / 3}
+body.ds-panels:not(.lys-bar):not(.main-bar) .b-art{width:48px;height:48px;border-radius:var(--ds-r2);margin:0 var(--ds-2) 0 0;box-shadow:var(--ds-sh1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .b-meta{max-width:none;flex:0 1 auto;margin-right:var(--ds-1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .b-title{font-size:var(--ds-f3)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .b-sub{font-size:var(--ds-f1);color:var(--ds-t3)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .play{width:40px;height:40px;background:var(--ds-t1);color:#0b0b0e}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .play svg.i{width:24px;height:24px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .play:hover{transform:scale(1.06);background:var(--ds-t1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .ib:not(.play){width:34px;height:34px;color:var(--ds-t2)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .ib:not(.play):hover{color:var(--ds-t1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .ib svg.i{width:20px;height:20px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .ib.on{color:var(--ds-acc)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-l .ib.on::after{content:"";position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ds-acc)}
+/* перемотка — под кнопками, время по краям */
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek{position:relative;grid-column:2;grid-row:2;left:auto;right:auto;top:auto;height:14px;margin:0 46px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek::before,body.ds-panels:not(.lys-bar):not(.main-bar) .seek-fill,body.ds-panels:not(.lys-bar):not(.main-bar) .seek-buf{top:5px;height:4px;border-radius:4px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek:hover::before,body.ds-panels:not(.lys-bar):not(.main-bar) .seek:hover .seek-fill,body.ds-panels:not(.lys-bar):not(.main-bar) .seek:hover .seek-buf{top:4px;height:6px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek::before{background:var(--ds-s4)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek-fill{background:var(--ds-t1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .seek:hover .seek-fill{background:var(--ds-acc)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .knob{background:var(--ds-t1)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar>.time{grid-column:2;grid-row:2;display:flex;justify-content:space-between;align-items:center;margin:0;font-size:0;pointer-events:none;color:var(--ds-t3)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar>.time span{font-size:11px;min-width:40px}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar>.time #tDur{text-align:right}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-c .ib,body.ds-panels:not(.lys-bar):not(.main-bar) .bar-r .ib{color:var(--ds-t2)}
+body.ds-panels:not(.lys-bar):not(.main-bar) .bar-c .ib:hover,body.ds-panels:not(.lys-bar):not(.main-bar) .bar-r .ib:hover{color:var(--ds-t1)}
+/* редкие кнопки — в меню «⋯» (там же «Скачать» и «Не нравится»); вернуть все — «Внешний вид → Все кнопки на панели» */
+body.ds-panels:not(.lys-bar):not(.main-bar):not(.bar-all) #btnDlCur,body.ds-panels:not(.lys-bar):not(.main-bar):not(.bar-all) #btnDislike{display:none}
+body.ds-panels.no-dj:not(.lys-bar):not(.main-bar):not(.bar-all) #btnDj{display:none}
+/* во весь экран нижняя панель уезжает целиком (вместе с зазором) */
+body.ds-panels.fs.pp-open:not(.lys-bar):not(.main-bar) .bar{transform:translateY(calc(100% + var(--ds-gap) * 2))}
+body.ds-panels.fs.pp-open.ui-show:not(.lys-bar):not(.main-bar) .bar{transform:none}
+/* узкое окно: перемотка и время остаются, громкость прячется в иконку */
+@media (max-width:1100px){
+  body.ds-panels:not(.lys-bar):not(.main-bar) .bar{grid-template-columns:minmax(0,1fr) minmax(260px,420px) auto}
+  body.ds-panels:not(.lys-bar):not(.main-bar) .b-sub{display:none}
+}
+@media (max-width:960px){
+  body.ds-panels:not(.lys-bar):not(.main-bar) .bar-c .b-meta{display:none}
+  body.ds-panels .page{padding:var(--ds-4) var(--ds-6) var(--ds-10)}
+}
+/* «Экономно»: без размытия под панелями */
+body.ds-panels.perf-eco .bar,body.ds-panels.perf-eco .side,body.ds-panels.perf-eco .view{backdrop-filter:none!important}
+
+/* ================= 3. НОВЫЕ ЭЛЕМЕНТЫ 2.0.10 ================= */
+/* командная палитра (Ctrl+K) */
+.ds-pal{position:fixed;inset:0;z-index:200;display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;background:rgba(0,0,0,.45);opacity:0;transition:opacity var(--ds-fast)}
+.ds-pal.show{opacity:1}
+.ds-pal-box{width:min(640px,calc(100vw - 48px));max-height:70vh;display:flex;flex-direction:column;background:var(--ds-pop);border:1px solid var(--ds-line2);border-radius:var(--ds-r4);box-shadow:var(--ds-sh3);overflow:hidden;transform:translateY(-8px) scale(.98);transition:transform var(--ds-med) var(--ds-ease)}
+.ds-pal.show .ds-pal-box{transform:none}
+.ds-pal-q{display:flex;align-items:center;gap:var(--ds-3);padding:0 var(--ds-4);height:56px;border-bottom:1px solid var(--ds-line)}
+.ds-pal-q svg.i{width:20px;height:20px;color:var(--ds-t3)}
+.ds-pal-q input{flex:1;background:none;border:0;font-size:var(--ds-f4);color:var(--ds-t1)}
+.ds-pal-q input::placeholder{color:var(--ds-t3)}
+.ds-pal-l{overflow-y:auto;padding:var(--ds-2)}
+.ds-pal-g{padding:var(--ds-3) var(--ds-3) var(--ds-1);font-size:11px;font-weight:var(--ds-w3);letter-spacing:.08em;text-transform:uppercase;color:var(--ds-t3)}
+.ds-pal-i{display:flex;align-items:center;gap:var(--ds-3);min-height:40px;padding:0 var(--ds-3);border-radius:var(--ds-r2);cursor:pointer;color:var(--ds-t2)}
+.ds-pal-i svg.i{width:18px;height:18px;color:var(--ds-t3)}
+.ds-pal-i b{font-weight:var(--ds-w1);color:var(--ds-t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-pal-i span{margin-left:auto;font-size:var(--ds-f1);color:var(--ds-t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.ds-pal-i.on{background:var(--ds-s3)}
+.ds-pal-i.on svg.i{color:var(--ds-acc)}
+.ds-pal-e{padding:var(--ds-8);text-align:center;color:var(--ds-t3)}
+.ds-pal-f{display:flex;gap:var(--ds-4);padding:var(--ds-2) var(--ds-4);border-top:1px solid var(--ds-line);font-size:var(--ds-f1);color:var(--ds-t3)}
+
+/* настройки: переключатель «Простые / Все» и свёрнутое «Дополнительно» */
+.ds-setmode{margin:var(--ds-2) 0 var(--ds-1)}
+.ds-setmode .seg{display:flex;width:100%}
+.ds-setmode .seg button{flex:1}
+details.set-adv{margin-top:var(--ds-4)}
+details.set-adv>summary{list-style:none;display:flex;align-items:center;gap:var(--ds-3);padding:var(--ds-3) var(--ds-4);border-radius:var(--ds-r3);background:var(--ds-s1);border:1px dashed var(--ds-line2);cursor:pointer;color:var(--ds-t2);transition:background-color var(--ds-fast)}
+details.set-adv>summary::-webkit-details-marker{display:none}
+details.set-adv>summary:hover{background:var(--ds-s2);color:var(--ds-t1)}
+details.set-adv>summary svg.i{width:18px;height:18px;transition:transform var(--ds-med) var(--ds-ease)}
+details.set-adv[open]>summary svg.i{transform:rotate(180deg)}
+details.set-adv>summary b{color:var(--ds-t1);font-weight:var(--ds-w2)}
+details.set-adv>summary span{font-size:var(--ds-f1);color:var(--ds-t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+details.set-adv>.set-grid{margin-top:var(--ds-4)}
+
+/* низ всплывашек: «Все настройки…» */
+.pop-f{display:flex;justify-content:flex-end;padding:var(--ds-2) var(--ds-3) var(--ds-3);border-top:1px solid var(--ds-line)}
+
+/* Главная: «Продолжить» + «Моя волна» */
+.ds-hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:var(--ds-4);margin:var(--ds-2) 0 var(--ds-8)}
+.ds-hero.one{grid-template-columns:1fr}
+.dh-card{position:relative;display:flex;align-items:center;gap:var(--ds-5);min-height:132px;padding:var(--ds-5);border-radius:var(--ds-r4);overflow:hidden;cursor:pointer;background:var(--ds-s2);border:1px solid var(--ds-line);isolation:isolate;transition:transform var(--ds-med) var(--ds-ease),border-color var(--ds-fast)}
+.dh-card:hover{transform:translateY(-2px);border-color:var(--ds-line2)}
+.dh-now::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--dh-art) center/cover;opacity:.32;transform:scale(1.4)}
+.dh-now::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(10,10,14,.92) 30%,rgba(10,10,14,.55))}
+.dh-art{width:92px;height:92px;flex-shrink:0;border-radius:var(--ds-r3);background:var(--dh-art) center/cover;box-shadow:var(--ds-sh2)}
+.dh-wave{background:linear-gradient(135deg,rgba(var(--a1),.28),rgba(var(--a2),.22)),var(--ds-s2)}
+.dh-tx{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.dh-k{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:var(--ds-w3);letter-spacing:.08em;text-transform:uppercase;color:var(--ds-t2)}
+.dh-k svg.i{width:16px;height:16px;color:var(--ds-acc)}
+.dh-tx b{font-size:var(--ds-f5);font-weight:var(--ds-w3);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dh-tx>span:last-child{font-size:var(--ds-f2);color:var(--ds-t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dh-play{width:52px;height:52px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:var(--ds-t1);color:#0b0b0e;box-shadow:var(--ds-sh2);transition:transform var(--ds-fast) var(--ds-ease)}
+.dh-play:hover{transform:scale(1.07)}
+.dh-play svg.i{width:26px;height:26px}
+@media (max-width:1100px){.ds-hero{grid-template-columns:1fr}}
+.ds-pal-q input:focus-visible{box-shadow:none}
+.dh-wave .dh-tx b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.top-res .tr-card{background:var(--ds-s2);border:1px solid var(--ds-line);border-radius:var(--ds-r4)}
+.top-res .tr-card:hover{background:var(--ds-s3)}
+.explore-btns .xb{background:var(--ds-s2);border:1px solid var(--ds-line);border-radius:var(--ds-r3)}
+.explore-btns .xb:hover{background:var(--ds-s3)}
+@media (max-width:1100px){.ds-kbd{display:none}}
+
+/* 2.0.11: авто-облегчение (app.js → liteTick). Включается само, когда окно не успевает рисоваться (~33 FPS и ниже).
+   Убираем то, что видеокарта пересчитывает каждый кадр, а глаз почти не замечает:
+   живое размытие под панелями, свечение за обложкой, размытый фон окна ПОД плеером (его закрывает фон плеера). */
+body.perf-lite .bar,body.perf-lite .top,body.perf-lite .side,body.perf-lite .view,body.perf-lite .viz-ctl{backdrop-filter:none!important}
+body.perf-lite .bar{background:rgba(var(--panRGB,20,20,24),.94)!important}
+body.perf-lite.scrolled .top{background:rgba(var(--bgRGB,9,9,12),.96)!important}
+body.perf-lite .art-glow{display:none!important}
+body.perf-lite.pp-open:not(.liquid):not(.spicy-ppbg) .amb-img{visibility:hidden!important}
+body.perf-lite.pp-open:not(.liquid):not(.spicy-ppbg) .pp-bg{opacity:1!important}
+/* 2.0.11: размытие отражения в «Только текст» пересчитывается на каждое слово — в облегчённом режиме отражение без размытия (маска и прозрачность остаются) */
+body.perf-lite .lys-refl{filter:none!important}
+/* 2.0.12: окно спрятано в трей / виджет — все CSS-анимации на паузе (раньше крутились 60 раз в секунду в невидимом окне) */
+body.win-hidden *,body.win-hidden *::before,body.win-hidden *::after{animation-play-state:paused!important}
+
+/* 1.0.0 panel8: notification is always a dark surface, including over bright artwork. */
+body .toast{background:rgba(22,22,28,.98);color:#f5f5f7;border-color:rgba(255,255,255,.18)}
+body .toast svg.i,body .toast span{color:inherit}

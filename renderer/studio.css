@@ -1,0 +1,569 @@
+/* =====================================================================
+   Pulse 2.0 — единый редактор окна: панель справа (#czDock), рамка с уголком,
+   свои объекты (#czLayer), карточка «Всё окно» во вкладке «Редактор».
+   ===================================================================== */
+#czLayer{position:fixed;inset:0;pointer-events:none;z-index:50}
+#czLayer>[data-cz]{pointer-events:none;box-sizing:border-box}
+#czLayer>[data-cz].lnk,body.cz-edit #czLayer>[data-cz]{pointer-events:auto}
+#czLayer>[data-cz].lnk{cursor:pointer}
+body:not(.cz-edit) .czh-hid{display:none!important}
+body.cz-edit .czh-hid{opacity:.3!important;outline:1px dashed rgba(255,255,255,.5)}
+#czBar{display:none!important}
+
+/* рамка выбора + уголок размера */
+#czSel .czh{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:4px;background:#fff;border:2px solid var(--A1);box-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:auto;cursor:nwse-resize}
+body.cz-edit #czSel{box-shadow:0 0 0 9999px rgba(0,0,0,.14)}
+
+/* панель — как боковое меню Pulse: прижата к краю, тот же чёрный фон, линия-разделитель */
+#czDock{position:fixed;top:var(--top);right:0;bottom:0;width:var(--czW,348px);z-index:9600;display:flex;flex-direction:column;background:var(--bg);border-left:1px solid var(--line);-webkit-app-region:no-drag;user-select:none;font-size:13px;color:var(--txt,#fff)}
+#czDock.left{right:auto;left:0;border-left:0;border-right:1px solid var(--line)}
+#czDock *{cursor:default}#czDock button,#czDock select,#czDock input[type=range],#czDock input[type=color],#czDock .toggle,#czDock label.colr{cursor:pointer}
+#czDock input[type=number],#czDock input[type=text],#czDock input:not([type]),#czDock textarea{cursor:text;user-select:text}
+#czDock .ib.sm{width:32px;height:32px;color:var(--mute)}#czDock .ib.sm:hover{color:#fff;background:rgba(255,255,255,.1)}#czDock .ib.sm.on{color:var(--A1)}
+#czDock .ib svg.i{width:18px;height:18px}
+#czDock .ib:disabled{opacity:.3;pointer-events:none}
+.czd-head{display:flex;align-items:center;gap:2px;height:56px;flex:0 0 auto;padding:0 10px 0 18px;border-bottom:1px solid var(--line)}
+.czd-t{flex:1;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700}.czd-t svg.i{width:20px;height:20px;color:var(--A1)}
+/* без полосы прокрутки — колесом / тачпадом */
+.czd-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 14px 18px;scrollbar-width:none;-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),transparent)}
+.czd-body::-webkit-scrollbar{display:none;width:0}
+.czd-foot{display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:12px 14px;border-top:1px solid var(--line)}
+.czd-foot .btn.sm{height:34px}.czd-foot>.btn:not(.acc),.czd-foot .czd-gap{margin-left:auto}
+.czb-redo svg.i{transform:scaleX(-1)}
+.czd-sec{padding:14px 0 2px}
+.czd-h{font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--A1);margin:0 2px 10px}
+.czd-sub{font-size:12px;color:var(--dim);margin:12px 2px 7px}.czd-what .czd-h+.czd-sub{margin-top:0}
+.czd-pages{display:flex;flex-wrap:wrap;gap:6px}
+.czd-pages button,.czd-add button{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:var(--mute);font-weight:500;font-size:13px;transition:.15s}
+.czd-pages button svg.i,.czd-add button svg.i{width:16px;height:16px;flex:0 0 auto}
+.czd-pages button:hover,.czd-add button:hover{color:#fff;background:rgba(255,255,255,.12)}
+.czd-pages button.on{color:#fff;background:rgba(var(--a1),.16);border-color:var(--A1)}
+.czd-add{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.czd-add button{height:38px}.czd-add button svg.i{color:var(--A1)}
+.czd-add button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.czd-tip{display:flex;gap:12px;align-items:flex-start;margin:14px 0 0;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+.czd-tip>svg.i{width:20px;height:20px;color:var(--A1);flex:0 0 auto;margin-top:1px}
+.czd-tip b{display:block;font-size:14px;font-weight:600;margin-bottom:3px}.czd-tip span{font-size:12.5px;color:var(--mute);line-height:1.45}
+.czd-help{display:grid;gap:6px;margin:12px 0 0;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);font-size:12.5px;color:var(--mute)}
+.czd-help b{color:#fff;font-weight:600;margin-bottom:2px}
+.czd-help kbd,.czc-how kbd,.czc-hero kbd{font:600 11px system-ui,sans-serif;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);color:#fff}
+.czd-note{font-size:12px;color:var(--dim)}.czd-note.blk{display:block;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);line-height:1.45;margin-top:4px}
+
+/* выбранный элемент — карточка как в настройках */
+.czd-sel{margin:14px 0 0;padding:4px 16px 14px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+.czd-sel:has(.czd-selh){border-color:rgba(var(--a1),.45)}
+.czd-selh{display:flex;align-items:center;gap:2px;padding:10px 0 4px}
+.czd-selh>div{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.czd-selh b{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.czd-selh span{font-size:12px;color:var(--mute)}
+.czg{padding:12px 0 2px;border-top:1px solid rgba(255,255,255,.055);margin-top:8px;display:grid;gap:9px}
+.czd-sel>.czg:first-child{border-top:0;margin-top:0}
+.czg-h{font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--A1)}
+.czrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.czb{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;font-weight:600;font-size:13px;transition:.15s}
+.czb svg.i{width:16px;height:16px}
+.czb:hover{background:rgba(255,255,255,.16)}
+.czb.on{background:rgba(var(--a1),.16);border-color:var(--A1)}
+.czb.red{color:#ff8a9a}.czb.red:hover{background:rgba(255,80,100,.16);border-color:rgba(255,80,100,.5)}
+.czz{min-width:26px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+.czd-danger{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.055)}
+.czf2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.czf{display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);transition:.15s}
+.czf:focus-within{border-color:var(--A1);background:rgba(255,255,255,.1)}
+.czf span{font-size:12.5px;color:var(--mute);font-weight:600}
+.czf input{flex:1;min-width:0;width:100%;background:none;border:0;outline:0;color:#fff;font:600 14px inherit;font-family:inherit;font-variant-numeric:tabular-nums;text-align:right;-moz-appearance:textfield}
+.czf input::-webkit-inner-spin-button,.czf input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.czf input::placeholder{color:var(--dim);font-weight:500}
+.czf em{font-style:normal;font-size:12px;color:var(--dim)}
+.czr{display:grid;grid-template-columns:auto 1fr 46px;align-items:center;gap:12px}
+.czr>span{font-size:13px;color:var(--mute);min-width:84px}
+.czr>em{font-style:normal;font-size:13px;text-align:right;color:var(--mute);font-variant-numeric:tabular-nums}
+#czDock input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:4px;border-radius:4px;background:rgba(255,255,255,.18);outline:none}
+#czDock input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(var(--a1),.35),0 0 12px rgba(var(--a1),.8)}
+.czc2{display:flex;align-items:center;gap:8px}
+.czc2>span{min-width:84px;font-size:13px;color:var(--mute)}
+.czc2>i{position:relative;width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);overflow:hidden}
+.czc2>i input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.czmini{height:28px;padding:0 11px;border-radius:99px;font-size:12px;font-weight:600;color:var(--mute);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+.czmini:hover{color:#fff}.czmini.on{color:#fff;background:rgba(var(--a1),.16);border-color:var(--A1)}
+.czt{display:grid;gap:6px}
+.czt span{font-size:12.5px;color:var(--mute)}
+.czt input,.czt textarea,.czt select{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:#fff;font:500 13.5px inherit;font-family:inherit;outline:0;resize:vertical}
+.czt input:focus,.czt textarea:focus,.czt select:focus{border-color:var(--A1)}
+.czt select option{background:var(--s2)}
+.czseg{display:flex;gap:2px;padding:3px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08)}
+.czseg button{flex:1;height:30px;border-radius:7px;font-size:13px;font-weight:600;color:var(--mute)}
+.czseg button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.czseg button.on{color:#fff;background:rgba(var(--a1),.16);box-shadow:inset 0 0 0 1.5px var(--A1)}
+
+/* строки настроек частей (те же, что в «Настройках») — в узкой панели в столбик */
+.set-wrap.czd-set{display:block;max-width:none;margin:0;padding:0;grid-template-columns:none;gap:0;border:0;background:none}
+.czd-set .czg-rows .set-row{display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:11px 0;min-height:0;border-top:1px solid rgba(255,255,255,.055)}
+.czd-set .czg-rows .set-row:first-child{border-top:0;padding-top:2px}
+.czd-set .czg-rows .set-row:has(>.set-c>.toggle:only-child){flex-direction:row;align-items:center;justify-content:space-between}
+.czd-set .set-l b{font-size:13.5px;font-weight:600}
+.czd-set .set-l span{display:block;font-size:12px;color:var(--mute);margin-top:2px;line-height:1.4}
+.czd-set .set-c{max-width:none;justify-content:flex-start;margin:0}
+.czd-set .set-row.sub{padding-left:0!important}.czd-set .set-row.sub::before{display:none}
+.czd-set .rng{width:100%}.czd-set .rng input[type=range]{flex:1}
+.czd-set .seg{flex-wrap:wrap}
+.czd-set .set-grp{color:var(--A1);border-top:1px solid rgba(255,255,255,.055);padding:14px 0 2px}
+.czd-set .sel{max-width:100%}
+.czd-where .seg button{height:26px;padding:0 9px;font-size:12px}
+
+/* слои */
+.czd-layers{display:grid;gap:2px}
+.czl-g{font-size:12px;color:var(--dim);margin:10px 4px 4px}
+.czl{display:flex;align-items:center;gap:6px;height:36px;padding:0 4px 0 12px;border-radius:8px;color:var(--mute);cursor:pointer!important;border:1px solid transparent;transition:.12s}
+.czl *{cursor:pointer!important}
+.czl:hover{background:rgba(255,255,255,.07);color:#fff}
+.czl.on{color:#fff;background:rgba(var(--a1),.16);border-color:var(--A1)}
+.czl.gone,.czl.hid>span,.czl.hid>.czl-n{opacity:.45}
+.czl.sub{margin-left:16px}
+.czl>span,.czl-n{flex:1;min-width:0;height:100%;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;color:inherit}
+.czl-dot{width:6px;height:6px;border-radius:50%;background:var(--A1)}
+.czl-eye{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--dim)}
+.czl-eye svg.i{width:16px;height:16px}
+.czl-eye:hover{color:#fff;background:rgba(255,255,255,.1)}
+.czl-eye.off{color:var(--A1)}
+
+/* холст части слева от панели */
+#czStage{position:fixed;top:var(--top);left:0;right:var(--czW,348px);bottom:0;z-index:9550;display:flex;flex-direction:column;max-width:none;margin:0;padding:0;gap:0;grid-template-columns:none;background:var(--bg);-webkit-app-region:no-drag}
+#czStage.left{left:var(--czW,348px);right:0}
+.czs-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:56px;padding:8px 24px;border-bottom:1px solid var(--line)}
+.czs-head>i{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:rgba(var(--a1),.16);color:var(--A1)}.czs-head>i svg.i{width:20px;height:20px}
+.czs-head>div{flex:1;min-width:200px;display:flex;flex-direction:column;line-height:1.35}
+.czs-head b{font-size:16px;font-weight:700}.czs-head span{font-size:12.5px;color:var(--mute)}
+.czs-tools{display:flex;align-items:center;gap:10px}.czs-tools>span{font-size:12.5px;color:var(--mute)}
+#czStage .czs-canvas{flex:1;border:0;border-radius:0;background:radial-gradient(circle at 50% 42%,rgba(var(--a1),.07),transparent 60%),var(--bg);scrollbar-width:none}
+#czStage .czs-canvas::-webkit-scrollbar{display:none}
+#czStage .ed-tab #pvWallBox{max-width:1100px;margin:auto;padding:28px}
+#czStage .ed-tab .pv-ly,#czStage .ed-tab .pv-viz{max-width:900px}
+body.cz-part #btnEdit{color:var(--A1)}
+
+/* пока панель справа — тосты не прячутся под неё */
+body.cz-edit .toast{left:calc(50% - var(--czW,348px) / 2)}
+body.cz-edit:has(#czDock.left) .toast{left:calc(50% + var(--czW,348px) / 2)}
+body.cz-edit #btnEdit{color:var(--A1);background:rgba(var(--a1),.16)}
+
+/* карточка «Всё окно» во вкладке «Редактор» */
+.czc-hero{display:flex;align-items:center;gap:18px}
+.czc-hero-t{flex:1;min-width:0}
+.czc-go{flex:0 0 auto;height:42px;padding:0 20px;font-size:14px}
+.czc-h2{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin:4px 2px -4px}
+.czc-how{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.czc-how>div{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.czc-how svg.i{grid-row:span 2;width:20px;height:20px;color:var(--A1)}
+.czc-how b{font-size:13px}.czc-how span{font-size:11.5px;color:var(--dim)}
+.czc-empty{padding:14px;text-align:center;font-size:12.5px;color:var(--dim)}
+.czc-note{margin-top:10px;font-size:11.5px;color:var(--dim)}
+.czc-list .cz-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px}
+.czc-list .cz-it>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.czc-list .cz-it span{font-size:11.5px;color:var(--dim)}
+@media (max-width:760px){body{--czW:290px!important}}
+#czSel.lb::after{top:auto;bottom:-24px;border-radius:0 6px 6px 6px}
+
+/* вкладка «Редактор» в настройках — вход в единый редактор */
+.czc-hero{border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(var(--a1),.4);padding:22px 24px}
+.czc-hero span b{display:inline;font-size:inherit;margin:0;color:#fff}
+.czc-hero em{display:flex;align-items:center;gap:6px;margin-top:10px;font-style:normal;font-size:12.5px;color:var(--dim)}.czc-hero em svg.i{width:16px;height:16px;color:#fff}
+.czc-parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.czc-part{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);text-align:left;transition:.15s;cursor:pointer}
+.czc-part:hover{background:rgba(var(--a1),.08);border-color:var(--A1)}
+.czc-part>i{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(var(--a1),.14);color:var(--A1);margin-bottom:4px}.czc-part>i svg.i{width:22px;height:22px}
+.czc-part b{font-size:15px;font-weight:700}.czc-part>span{font-size:12.5px;color:var(--mute);line-height:1.45}
+.czc-part>div{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.czc-part em{font-style:normal;font-size:11.5px;padding:3px 8px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--mute)}
+.czc-h2{color:var(--A1)}
+.czl>span,.czl-n{display:flex;align-items:center}
+#czStage #pvDiscord{zoom:1.55}
+
+/* ---------- 2.0: предпросмотр обоев — дизайн часов, карточки, строки ---------- */
+.pvw-clock{text-align:center;line-height:1;transform-origin:top right}
+.pvw-clock .hm{display:block;font-size:26px;font-weight:200;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pvw-clock .hm small{font-size:.42em;opacity:.65;margin-left:1px}.pvw-clock .hm sup{font-size:.32em;font-weight:600;opacity:.7;margin-left:2px;vertical-align:.9em}
+.pvw-clock .dt{display:block;font-size:9px;opacity:.75;margin-top:3px;text-transform:capitalize;white-space:nowrap}
+.pvw-clock.cs-bold .hm{font-weight:800;letter-spacing:-.03em}
+.pvw-clock.cs-stack .hm{font-weight:800;line-height:.86;letter-spacing:-.03em}.pvw-clock.cs-stack .hm i{display:block;font-style:normal}.pvw-clock.cs-stack .hm i+i{opacity:.55}
+.pvw-clock.cs-mini{display:flex;gap:6px;align-items:baseline}.pvw-clock.cs-mini .hm{font-size:16px;font-weight:500}.pvw-clock.cs-mini .dt{margin:0}
+.pvw-clock.cs-neon .hm{font-weight:300;color:rgb(var(--a1));text-shadow:0 0 4px rgba(var(--a1),.9),0 0 14px rgba(var(--a1),.7),0 0 26px rgba(var(--a2),.5)}
+.pvw-clock.cs-analog svg{width:58px;height:58px;aspect-ratio:1;display:block;margin:0 auto}
+.pvw-clock.pl-glass,.pvw-clock.pl-dark,.pvw-clock.pl-accent{padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1)}
+.pvw-clock.pl-glass{backdrop-filter:blur(10px)}
+.pvw-card.st-solid{backdrop-filter:none}
+.pvw-card.st-minimal{backdrop-filter:none;box-shadow:none;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.pvw-card.st-accent{border:1px solid rgba(var(--a1),.45)}
+.pvw-card.as-square .pvw-art{border-radius:3px}.pvw-card.as-circle .pvw-art{border-radius:50%}
+.pvw-ctl .pvw-like{display:grid;place-items:center;font-style:normal;margin-left:3px}.pvw-ctl .pvw-like.on{color:var(--A1)}
+.pvw-ly span{padding:.08em .5em;border-radius:.45em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.pvw-ly.plate span{background:rgba(8,6,14,.5);backdrop-filter:blur(8px)}
+.pvw-ly.glow{text-shadow:0 2px 8px rgba(0,0,0,.6),0 0 12px rgba(var(--a1),.65)}
+
+/* ---------- 2.0: панель и холст — в стиле твоего Pulse ----------
+   Раньше были сплошные var(--bg), как у тёмной темы по умолчанию. Но если включён «фон из обложки» (amb-all),
+   «стекло» (glass) или Liquid Glass — меню и плеер у Pulse полупрозрачные, а редактор выглядел чужим чёрным блоком.
+   Теперь панель берёт те же правила, что боковое меню (.side), а холст прозрачный — под ним те же цвета обложки. */
+body.amb-all:not(.czs-solid) #czDock{background:rgba(var(--bgRGB,3,3,3),.55);backdrop-filter:blur(24px) saturate(1.3)}
+body.glass:not(.czs-solid) #czDock{background:rgba(var(--bgRGB,3,3,3),var(--glassOp,.6));backdrop-filter:blur(22px) saturate(1.4)}
+body.liquid:not(.czs-solid) #czDock{background:rgba(var(--bgRGB,6,5,12),calc(var(--lqOp,.35) * .5 + .3));backdrop-filter:blur(30px) saturate(1.6);border-color:rgba(255,255,255,.08)}
+body.czs-glass #czDock{background:rgba(var(--bgRGB,3,3,3),.5);backdrop-filter:blur(26px) saturate(1.4)}
+/* холст: окно под ним прячем, сам холст прозрачный — видно фон из обложки, как на остальных страницах */
+body.cz-part:has(#czStage):not(.czs-solid) :is(.side,#view,.bar){visibility:hidden}
+body.cz-part:has(#czStage):not(.czs-solid):is(.amb-all,.glass,.liquid,.czs-glass) #czStage{background:rgba(var(--bgRGB,3,3,3),.28)}
+body.cz-part:has(#czStage):not(.czs-solid):is(.amb-all,.glass,.liquid,.czs-glass) #czStage .czs-canvas{background:radial-gradient(circle at 50% 42%,rgba(var(--a1),.08),transparent 60%)}
+body.liquid #czStage{background:transparent}
+:is(.amb-all,.glass,.liquid,.czs-glass):not(.czs-solid) .czs-head{background:rgba(var(--bgRGB,3,3,3),.35);backdrop-filter:blur(18px)}
+body[data-czstage=grid] #czStage .czs-canvas{background-color:transparent;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px),radial-gradient(circle at 50% 42%,rgba(var(--a1),.07),transparent 60%);background-size:24px 24px,24px 24px,100% 100%;background-position:center}
+body[data-czstage=dark] #czStage,body[data-czstage=dark] #czStage .czs-canvas{background:#050505!important}
+body.czs-notips #czDock .czd-tip{display:none}
+body.czs-noshade.cz-edit #czSel{box-shadow:none}
+/* сворачиваемые разделы */
+#czDock .czd-h,#czDock .czg-h{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer!important;border-radius:6px}
+#czDock .czd-h:hover,#czDock .czg-h:hover{color:#fff}
+#czDock .czd-h::after,#czDock .czg-h::after{content:"";flex:0 0 auto;width:6px;height:6px;margin-right:4px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.55;transition:transform .15s}
+#czDock .fold>.czd-h::after,#czDock .fold>.czg-h::after{transform:rotate(-45deg)}
+#czDock .czd-sec.fold>:not(.czd-h),#czDock .czg.fold>:not(.czg-h){display:none!important}
+#czDock .czd-sec.fold{padding-bottom:0}#czDock .czd-sec.fold>.czd-h{margin-bottom:0}
+.czd-cfg .czc2 .czseg{flex:1}.czd-cfg .czc2>span{min-width:76px}.czd-cfg .czseg button{font-size:12px}
+.czd-cfg{border-color:rgba(var(--a1),.35)}
+/* вкладка «Редактор»: короткое вступление вместо повторяющейся большой карточки */
+.czc-intro{font-size:13.5px;color:var(--mute);line-height:1.55;margin:2px 2px 0}
+.czc-intro svg.i{width:15px;height:15px;vertical-align:-3px;color:#fff}
+.czc-intro kbd{font:600 11px system-ui,sans-serif;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);color:#fff}
+.czc-part.main{border-color:rgba(var(--a1),.45);background:rgba(var(--a1),.06)}
+.glass .czc-part,.amb-all .czc-part{backdrop-filter:blur(14px)}
+body.liquid .czc-part{background:rgba(255,255,255,.06);backdrop-filter:blur(16px) saturate(1.3);border-color:rgba(255,255,255,.1)}
+.czc-cfg{margin-top:0}
+.czc .set-card.czc-cfg{padding:4px 24px 6px!important;margin:0}
+.czc-intro svg.i{display:inline-block!important}
+#sideList .sync-st{margin:10px 12px 14px;padding-top:10px;border-top:1px solid var(--line);cursor:pointer}
+
+/* ---------- 1.9.4: предпросмотр «Внешний вид» — мини-копия настоящего окна ---------- */
+.pv-app.pv-app2{height:auto;display:block;padding:0;background:none;border:0;container-type:inline-size;font-size:inherit}
+.pa2{--u:calc(100cqw / 1180);position:relative;aspect-ratio:1180/640;overflow:hidden;border-radius:14px;background:var(--bg);color:var(--txt,#fff);font-family:var(--uiFont,inherit);font-size:calc(var(--u) * 14 * var(--pfs,1));display:grid;grid-template-columns:calc(var(--u) * var(--pside,240)) 1fr;grid-template-rows:calc(var(--u) * 64) 1fr calc(var(--u) * var(--pbar,72));box-shadow:0 0 0 1px rgba(255,255,255,.08),0 20px 50px -20px rgba(0,0,0,.6)}
+.pa2 svg.i{width:calc(var(--u) * 20);height:calc(var(--u) * 20);flex:0 0 auto}
+.pa2-amb{position:absolute;inset:-10%;z-index:0;background:radial-gradient(circle at 25% 30%,rgba(var(--a1),.6),transparent 55%),radial-gradient(circle at 80% 75%,rgba(var(--a2),.5),transparent 55%) center/cover;filter:blur(calc(var(--u) * 40)) saturate(1.5)}
+body.amb-all .pa2-amb{opacity:var(--ambAllOp,.45)}
+.pa2>*:not(.pa2-amb){position:relative;z-index:1}
+.pa2-top{grid-column:1/-1;display:flex;align-items:center;gap:calc(var(--u) * 24);padding:0 calc(var(--u) * 22);background:linear-gradient(var(--bg),rgba(var(--bgRGB,3,3,3),.92));border-bottom:1px solid var(--line)}
+body.amb-all .pa2-top{background:rgba(var(--bgRGB,3,3,3),.55)}
+body.glass .pa2-top,body.glass .pa2-side,body.glass .pa2-bar{background:rgba(var(--panRGB,33,33,33),var(--glassOp,.6));backdrop-filter:blur(10px)}
+.pa2-logo{display:flex;align-items:center;gap:calc(var(--u) * 10);font-weight:800;font-size:1.35em}.pa2-logo i{width:calc(var(--u) * 26);height:calc(var(--u) * 26);border-radius:calc(var(--u) * 8);background:var(--grad)}
+.pa2-q{flex:0 1 calc(var(--u) * 520);display:flex;align-items:center;gap:calc(var(--u) * 10);height:calc(var(--u) * 38);padding:0 calc(var(--u) * 14);border-radius:calc(var(--u) * 10);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--dim);white-space:nowrap;overflow:hidden}
+.c-radius .pa2-q,.c-radius .pa2-card .pa2-cov,.c-radius .pa2-btn{border-radius:calc(var(--u) * var(--prad,10))}
+.pa2-tr{margin-left:auto;display:flex;align-items:center;gap:calc(var(--u) * 18);color:var(--mute)}.pa2-tr em{display:grid;place-items:center;width:calc(var(--u) * 34);height:calc(var(--u) * 34);border-radius:50%;background:rgba(255,255,255,.12)}
+.pa2-side{display:flex;flex-direction:column;gap:calc(var(--u) * 4);padding:calc(var(--u) * 10);border-right:1px solid var(--line);background:var(--bg);overflow:hidden}
+body.amb-all .pa2-side{background:rgba(var(--bgRGB,3,3,3),.55)}
+.pa2-side span{display:flex;align-items:center;gap:calc(var(--u) * 14);height:calc(var(--u) * 44);padding:0 calc(var(--u) * 14);border-radius:calc(var(--u) * 10);font-weight:600;white-space:nowrap;color:#fff}
+.pa2-side span.on{background:rgba(255,255,255,.1)}.pa2-side span.on svg.i{color:var(--A1)}
+.pa2-side hr{border:0;border-top:1px solid var(--line);margin:calc(var(--u) * 8) calc(var(--u) * 6)}
+.pa2-side .pa2-new{justify-content:center;background:rgba(255,255,255,.08);border-radius:99px;height:calc(var(--u) * 38);font-size:.92em}
+.pa2-side .pa2-pl{height:calc(var(--u) * 34);font-size:.92em;font-weight:500}.pa2-side .pa2-pl svg.i{color:var(--A1);width:calc(var(--u) * 15)}.pa2-side .pa2-pl.dim{color:var(--mute)}
+.pa2-main{padding:calc(var(--u) * 26) calc(var(--u) * 34);overflow:hidden}
+.pa2-main h4{margin:0 0 calc(var(--u) * 14);font-size:2em;font-weight:800}
+.pa2-chips{display:flex;gap:calc(var(--u) * 8);margin-bottom:calc(var(--u) * 18)}.pa2-chips i{font-style:normal;padding:calc(var(--u) * 7) calc(var(--u) * 14);border-radius:99px;background:rgba(255,255,255,.08);font-size:.92em;font-weight:600}
+.pa2-cards{display:grid;gap:calc(var(--u) * 18)}
+.pa2-card{display:flex;flex-direction:column;gap:calc(var(--u) * 4);min-width:0}.pa2-card b{font-size:.95em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pa2-card span{font-size:.82em;color:var(--mute);white-space:nowrap}
+.pa2-cov{aspect-ratio:1;border-radius:calc(var(--u) * 10);margin-bottom:calc(var(--u) * 6);background:linear-gradient(135deg,var(--A1),var(--A2))}
+.pa2-cov.b{background:linear-gradient(135deg,var(--A2),var(--A3,#00e5ff))}.pa2-cov.c{background:linear-gradient(135deg,var(--A3,#00e5ff),var(--A1))}.pa2-cov.d{background:linear-gradient(160deg,#2a2a35,var(--A2))}
+.pa2-ctl{display:flex;align-items:center;gap:calc(var(--u) * 14);margin-top:calc(var(--u) * 20)}
+.pa2-btn{padding:calc(var(--u) * 8) calc(var(--u) * 18);border-radius:99px;background:var(--grad);font-weight:700;font-size:.92em}
+.pa2-tg{width:calc(var(--u) * 42);height:calc(var(--u) * 24);border-radius:99px;background:var(--A1);position:relative}.pa2-tg::after{content:"";position:absolute;right:calc(var(--u) * 3);top:calc(var(--u) * 3);width:calc(var(--u) * 18);height:calc(var(--u) * 18);border-radius:50%;background:#fff}
+.pa2-seg{display:inline-flex;padding:calc(var(--u) * 3);border-radius:calc(var(--u) * 10);background:rgba(255,255,255,.07)}.pa2-seg i{font-style:normal;padding:calc(var(--u) * 5) calc(var(--u) * 14);border-radius:calc(var(--u) * 7);font-size:.9em;color:var(--mute)}.pa2-seg i.on{color:#fff;background:rgba(var(--a1),.16);box-shadow:inset 0 0 0 1.5px var(--A1)}
+.pa2-bar{grid-column:1/-1;display:flex;align-items:center;gap:calc(var(--u) * 24);padding:0 calc(var(--u) * 24);background:var(--barBg,#212121);position:relative}
+body.amb-all .pa2-bar{background:rgba(var(--panRGB,33,33,33),.72)}
+.pa2-c{display:flex;align-items:center;gap:calc(var(--u) * 18)}.pa2-c b{display:grid;place-items:center}.pa2-c b svg.i{width:calc(var(--u) * 28);height:calc(var(--u) * 28)}
+.pa2-time{font-size:.85em;color:var(--mute);font-variant-numeric:tabular-nums;min-width:calc(var(--u) * 80)}
+.pa2-now{flex:1;display:flex;align-items:center;justify-content:center;gap:calc(var(--u) * 14);min-width:0}
+.pa2-now>i{width:calc(var(--u) * 42);height:calc(var(--u) * 42);border-radius:calc(var(--u) * 6);flex:0 0 auto}
+.pa2-now>span{display:flex;flex-direction:column;min-width:0}.pa2-now b{font-size:.95em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(var(--u) * 260)}.pa2-now em{font-style:normal;font-size:.85em;color:var(--mute)}
+.pa2-r{display:flex;gap:calc(var(--u) * 18);color:var(--mute)}
+.pa2-prog{position:absolute;left:0;right:0;top:0;height:calc(var(--u) * 3);background:rgba(255,255,255,.12)}.pa2-prog i{display:block;width:34%;height:100%;background:var(--grad)}
+.pv-app2>em{display:block;margin-top:8px}
+.ed .pv-app2 [data-ed]{outline-offset:-2px}
+
+/* Preview actions stay in normal flow ABOVE content; never float over or below it. */
+.ed-mini{display:flex;flex-direction:column}
+.ed-mini .pv>em,#czStage .pv>em,.ed-mini .pv-wall>em{display:none}
+.ed-mini .ed-preview-actions{display:flex;justify-content:flex-end;align-items:center;flex:0 0 auto;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.ed-mini .ed-open{position:static;inset:auto;align-self:auto;max-width:100%;min-height:44px;margin:0;opacity:1;white-space:normal;text-align:start}
+.ed-mini #pvWallBox{width:100%}
+.ed-mini .pv-wall{width:100%;height:auto;aspect-ratio:16/9;max-height:none}
+
+/* 1.9.4: образцы цвета акцента — ровные круги, кольцо выбора не обрезается */
+.sws{gap:12px;padding:6px 6px 22px;overflow:visible}
+.sw{width:40px;height:40px;flex:0 0 40px;padding:0;border:0;border-radius:50%;overflow:visible;
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.45),transparent 42%),linear-gradient(140deg,var(--c1,#555),var(--c2,#333) 55%,var(--c3,#222));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.35);transition:transform .18s cubic-bezier(.3,1.6,.5,1),box-shadow .18s}
+.sw:not([style*="--c1"]):not(.custom){background:conic-gradient(from 200deg,#ff3d7f,#ffb13d,#3dffa0,#3db8ff,#a63dff,#ff3d7f);}
+.sw:not([style*="--c1"]):not(.custom) svg.i{color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.sw:hover{transform:translateY(-2px) scale(1.08)}
+.sw.on{border:0;box-shadow:0 0 0 3px var(--bg2,#121018),0 0 0 5px #fff,0 6px 18px rgba(var(--a1),.55)}
+.sw em{margin-top:7px;font-size:10.5px}
+.sw.custom{background:conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red)}
+.sw.custom::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--cc,#222);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.sw.custom::after{content:"+";position:relative;z-index:1;font-size:18px;line-height:1;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+
+/* 1.9.4: «Анимации» — заметные плавные переходы интерфейса (выключаются тумблером, класс .no-anim) */
+@keyframes pxUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pxPop{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pxMenu{from{opacity:0;transform:scale(.96) translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes pxFade{from{opacity:0}to{opacity:1}}
+body:not(.no-anim) #page.fade .card{animation:pxUp .42s cubic-bezier(.2,.8,.25,1) both}
+body:not(.no-anim) #page.fade .card:nth-child(2){animation-delay:.03s}
+body:not(.no-anim) #page.fade .card:nth-child(3){animation-delay:.06s}
+body:not(.no-anim) #page.fade .card:nth-child(4){animation-delay:.09s}
+body:not(.no-anim) #page.fade .card:nth-child(5){animation-delay:.12s}
+body:not(.no-anim) #page.fade .card:nth-child(n+6){animation-delay:.15s}
+body:not(.no-anim) .card .ca{transition:transform .25s cubic-bezier(.2,.8,.25,1),box-shadow .25s}
+body:not(.no-anim) .card:hover .ca{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.45)}
+body:not(.no-anim) .card:hover .ca img{transform:scale(1.05)}
+body:not(.no-anim) .nv svg.i{transition:transform .2s cubic-bezier(.3,1.5,.5,1)}
+body:not(.no-anim) .nv:hover svg.i{transform:translateX(2px) scale(1.08)}
+/* 1.9.4: диджей выключен — его пункт и кнопка не мешают */
+body.no-dj .nv[data-go=dj],body.no-dj #btnDj{display:none!important}
+
+/* 1.9.4: менеджер аккаунтов — карточки с аватарками */
+.acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin:8px 0 14px}
+.acc-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:22px 14px 16px;border-radius:16px;background:rgba(255,255,255,.05);border:1.5px solid transparent;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.acc-card:hover{background:rgba(255,255,255,.09);transform:translateY(-2px)}
+.acc-card.on{cursor:default;border-color:var(--A1);background:linear-gradient(160deg,rgba(var(--a1),.18),rgba(255,255,255,.04))}
+.acc-card b{font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-card>span{font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.acc-av{width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.acc-av.ava{display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:26px}
+.acc-av.plus{background:rgba(255,255,255,.08);border:1.5px dashed rgba(255,255,255,.3);box-shadow:none}
+.acc-av.plus svg.i{width:26px;height:26px}
+.acc-card.on .acc-av{box-shadow:0 0 0 3px var(--bg2,#121018),0 0 0 5px var(--A1),0 8px 22px rgba(var(--a1),.4)}
+.acc-dot{width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84;display:inline-block}
+.acc-tools{position:absolute;top:6px;right:6px;display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.acc-card:hover .acc-tools{opacity:1}
+.acc-go{font-style:normal;font-size:12px;font-weight:600;color:var(--A1);display:flex;align-items:center;gap:5px;opacity:0;transition:opacity .15s;margin-top:2px}
+.acc-go svg.i{width:14px;height:14px}
+.acc-card:hover .acc-go{opacity:1}
+.acc-card.add{border-style:dashed;border-color:rgba(255,255,255,.14);background:transparent}
+.acc-pop{position:fixed;z-index:65;width:300px;padding:10px;border-radius:16px;background:rgba(28,26,34,.97);border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.6);backdrop-filter:blur(20px)}
+body:not(.no-anim) .acc-pop{animation:pxMenu .18s cubic-bezier(.2,.8,.3,1) both;transform-origin:top right}
+.ap-me{display:flex;align-items:center;gap:12px;padding:10px 8px 14px}
+.ap-me .acc-av{width:52px;height:52px;font-size:22px}
+.ap-me b{display:block;font-size:15px}
+.ap-me span{font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px;margin-top:3px}
+.ap-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:8px 8px 4px}
+.ap-acc{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:10px;text-align:left;color:inherit}
+.ap-acc:hover{background:rgba(255,255,255,.07)}
+.ap-acc .acc-av{width:34px;height:34px;font-size:15px;box-shadow:none}
+.ap-acc .acc-av.plus svg.i{width:16px;height:16px}
+.ap-acc>span:nth-child(2){flex:1;min-width:0}
+.ap-acc b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-acc em{font-style:normal;font-size:11.5px;color:var(--mute)}
+.ap-acc>svg.i{width:16px;height:16px;opacity:0;color:var(--A1)}
+.ap-acc:hover>svg.i{opacity:1}
+.ap-cfg{display:flex;flex-wrap:wrap;gap:6px;padding:4px 8px 6px}
+.ap-sep{height:1px;background:rgba(255,255,255,.08);margin:8px 4px}
+.ap-it{display:flex;align-items:center;gap:12px;width:100%;padding:9px 10px;border-radius:10px;font-size:13.5px;color:inherit;text-align:left}
+.ap-it:hover{background:rgba(255,255,255,.07)}
+.ap-it svg.i{width:18px;height:18px;opacity:.8}
+.ap-it.danger{color:#ff7a90}
+
+/* 1.9.4: панель редактора двигается и меняет ширину */
+#czDock .czd-head{cursor:grab}
+body.czd-drag,body.czd-drag *{cursor:grabbing!important;user-select:none!important}
+.czd-grip{width:14px;height:10px;margin-left:2px;opacity:.35;background:radial-gradient(circle,currentColor 1.2px,transparent 1.6px) 0 0/5px 5px}
+#czDock .czd-head:hover .czd-grip{opacity:.7}
+.czd-rs{position:absolute;top:0;bottom:0;left:-4px;width:8px;cursor:ew-resize;z-index:6}
+.czd-rs::after{content:"";position:absolute;top:50%;left:3px;width:2px;height:40px;margin-top:-20px;border-radius:2px;background:rgba(255,255,255,.0);transition:background .15s}
+.czd-rs:hover::after,body.czd-drag .czd-rs::after{background:var(--A1)}
+#czDock.left .czd-rs,#czDock.float .czd-rs{left:auto;right:-4px}
+.czd-rsb{display:none}
+#czDock.float .czd-rsb{display:block;position:absolute;left:20%;right:20%;bottom:-4px;height:8px;cursor:ns-resize;z-index:6}
+#czDock.float{right:auto;bottom:auto;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 30px 90px rgba(0,0,0,.65);overflow:visible}
+#czDock.float>.czd-head{border-radius:16px 16px 0 0}
+#czDock.float .czd-foot{border-radius:0 0 16px 16px}
+body.czd-float #czStage{left:0;right:0}
+body.cz-edit.czd-float .toast{left:24px}
+#czSnap{position:fixed;top:var(--top);bottom:0;width:var(--czW,348px);z-index:9590;pointer-events:none;background:rgba(var(--a1),.14);border:2px dashed rgba(var(--a1),.7);box-sizing:border-box}
+#czSnap.l{left:0}#czSnap.r{right:0}
+body:not(.no-anim) #czSnap{animation:pxFade .15s ease both}
+
+/* 1.9.4: караоке-заливка поющегося слова */
+.ly-line.cur .w.on.fl{background:linear-gradient(90deg,var(--lyFill,#fff) 0,var(--lyFill,#fff) calc(var(--wp,0) * 100%),rgba(255,255,255,var(--lyDimA,.38)) calc(var(--wp,0) * 100% + .35em));-webkit-background-clip:text;background-clip:text;color:transparent!important;transition:transform var(--wt) cubic-bezier(.3,1.6,.5,1),filter var(--wt)}
+.ly-colored .ly-line.cur .w.on.fl{--lyFill:rgb(var(--lyC))}
+
+/* ===== 1.9.4: «Только текст» ===== */
+.stage-ly{left:44px}
+.lys{position:fixed;inset:0;z-index:58;background:#050407;color:#fff;overflow:hidden;--lysK:1;--lysFont:Georgia,serif;-webkit-app-region:no-drag;cursor:none}
+.lys.ui{cursor:default}
+body.lyonly .toast{z-index:90}
+.lys-bg{position:absolute;inset:-60px;background:center/cover no-repeat;filter:blur(60px) saturate(1.3) brightness(.32);transform:scale(1.15);opacity:.9}
+.lys::after{content:"";position:absolute;inset:0;pointer-events:none}
+.lys-pt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;display:none}
+.lys.pt .lys-pt{display:block}
+.lys-wrap{position:absolute;inset:0;z-index:2;display:flex;align-items:center;gap:6vw;padding:0 7vw}
+.lys[data-cover=left] .lys-wrap{flex-direction:row-reverse}
+.lys-text{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;justify-content:center;height:100%}
+.lys[data-layout=center] .lys-text{align-items:center;text-align:center}
+.lys-main{position:relative;height:calc(300px * var(--lysK));flex:0 0 auto}
+.lys:not(.refl) .lys-main{height:calc(420px * var(--lysK))}
+.lys-cover{flex:0 0 auto;width:min(30vw,52vh);display:flex;flex-direction:column;gap:16px}
+.lys[data-cover=none] .lys-cover{display:none}
+.lys-art{width:100%;aspect-ratio:1;border-radius:14px;background:#15131c center/cover no-repeat;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.lys.refl .lys-art{-webkit-box-reflect:below 10px linear-gradient(transparent 62%,rgba(255,255,255,.22))}
+.lys-meta{display:none}
+.lys:not(.refl) .lys-meta{display:block}
+.lys-meta b{display:block;font-size:20px}.lys-meta span{color:rgba(255,255,255,.6);font-size:14px}
+.lys-blk{position:absolute;left:0;right:0;bottom:0;font-family:var(--lysFont);font-weight:700;line-height:1.08;transition:opacity .45s,transform .5s cubic-bezier(.2,.8,.25,1),filter .45s}
+.lys[data-layout=center] .lys-blk{text-align:center}
+.lys.upper .lys-blk{text-transform:uppercase;letter-spacing:.02em}
+.lys-none{font-size:calc(90px * var(--lysK));opacity:.3;text-align:center}
+.lys-gap{display:flex;gap:14px}.lys[data-layout=center] .lys-gap{justify-content:center}
+.lys-gap i{width:14px;height:14px;border-radius:50%;background:#fff;opacity:.5;animation:lysDot 1.4s ease-in-out infinite}
+.lys-gap i:nth-child(2){animation-delay:.2s}.lys-gap i:nth-child(3){animation-delay:.4s}
+@keyframes lysDot{50%{opacity:1;transform:scale(1.35)}}
+/* классика */
+.lys-cl .lys-pv,.lys-cl .lys-nx{font-size:calc(26px * var(--lysK));opacity:.28;font-weight:600;margin:18px 0}
+.lys-cl .lys-cur{font-size:calc(58px * var(--lysK))}
+.lys-cl .lw{color:rgba(255,255,255,.32);transition:color .2s,text-shadow .3s}
+.lys-cl .lw.on{color:#fff}
+/* кинетика и столбик */
+.lys-kin .lw{display:inline-block;opacity:0}
+.lys-kin .lw.in{opacity:1}
+.lys-kin .lw.hot{color:#fff}
+.lys-stk .lr{font-size:calc(78px * var(--lysK));line-height:1;transition:opacity .4s,max-height .4s,margin .4s;overflow:visible}
+.lys-stk .lr.gone{margin:0}
+
+/* отражение */
+.lys-refl{display:none;position:relative;height:calc(200px * var(--lysK));margin-top:4px;flex:0 0 auto;transform:scaleY(-1);filter:url(#lysRipple) blur(1.2px);-webkit-mask-image:linear-gradient(to top,#000 0%,transparent 75%);mask-image:linear-gradient(to top,#000 0%,transparent 75%);pointer-events:none;overflow:hidden}
+.lys.refl .lys-refl{display:block}
+.lys-refl .lys-blk{bottom:0}
+/* управление */
+.lys-ui{position:absolute;top:18px;right:18px;z-index:5;display:flex;gap:8px;align-items:center;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s}
+.lys.ui .lys-ui{opacity:1;transform:none}
+.lys-seg{display:flex;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:3px;backdrop-filter:blur(12px)}
+.lys-seg button{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7)}
+.lys-seg button.on{background:#fff;color:#000}
+.lys-b{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.75);backdrop-filter:blur(12px)}
+.lys-b.on{color:var(--A1);border-color:rgba(var(--a1),.6)}
+.lys-b svg.i{width:18px;height:18px}
+.lys-prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08);z-index:5}
+.lys-prog i{display:block;height:100%;background:linear-gradient(90deg,rgb(var(--a1)),rgb(var(--a2)))}
+
+/* 1.9.5: убрать аккаунт прямо из карточки аватарки */
+.ap-acc .ap-del{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;opacity:0;color:var(--mute);transition:opacity .15s,background .15s,color .15s}
+.ap-acc:hover .ap-del{opacity:1}
+.ap-acc .ap-del:hover{background:rgba(255,80,80,.16);color:#ff6b6b}
+.ap-acc .ap-del svg.i{width:14px;height:14px}
+/* 1.9.5: карточка без обложки — аккуратная заглушка вместо пустого квадрата */
+.card .ca .ca-ico.ph,.card .ca.noimg{background:linear-gradient(145deg,#2b2b31,#141417)}
+.card .ca .ca-ico.ph svg.i{width:46px;height:46px;opacity:.35}
+.card .ca.noimg::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M9 18V5l12-2v13'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Ccircle cx='18' cy='16' r='3'/%3E%3C/svg%3E") center/38% no-repeat;opacity:.3;pointer-events:none}
+/* 1.9.5: предпросмотр = настоящее окно: реальные обложки, нейтральные заглушки как в приложении, без пунктира */
+.pa2-cov,.pa2-cov.b,.pa2-cov.c,.pa2-cov.d{background:#232326 center/cover no-repeat}
+.pa2-cov.round{border-radius:50%!important}
+.pa2-cards{grid-template-columns:repeat(5,1fr)}
+.pa2-sh{margin-bottom:calc(var(--u) * 18)}
+.pa2-sh h5{margin:0 0 calc(var(--u) * 12);font-size:1.45em;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pa2-greet{font-size:.85em;color:var(--mute);margin-bottom:calc(var(--u) * 10);font-weight:600}
+.pa2-chips i.on{background:rgba(255,255,255,.08);color:inherit}
+.pa2-tr em{background-size:cover;background-position:center}
+.pa2-now>i{background:#232326 center/cover}
+.pa2-amb{opacity:var(--ambAllOp,.45);background-size:cover;background-position:center}
+.ed .pv-app2 [data-ed]:hover{outline:none!important;box-shadow:inset 0 0 0 calc(var(--u,1px) * 2) rgba(255,255,255,.18)}
+.ed .pv-app2 .ed-on{outline:none!important;box-shadow:inset 0 0 0 2px var(--A1)}
+/* 1.9.5: переход по чипам раздела — группа подсвечивается, чтобы было видно, что нажалось */
+.jump-hl{animation:jumpHl 1.2s ease}
+@keyframes jumpHl{0%,35%{box-shadow:0 0 0 2px var(--A1),0 0 30px -6px rgba(var(--a1),.6)}100%{box-shadow:0 0 0 0 transparent}}
+.set-jump button.on{background:rgba(var(--a1),.16);box-shadow:inset 0 0 0 1.5px var(--A1)}
+
+/* 1.9.5: «Кинетика» как в лирик-видео — строки-плакат одной ширины, слова влетают по одному, строка растёт снизу вверх */
+.lys-kin .lr{font-size:calc(64px * var(--lysK));line-height:1.02;margin:0;max-height:1.3em;opacity:1;transition:max-height .5s cubic-bezier(.2,.8,.25,1),opacity .35s,font-size .3s;white-space:nowrap}
+.lys-kin .lr:not(.shown){max-height:0;opacity:0}
+.lys-kin .lri{display:inline-block;white-space:nowrap}
+.lys-kin .lw{transform-origin:50% 80%}
+.lys-kin .lw.hot{scale:1.06}
+.lys-kin .lw.in:not(.hot){color:rgba(255,255,255,.86)}
+.lys-kin .lr.shown:not(:last-child) .lw:not(.hot){color:rgba(255,255,255,.62)}
+.lys-stk .lr{max-height:1.15em}
+.lys-stk .lr.gone{max-height:0;opacity:0}
+/* живой фон: медленный «наезд» и вздох на басах */
+.lys-bg{animation:lysKen 38s ease-in-out infinite alternate}
+@keyframes lysKen{0%{transform:scale(1.15) translate(0,0)}100%{transform:scale(1.3) translate(-2%,-3%)}}
+.lys-art{animation:lysFloat 9s ease-in-out infinite;transform-origin:50% 60%}
+@keyframes lysFloat{0%,100%{translate:0 0}50%{translate:0 -8px}}
+.lys-art{position:relative;overflow:hidden}
+.lys-art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.13) 48%,transparent 60%);background-size:250% 100%;animation:lysGlare 7s ease-in-out infinite;border-radius:inherit}
+@keyframes lysGlare{0%,55%{background-position:120% 0}100%{background-position:-60% 0}}
+/* 1.9.5: режим ожидания (как в Spotify): в полноэкранном плеере мышь не двигается — остаются только текст и обложка */
+.lys.idle{animation:lysIn .9s ease both;cursor:none}
+.lys.idle .lys-ui{display:none}
+@keyframes lysIn{from{opacity:0}to{opacity:1}}
+body.no-anim .lys-bg,body.no-anim .lys-art,body.no-anim .lys-art::after{animation:none}
+
+/* ---------- 1.9.6: текст песни без «каши», прыжков и съеденных пробелов ---------- */
+/* пока слово заливается, свечение (text-shadow) просвечивало сквозь прозрачные буквы — незалитая часть была мутной белой «кашей» */
+.ly-line.cur .w.on.fl{text-shadow:none!important}
+/* слово растёт вправо, внутрь своего пробела, и почти не растёт — соседние слова больше не слипаются («Зімною», «всерце») */
+.ly-line .w{transform-origin:0 70%;transition:color var(--wt),text-shadow var(--wt),transform var(--wt) cubic-bezier(.2,.8,.2,1),opacity var(--wt)}
+body.ly-fill .ly-line .w{transition-property:transform,opacity,text-shadow}
+.ly-line.cur .w.pop{transform:translateY(var(--py,-2px)) scale(var(--ps,1.04))}
+.ly-line.cur{transform:scale(calc(1.03 + var(--beat)*var(--bk,.015)))}
+.pace-calm{--py:-1px;--ps:1.02;--bk:.008}
+.pace-mid{--py:-2px;--ps:1.04;--bk:.015}
+.pace-hype{--py:-3px;--ps:1.06;--pr:0deg;--bk:.025}
+/* не размываем ещё не спетые слова текущей строки и не трясём строку */
+.pace-calm .ly-line.cur .w{filter:none;opacity:.75}
+.pace-hype .ly-line.cur{animation:none}
+body[data-lyanim=grow] .ly-line.cur .w.pop{transform:scale(1.08)}
+body[data-lyanim=wave] .ly-line.cur .w.pop{transform:translateY(-4px)}
+.ly-line.far{transition:color .4s,transform var(--lt,.5s) cubic-bezier(.2,.8,.2,1),opacity .5s}
+
+/* ---------- 1.9.6: всплывающие меню и панели кликаются даже поверх заголовка окна ---------- */
+/* верхняя панель — область перетаскивания окна (app-region: drag): всё, что на неё заезжало (пункт «Кольцо»
+   в меню стилей, шапка панели эффектов), не нажималось — клик забирала Windows */
+.menu,.menu *,.pop-panel,.pop-panel *,.modal,.modal *,.toast,.acc-pop,.acc-pop *,.ly-fix,.ly-fix *{-webkit-app-region:no-drag}
+.menu .mi.on{color:rgb(var(--a1));font-weight:700}
+/* 1.9.6: выбор браузера для входа */
+.login-br{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 2px 0}
+.login-br>span{font-size:12px;color:var(--mute);margin-right:4px}
+
+/* ---------- 1.9.7 ---------- */
+/* «Только текст»: свечение слова больше не обрезается прямоугольником по краю слова.
+   У слова есть невидимые поля (padding + такой же отрицательный margin) — раскладка не меняется,
+   а свечению и увеличению «горящего» слова есть куда выйти. Радиус свечения — в em, чтобы не вылезал за поля. */
+.lys-kin .lw{padding:.3em .42em;margin:-.3em -.42em}
+.lys:not([data-layout=center]) .lys-kin .lw{transform-origin:0 80%}
+.lys-kin .lw.hot{text-shadow:0 0 .22em rgba(var(--a1),.85),0 0 .5em rgba(var(--a2),.38)}
+.lys-cl .lw.hot{text-shadow:0 0 .3em rgba(var(--a1),.8)}
+/* эффекты появления пересмотрены: без размытия у «Снизу», без разъезда букв у «Из размытия» (он двигал соседние слова),
+   уже появившееся слово всегда чёткое */
+.lys-kin .lw{transition:opacity .38s ease var(--d),transform .55s cubic-bezier(.16,1,.3,1) var(--d),filter .38s ease var(--d),text-shadow .35s,color .35s,scale .3s cubic-bezier(.3,1.5,.5,1)}
+.lys-kin .lw.in{filter:none}
+.lys[data-anim=rise] .lys-kin .lw:not(.in){transform:translateY(.5em);filter:none}
+.lys[data-anim=blur] .lys-kin .lw:not(.in){filter:blur(10px);transform:scale(1.12);letter-spacing:normal}
+.lys[data-anim=pop] .lys-kin .lw:not(.in){transform:scale(.5);filter:none}
+.lys[data-anim=type] .lys-kin .lw{transition:opacity .06s linear,color .25s,text-shadow .25s}
+.lys[data-anim=type] .lys-kin .lw:not(.in){transform:none;filter:none}
+/* уходящая строка: быстро тает и уезжает вверх, без размытия — раньше она полсекунды стояла размытой поверх новой (двоение) */
+.lys-blk.out{opacity:0;transform:translateY(-40px);filter:none;transition:opacity .28s ease-out,transform .45s cubic-bezier(.2,.8,.25,1);pointer-events:none}
+
+/* «Только текст» — предпросмотр в настройках */
+.lys.lys-pv{position:relative;inset:auto;z-index:auto;height:250px;margin:6px 0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);cursor:pointer}
+.lys-pv .lys-bg{inset:-30px;filter:blur(30px) saturate(1.3) brightness(.32)}
+.lys-pv .lys-wrap{padding:0 28px;gap:26px}
+.lys-pv .lys-cover{width:150px;gap:8px}
+.lys-pv .lys-art{border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.6)}
+.lys-pv .lys-meta{display:block}.lys-pv .lys-meta b{font-size:13px}.lys-pv .lys-meta span{font-size:11px}
+.lys-pv .lys-main{height:170px}
+.lys-pv .lys-gap i{width:8px;height:8px}
+.lys-pv-cap{position:absolute;left:12px;top:10px;z-index:3;font-style:normal;font-size:11px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.04em}
+.c-radius .lys-pv{border-radius:var(--r)!important}
+
+/* Главная: все обложки в полках одного размера (раньше у клипов была плоская 16:9, у альбомов — квадрат) */
+.card.vid .ca{aspect-ratio:1}
+.card .ca img{object-position:center}
+/* круглые карточки (исполнители) при наведении больше не становятся «квадратом со скруглениями»:
+   картинка и затемнение сами круглые, а не полагаются только на обрезку родителя */
+.card .ca img,.card .ca::after,.card .ca .ca-ico{border-radius:inherit}
+.card.round .ca{isolation:isolate}
+/* полка прокручивается по горизонтали (overflow) и срезала приподнятую при наведении карточку — у круга появлялась плоская макушка.
+   Даём место сверху и снизу (под тень), не сдвигая раскладку */
+.row{padding-top:8px;margin-top:-8px;padding-bottom:18px;margin-bottom:-14px}

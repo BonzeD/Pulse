@@ -1,0 +1,18 @@
+/* One fixed backdrop: no per-card filters, scrolling listeners or animation. */
+#pulseBackdrop{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:strict;background:var(--bg)}
+#pulseBackdrop[hidden]{display:none}
+#pulseBackdrop .pb-image{position:absolute;inset:-32px;background-position:center;background-size:cover;background-repeat:no-repeat}
+#pulseBackdrop .pb-shade{position:absolute;inset:0}
+body:is([data-background=solid],[data-background=gradient],[data-background=image]) #ambient{display:none!important}
+body:is([data-background=solid],[data-background=gradient],[data-background=image])::before,
+body:is([data-background=solid],[data-background=gradient],[data-background=image])::after{display:none!important}
+.pb-themes,.pb-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pb-themes .chip,.pb-actions .btn{min-height:44px}
+.pb-file{font-size:13px;color:var(--mute);overflow-wrap:anywhere;padding:0 22px 12px}
+.pb-preview{position:relative;min-height:144px;margin:0 22px 22px;border-radius:12px;border:1px solid var(--ds-line2);overflow:hidden;display:grid;place-items:center;background-size:cover;background-position:center}
+.pb-preview::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,var(--pb-dim,0))}
+.pb-preview span{position:relative;color:#fff;background:rgba(9,9,12,.85);padding:10px 16px;border-radius:8px;font-size:14px}
+@media(forced-colors:active){#pulseBackdrop{display:none!important}.pb-preview{background:Canvas!important}.pb-preview::before{display:none}.pb-preview span{background:Canvas;color:CanvasText}}
+/* Even pale photographs retain a readable header; this is a static scrim. */
+body[data-background=image] .top{background:linear-gradient(rgba(9,9,12,.72),rgba(9,9,12,.2))!important}
+@media(forced-colors:active){body[data-background=image] .top{background:Canvas!important}}

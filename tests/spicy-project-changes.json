@@ -1,0 +1,58 @@
+[
+  [
+    "Текст: официальный developer API Spicy Lyrics (если указан ключ) — иначе обычный текст Pulse.",
+    "Текст: официальный developer API с ключом проекта Pulse; обычные источники остаются запасными."
+  ],
+  [
+    "  const key = String(spS().key || '').trim();\n  if (t && key && pulse.spicy) {",
+    "  if (t && pulse.spicy) {"
+  ],
+  [
+    "dur: t.dur || t.duration || 0 }, key);",
+    "dur: t.dur || t.duration || 0 });"
+  ],
+  [
+    "Spicy Lyrics не принял ключ — проверь его в настройках",
+    "Spicy Lyrics временно недоступен: ошибка авторизации проекта"
+  ],
+  [
+    "async function spTestKey() {\n  const key = String(spS().key || '').trim(); if (!key) return toast('Сначала вставь ключ', 'lyrics');\n  toast('Проверяю ключ…', 'lyrics');\n  const r = await pulse.spicy.lyrics({ id: 'sp:1QV6tiMFM6fSOKOGLMHYYg', title: 'test' }, key).catch((e) => ({ error: String(e.message || e) }));\n  toast(r && r.body ? 'Ключ работает — Spicy Lyrics отвечает' : r && r.error === 'badkey' ? 'Spicy Lyrics не принял ключ' : r && r.error === 'limit' ? 'Лимит запросов — попробуй позже' : 'Не получилось: ' + ((r && (r.status || r.error)) || 'нет ответа'), 'lyrics');\n}\ndocument.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-spc=\"test\"]'); if (b) { e.preventDefault(); spTestKey(); } });\n",
+    ""
+  ],
+  [
+    "  const P = spS(), key = String(P.key || '').trim();",
+    "  const P = spS();"
+  ],
+  [
+    "    R('Ключ Spicy Lyrics API', 'Бесплатно на developers.spicylyrics.org (Dashboard → создать приложение). С ключом Pulse берёт синхронизацию по слогам из базы Spicy (сообщество, Apple Music, Spotify)', `<input class=\"field xin\" style=\"width:220px\" data-txt=\"spicy.key\" value=\"${esc(P.key || '')}\" placeholder=\"sl_sk_…\" spellcheck=\"false\" type=\"password\"><button class=\"btn sm\" data-spc=\"test\">Проверить</button>`, 'spicy ключ api key'),\n",
+    ""
+  ],
+  [
+    "    ...(key ? [R('↳ Брать текст из Spicy Lyrics для всех песен'",
+    "    R('↳ Брать текст из Spicy Lyrics для всех песен'"
+  ],
+  [
+    "tg('spicy.src'), 'spicy источник текста')] : []),",
+    "tg('spicy.src'), 'spicy источник текста'),"
+  ],
+  [
+    "официальный API с твоим ключом",
+    "официальный API с ключом проекта Pulse"
+  ],
+  [
+    "(on|style|key|src|stage)",
+    "(on|style|src|stage)"
+  ],
+  [
+    "  if (path === 'spicy.key' && typeof updVizLySrc === 'function') updVizLySrc();\n",
+    ""
+  ],
+  [
+    "if (path === 'spicy.key' || path === 'spicy.src')",
+    "if (path === 'spicy.src')"
+  ],
+  [
+    "data: SP.lines[i] && [...SP.lines[i].words, ...((SP.lines[i].bg || []).flat())]",
+    "data: SP.lines[i] && [...(SP.lines[i].words || []), ...((SP.lines[i].bg || []).flat())]"
+  ]
+]

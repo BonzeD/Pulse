@@ -1,0 +1,7 @@
+'use strict';
+const uk={'Добавить локальные треки':'Додати локальні треки','Аудио и видео':'Аудіо та відео','Выбрать обложку':'Вибрати обкладинку','Изображения':'Зображення','Сохранить отредактированный трек':'Зберегти відредагований трек','Pulse — ошибка':'Pulse — помилка','Pulse — запуск':'Pulse — запуск'};
+const en={'Добавить локальные треки':'Add local tracks','Аудио и видео':'Audio and video','Выбрать обложку':'Choose artwork','Изображения':'Images','Сохранить отредактированный трек':'Save edited track','Pulse — ошибка':'Pulse — error','Pulse — запуск':'Pulse — startup'};
+const ja={'Добавить локальные треки':'ローカルトラックを追加','Аудио и видео':'音声と動画','Выбрать обложку':'アートワークを選択','Изображения':'画像','Сохранить отредактированный трек':'編集したトラックを保存','Pulse — ошибка':'Pulse — エラー','Pulse — запуск':'Pulse — 起動'};
+function localize(options,lang){const d=lang==='uk'?uk:lang==='en'?en:lang==='ja'?ja:{};const out={...options};for(const k of ['title','message','detail','buttonLabel'])if(typeof out[k]==='string')out[k]=d[out[k]]||out[k];if(out.filters)out.filters=out.filters.map(f=>({...f,name:d[f.name]||f.name}));return out;}
+function create(dialog,language){const result={};for(const key of ['showOpenDialog','showSaveDialog'])result[key]=(...args)=>dialog[key](...args.map((v,i)=>i===args.length-1?localize(v,language()):v));result.showErrorBox=(title,content)=>dialog.showErrorBox(localize({title},language()).title,content);return result;}
+module.exports={localize,create};

@@ -1,0 +1,36 @@
+/* Pulse 2.0.8: внутри Pulse показываем только сцену Mineradio — 3D-визуал, текст песни, 3D-полку и визуальную консоль.
+   Поиск, медиатека, вход, нижняя панель и очередь — у Pulse свои (нижняя «таблетка» Pulse лежит поверх сцены). */
+html.pulse-embed #desktop-titlebar,html.pulse-embed #fullscreen-diy-zone,
+html.pulse-embed #folia-interface,html.pulse-embed #folia-floating-switch,html.pulse-embed #folia-floating-import,
+html.pulse-embed #splash,html.pulse-embed #hint,html.pulse-embed #search-area,html.pulse-embed #empty-home,html.pulse-embed #top-right,
+html.pulse-embed #playlist-panel,html.pulse-embed #trial-banner,html.pulse-embed #thumb-wrap,html.pulse-embed #bottom-handle,
+html.pulse-embed #bottom-bar,html.pulse-embed #drop-overlay,html.pulse-embed #loading-overlay,html.pulse-embed #login-guide-canvas,
+html.pulse-embed #idle-guide-canvas,html.pulse-embed #login-modal,html.pulse-embed #user-modal,html.pulse-embed #update-modal,
+html.pulse-embed #visual-guide,html.pulse-embed #source-fallback-notice,html.pulse-embed #upload-tip,html.pulse-embed #gesture-hud,
+html.pulse-embed #hand-canvas,html.pulse-embed #custom-lyric-modal,html.pulse-embed #local-beat-modal,html.pulse-embed #collect-modal,html.pulse-embed #plugin-modal,
+html.pulse-embed #wallpaper-engine-modal,html.pulse-embed #local-playlist-delete-modal,html.pulse-embed #listen-history-clear-modal,html.pulse-embed #fullscreen-transition-layer,html.pulse-embed #fx-fab-hide-btn{display:none!important}
+html.pulse-embed,html.pulse-embed body{background:#050407!important}
+/* кнопка консоли — справа снизу, рядом с «таблеткой» Pulse; консоль открывается и кнопкой «Вид» на панели Pulse */
+html.pulse-embed #fx-fab{bottom:34px!important;right:22px!important;width:46px!important;height:46px!important;opacity:.7}
+html.pulse-embed #fx-fab:hover,html.pulse-embed #fx-fab.active{opacity:1}
+/* консоль не залезает под нижнюю панель Pulse */
+html.pulse-embed #fx-panel{bottom:112px!important;max-height:calc(100vh - 140px)!important}
+@media (max-width:980px){html.pulse-embed #fx-fab{bottom:112px!important}}
+/* в консоли — только то, что относится к сцене. Звук, эквалайзер, мини-плеер, медиатека, резервные копии, плагины,
+   обои рабочего стола, «текст на рабочем столе», перевод и источник текста — у Pulse свои */
+html.pulse-embed #fx-panel-tabs [data-fx-tab="mini"],
+html.pulse-embed #fx-mini-player-settings,html.pulse-embed #fx-playback-fold,html.pulse-embed #fx-volume-fold,html.pulse-embed #fx-gapless-fold,
+html.pulse-embed #fx-playbackrate-fold,html.pulse-embed #fx-sleep-fold,html.pulse-embed #fx-outputdevice-fold,html.pulse-embed #fx-eq-fold,
+html.pulse-embed #fx-plugin-fold,html.pulse-embed #fx-backup-fold,html.pulse-embed #fx-library-fold,
+html.pulse-embed .wallpaper-engine-row,html.pulse-embed .lyric-color-row:has(#home-accent-picker),html.pulse-embed .lyric-color-row:has(#home-icon-picker),
+html.pulse-embed .fx-slider:has(#fx-windowbgopacity),html.pulse-embed .fx-slider:has(#fx-playlistblur),html.pulse-embed .fx-slider:has(#fx-playlistdensity),
+html.pulse-embed .fx-slider:has(#fx-playlistopen),html.pulse-embed .fx-slider:has(#fx-playlistclose),
+html.pulse-embed #lyric-translation-mode-seg,html.pulse-embed .lyric-translate-target-row,html.pulse-embed .fx-slider:has(#fx-lyrictranslationgap),
+html.pulse-embed .fx-slider:has(#fx-lyrictranslationscale),html.pulse-embed .fx-slider:has(#fx-lyrictranslationopacity),html.pulse-embed .lyric-source-row,
+html.pulse-embed [id^="t-desktopLyrics"],html.pulse-embed #t-wallpaperMode,html.pulse-embed #fx-overlay-fold .fx-fold-body > .fx-toggle-grid ~ *,
+html.pulse-embed #cam-seg,html.pulse-embed #performance-background-seg,html.pulse-embed #t-liveBackgroundKeep,
+html.pulse-embed #lyric-translate-chip,html.pulse-embed #ai-depth-chip,html.pulse-embed #beat-chip,
+html.pulse-embed #hotkey-settings-btn,html.pulse-embed #lyric-translation-retry-actions,html.pulse-embed #lyric-translation-retry-actions + div,html.pulse-embed #hotkey-modal,
+html.pulse-embed #fx-panel .fx-section-label.pulse-empty{display:none!important}
+/* тост Mineradio — над панелью Pulse */
+html.pulse-embed #toast{bottom:120px!important}

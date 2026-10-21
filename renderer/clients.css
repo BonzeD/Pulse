@@ -1,0 +1,44 @@
+/* 2.0.2: переключатель сервисов — только логотипы, плашка выбора переезжает с анимацией */
+.cl-sw{--i:0;--clc:#ff0033;position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:0 4px 10px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.cl-sw[data-c=am]{--clc:#fa2d48}.cl-sw[data-c=sp]{--clc:#1ed760}
+.cl-ind{position:absolute;top:4px;left:4px;height:calc(100% - 8px);width:calc((100% - 16px) / 3);border-radius:9px;pointer-events:none;
+  transform:translateX(calc(var(--i) * (100% + 4px)))}
+.cl-sw button{position:relative;z-index:1;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:none;transition:background .15s}
+.cl-sw button svg.i{width:19px;height:19px;filter:grayscale(.85) brightness(.85);opacity:.7;transition:filter .3s,opacity .3s,transform .2s}
+.cl-sw button:hover svg.i{opacity:1;transform:scale(1.08)}
+.cl-sw button:not(.on):hover{background:rgba(255,255,255,.05)}
+.cl-sw button.on svg.i{opacity:1}
+.cl-sw button.pop svg.i{animation:clPop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes clPop{0%{transform:scale(.55) rotate(-14deg)}55%{transform:scale(1.22) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+.mini .cl-sw{grid-template-columns:1fr;margin:0 0 8px;padding:3px}
+.mini .cl-sw button{height:36px}
+.mini .cl-ind{top:3px;left:3px;width:calc(100% - 6px);height:36px;transform:translateY(calc(var(--i) * (100% + 4px)))}
+#view.cl-anim #page{animation:clPage .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes clPage{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cl-ind,.cl-sw button svg.i{transition:none}.cl-sw button.pop svg.i,#view.cl-anim #page{animation:none}}
+/* 2.0.2: переключатель клиента (YouTube Music / Apple Music / Spotify) и эффекты текстов из сервисов */
+.cl-strap{display:flex;align-items:center;gap:8px}
+.cl-strap svg.i{width:20px;height:20px}
+.cl-hint{display:flex;align-items:center;gap:12px;margin:0 0 22px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13.5px;color:#ddd;max-width:760px}
+.cl-hint svg.i{width:24px;height:24px;flex:none}
+.cl-hint span{flex:1}
+.cl-login button svg.i{width:18px;height:18px}
+.cl-side{display:block}
+.cl-side>svg.i{width:16px;height:16px;vertical-align:-3px}
+/* подпись источника текста — кнопка выбора */
+.ly-src.pick{cursor:pointer;border-radius:8px;padding:2px 6px;margin-left:-6px;transition:background .15s}
+.ly-src.pick:hover{background:rgba(255,255,255,.08);color:#fff}
+.ly-src .ly-cred{color:var(--mute);font-size:.92em;overflow:hidden;text-overflow:ellipsis}
+.viz-lysrc{max-width:200px}
+.viz-lysrc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* бэк-вокал: тише и чуть меньше, подсветка — своя */
+.ly-line .w.bgv{font-size:.78em;font-weight:600;opacity:.75;font-style:italic}
+.ly-line.cur .w.bgv.on{opacity:1;color:rgba(255,255,255,.92)}
+/* дуэт: второй голос справа */
+.ly-line.v2{text-align:right;transform-origin:right center}
+.vis-line .w.bgv{opacity:.7;font-style:italic}
+/* цвета текста Spotify */
+.lyrics.svc-col .ly-line.cur .w.on{color:var(--svc-hi);text-shadow:0 0 18px color-mix(in srgb,var(--svc-bg) 70%,transparent)}
+/* 2.0.8: подсветка-«коробка» цветом Spotify за текстом убрана — фон панели был заметно светлее общего фона */
+.lyrics.svc-col::before{content:none;display:none}
+.lyrics.svc-col .ly-line.cur .w.on.fl{--lyFill:var(--svc-hi)} /* 2.0.2: караоке-заливка цветом Spotify */

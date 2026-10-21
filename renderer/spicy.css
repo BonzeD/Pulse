@@ -1,0 +1,109 @@
+/* 2.0.4: Spicy Lyrics — вид «Только текст» в стиле расширения Spicy Lyrics (Spikerko, AGPL-3.0) */
+#spicy{position:fixed;inset:0;z-index:58;background:#08070b;color:#fff;overflow:hidden;opacity:0;transition:opacity .25s ease;-webkit-app-region:no-drag;font-family:'SF Pro Display','Segoe UI Variable Display','Segoe UI',Inter,system-ui,sans-serif}
+#spicy.show{opacity:1}
+#spicy.idle{cursor:none}
+.spc-bg{position:absolute;inset:0;overflow:hidden;contain:strict}
+.spc-bg i{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;background:center/cover no-repeat;filter:saturate(2.5) brightness(.65);border-radius:50%;will-change:transform;opacity:.9}
+.spc-bg i:nth-child(1){animation:spcRot 46s linear infinite}
+.spc-bg i:nth-child(2){width:110vmax;height:110vmax;margin:-55vmax 0 0 -55vmax;left:22%;top:78%;animation:spcRot 34s linear infinite reverse;mix-blend-mode:screen;opacity:.45}
+.spc-bg i:nth-child(3){width:90vmax;height:90vmax;margin:-45vmax 0 0 -45vmax;left:82%;top:18%;animation:spcRot 58s linear infinite;mix-blend-mode:overlay;opacity:.5}
+.spc-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(0,0,0,.05),rgba(0,0,0,.45))}
+#spicy.nobg .spc-bg i{display:none}
+@keyframes spcRot{to{transform:rotate(360deg)}}
+body.no-anim .spc-bg i{animation:none}
+.spc-main{position:relative;height:100%;display:grid;grid-template-columns:minmax(260px,36%) 1fr;gap:4vw;padding:0 6vw;align-items:center}
+.spc-side{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.spc-art{width:min(30vw,52vh);aspect-ratio:1;border-radius:14px;background:#222 center/cover;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.spc-t{margin-top:16px;font-size:clamp(18px,2vw,28px);font-weight:800;max-width:min(30vw,52vh);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spc-a{opacity:.7;font-size:clamp(13px,1.3vw,18px);max-width:min(30vw,52vh);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spc-ly{position:relative;height:100%;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 82%,transparent)}
+.spc-in{padding:34vh 2vw 50vh 0;transition:transform .7s cubic-bezier(.22,.8,.26,1);will-change:transform}
+.spc-l{font-size:clamp(26px,3.4vw,52px);font-weight:800;line-height:1.18;letter-spacing:-.01em;margin:0 0 .55em;cursor:pointer;transform-origin:left center;transition:opacity .45s ease,filter .45s ease,transform .45s ease;filter:blur(var(--bl,0px));opacity:.5;transform:scale(.97)}
+.spc-l.act{opacity:1;transform:scale(1)}
+.spc-l.past{opacity:.48}
+.spc-l.fut{opacity:.52}
+.spc-l:hover{filter:none;opacity:.85}
+.spc-l.opp{text-align:right;transform-origin:right center}
+.spc-bgv{font-size:.62em;font-weight:700;margin-top:.2em;opacity:.85}
+.spc-w{display:inline-block;white-space:nowrap}
+.spc-s{display:inline-block;color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(90deg,rgba(255,255,255,.88) calc(var(--gp,-20%) - 10%),rgba(255,255,255,.48) calc(var(--gp,-20%) + 10%));
+  --gl:0;text-shadow:0 0 calc(var(--gl) * 14px) rgba(255,255,255,calc(var(--gl) * .55));transform-origin:50% 70%}
+.spc-s.ln{white-space:normal;display:inline}
+.spc-l.past .spc-s{--gp:100%}
+#spicy.stat .spc-l{opacity:.85;filter:none;transform:none;cursor:default}
+#spicy.stat .spc-in{padding-top:12vh;transition:none}
+#spicy.stat .spc-ly{overflow-y:auto}
+.spc-msg{font-size:clamp(20px,2.2vw,32px);font-weight:700;opacity:.7}
+.spc-foot{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:12px;opacity:.45}
+.spc-x{position:absolute;top:18px;right:20px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:16px;cursor:pointer;opacity:0;transition:opacity .2s}
+#spicy:hover .spc-x{opacity:1}
+#spicy.idle .spc-x{display:none}
+body.no-anim .spc-in,body.no-anim .spc-l{transition:none}
+@media (max-width:900px){.spc-main{grid-template-columns:1fr}.spc-side{display:none}}
+
+/* ===== 2.0.4: стиль Spicy Lyrics для всего текста Pulse (панель текста в плеере) ===== */
+body.spicy-ly #lyrics .ly-line{font-family:'SF Pro Display','Segoe UI Variable Display','Segoe UI',Inter,system-ui,sans-serif;letter-spacing:-.015em;
+  color:rgba(255,255,255,.5);opacity:.55;transform:scale(.95);transform-origin:left center;
+  transition:opacity .5s ease,transform .6s cubic-bezier(.22,.8,.26,1),filter .5s ease,color .4s!important}
+body.spicy-ly.spicy-blur #lyrics .ly-inner:not(.free) .ly-line{filter:blur(var(--sd,0px))}
+body.spicy-ly #lyrics .ly-line.past{color:rgba(255,255,255,.85);opacity:.5}
+body.spicy-ly #lyrics .ly-line.cur{opacity:1;filter:none!important;transform:scale(1)!important;color:rgba(255,255,255,.5)}
+body.spicy-ly #lyrics .ly-line:hover{opacity:.85;filter:none}
+body.spicy-ly .ly-center #lyrics .ly-line,body.spicy-ly #lyrics.ly-center .ly-line{transform-origin:center center}
+body.spicy-ly #lyrics .ly-line.v2{text-align:right;transform-origin:right center}
+body.spicy-ly #lyrics .ly-line .w.bgv{font-size:.7em;opacity:.9}
+/* слова текущей строки: белая заливка градиентом (--kg) и белое свечение — как в Spicy */
+body.spicy-ly #lyrics.kara .ly-line.cur .w{--kF:rgba(255,255,255,.95);--kD:rgba(255,255,255,.42);text-shadow:0 0 var(--kb,.08em) rgba(255,255,255,calc(var(--ko,0) * 1.1))!important}
+body.spicy-ly #lyrics.kara .ly-line.cur .w .lt{text-shadow:0 0 var(--kb,.08em) rgba(255,255,255,calc(var(--ko,0) * 1.1))!important}
+body.spicy-ly #lyrics.kara .ly-line.cur .w.lg{text-shadow:none!important}
+body.spicy-ly.no-glow #lyrics.kara .ly-line.cur .w,body.spicy-ly.no-glow #lyrics.kara .ly-line.cur .w .lt{text-shadow:none!important}
+/* режим «строками» (без караоке-движка): спетые слова — белые */
+body.spicy-ly #lyrics:not(.kara) .ly-line.cur .w{color:rgba(255,255,255,.45);text-shadow:none!important}
+body.spicy-ly #lyrics:not(.kara) .ly-line.cur .w.on{color:#fff;text-shadow:0 0 .12em rgba(255,255,255,.45)!important}
+/* проигрыш: точки наполняются по очереди, группа «дышит» */
+body.spicy-ly #lyrics .ly-gap{transform:scale(var(--gs,.8));opacity:calc(.35 + var(--go,0) * .65);transform-origin:left center;transition:none}
+body.spicy-ly #lyrics .ly-gap i{background:rgba(255,255,255,calc(.25 + var(--dp,0) * .7));box-shadow:0 0 calc(var(--dp,0) * 14px) rgba(255,255,255,calc(var(--dp,0) * .45));transform:scale(calc(.75 + var(--dp,0) * .3));transition:none}
+body.spicy-ly #lyrics .ly-gap:not(.cur) i{--dp:0}
+/* живой фон страницы плеера */
+.spc-ppbg{position:absolute;inset:0;z-index:-1;overflow:hidden;contain:strict;pointer-events:none}
+.spc-ppbg i{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;background:center/cover no-repeat;filter:saturate(2.5) brightness(.6);border-radius:50%;will-change:transform;animation:spcRot 46s linear infinite}
+.spc-ppbg i:nth-child(2){width:110vmax;height:110vmax;margin:-55vmax 0 0 -55vmax;left:20%;top:80%;animation-duration:34s;animation-direction:reverse;mix-blend-mode:screen;opacity:.4}
+.spc-ppbg i:nth-child(3){width:90vmax;height:90vmax;margin:-45vmax 0 0 -45vmax;left:85%;top:15%;animation-duration:58s;mix-blend-mode:overlay;opacity:.5}
+.spc-ppbg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(0,0,0,.1),rgba(0,0,0,.5))}
+body.spicy-ppbg #ppBg{opacity:0!important}
+body.no-anim .spc-ppbg i,body.perf-eco .spc-ppbg i{animation:none}
+body.perf-eco .spc-ppbg i:nth-child(n+2){display:none}
+.spc-attr a{color:inherit;text-decoration:underline;cursor:pointer;pointer-events:auto}
+.spc-foot{pointer-events:auto}
+/* 2.0.4: бэк-вокал Spicy Lyrics — своей строкой под основным голосом */
+.ly-line .bgbr{display:block;height:0}
+.ly-line .w.sbg{font-size:.62em;font-weight:700}
+
+/* ===== 2.0.4: «Только текст» — эффекты и механика Spicy только для самого текста (фон, вода, частицы — как были) ===== */
+body.spicy-stage .lys .lys-cur .lw,body.spicy-stage .lys .lys-kin .lw{
+  display:inline-block;color:transparent!important;-webkit-text-fill-color:transparent;
+  background:linear-gradient(90deg,rgba(255,255,255,.96) var(--kg,-20%),rgba(255,255,255,.42) calc(var(--kg,-20%) + 20%))!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  text-shadow:0 0 var(--kb,.08em) rgba(255,255,255,var(--ko,0))!important;
+  scale:var(--ss,1)!important;translate:0 var(--sy,0em)!important;transform-origin:50% 70%}
+/* появление слов в «Кинетике» остаётся, но масштаб/подъём/цвет больше не догоняют музыку CSS-переходом */
+body.spicy-stage .lys .lys-kin .lw{transition:opacity .38s ease var(--d),transform .55s cubic-bezier(.16,1,.3,1) var(--d),filter .38s ease var(--d)!important}
+body.spicy-stage .lys .lys-cur .lw{transition:none!important}
+body.spicy-stage .lys .lys-refl .lw{text-shadow:none!important}
+body.spicy-stage.no-glow .lys .lw{text-shadow:none!important}
+
+/* ===== 2.0.4: построчные тайминги — строка «переливается» целиком сверху вниз с уклоном вправо (как Line-синхронизация в Spicy) ===== */
+/* --lp: 0…1, прогресс строки. Один градиент 160° на весь блок: у каждого слова фон размером с блок (--bw/--bh), сдвинут на место слова (--bx/--by) */
+body.spicy-ly #lyrics .ly-line.cur.lnfill .w,body.spicy-ly #lyrics .ly-line.cur.lnfill .w .lt,
+body.spicy-stage .lys .lys-blk.lnfill .lw{
+  color:transparent!important;-webkit-text-fill-color:transparent!important;
+  background:linear-gradient(160deg,rgba(255,255,255,.96) calc(var(--lp,0) * 140% - 30%),rgba(255,255,255,.42) calc(var(--lp,0) * 140%)) no-repeat!important;
+  background-size:var(--bw,100%) var(--bh,100%)!important;background-position:var(--bx,0) var(--by,0)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  text-shadow:none!important;scale:1!important;translate:none!important}
+body.spicy-ly #lyrics .ly-line.cur.lnfill .w{transform:none!important}
+/* полноэкранный Spicy-вид: строка без слов — один блок */
+#spicy .spc-s.ln{display:block;white-space:normal;transform-origin:left center;
+  background-image:linear-gradient(160deg,rgba(255,255,255,.95) calc(var(--gp,-20%) * 1.25 - 5%),rgba(255,255,255,.45) calc(var(--gp,-20%) * 1.25 + 20%))}
+#spicy .spc-l.opp .spc-s.ln{transform-origin:right center}

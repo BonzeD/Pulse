@@ -1,0 +1,61 @@
+/* 2.0.4: «Моя волна» */
+.wave-hero { position: relative; overflow: hidden; border-radius: 22px; margin: 4px 0 26px; min-height: 270px; display: flex; align-items: center; justify-content: center; text-align: center;
+  background: radial-gradient(120% 90% at 50% 110%, rgba(var(--a1), .28), transparent 60%), radial-gradient(80% 80% at 10% 0%, rgba(var(--a2), .18), transparent 60%), rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.06); isolation: isolate; }
+.wave-hero.big { min-height: 340px; }
+.wave-hero .wh-cv { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .7s ease; }
+.wave-hero .wh-cv.on { opacity: .95; }
+.wave-hero:not(.anim) .wh-cv { display: none; }
+.wh-in { padding: 22px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.wh-k { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); }
+.wh-k .i { width: 18px; height: 18px; color: rgb(var(--a1)); }
+.wh-more { margin-left: 10px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--mute); cursor: pointer; font-size: 12px; }
+.wh-more:hover { color: #fff; }
+.wh-play { position: relative; width: 84px; height: 84px; border-radius: 50%; border: 0; cursor: pointer; margin: 8px 0 4px; color: #111; background: #fff; display: grid; place-items: center;
+  box-shadow: 0 10px 40px rgba(var(--a1), .45); transition: transform .18s ease, box-shadow .2s; }
+.wh-play:hover { transform: scale(1.06); box-shadow: 0 12px 54px rgba(var(--a1), .65); }
+.wh-play:active { transform: scale(.96); }
+.wh-play .i { width: 34px; height: 34px; }
+.wh-sp { position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(var(--a1), .0); }
+.wave-hero.is-loading .wh-sp { border-color: rgba(var(--a1), .9) transparent transparent transparent; animation: whspin .8s linear infinite; }
+.wave-hero.playing .wh-play { box-shadow: 0 0 0 6px rgba(var(--a1), .18), 0 10px 50px rgba(var(--a1), .6); }
+@keyframes whspin { to { transform: rotate(360deg); } }
+.wh-t { font-size: 20px; font-weight: 800; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wh-t em { font-style: normal; font-weight: 500; color: var(--mute); font-size: 15px; margin-left: 6px; }
+.wh-why { font-size: 13px; color: var(--mute); min-height: 16px; }
+.wh-acts { display: flex; gap: 8px; align-items: center; }
+.wh-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; margin-top: 10px; }
+.wh-g { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px; border-radius: 999px; background: rgba(0,0,0,.25); backdrop-filter: none; }
+.wh-g > span { font-size: 11px; color: var(--mute); padding: 0 6px 0 8px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.wh-c { border: 0; background: transparent; color: rgba(255,255,255,.8); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: background .15s, color .15s; }
+.wh-c:hover { background: rgba(255,255,255,.08); color: #fff; }
+.wh-c.on { background: #fff; color: #111; }
+/* боковое меню: волна играет — значок качается */
+.nv-wave.live .i { color: rgb(var(--a1)); animation: nvwave 1.4s ease-in-out infinite; }
+@keyframes nvwave { 50% { transform: scaleY(1.35); } }
+/* кнопка «Не нравится» */
+#btnDislike.on { color: rgb(var(--a1)); }
+.wv-by .i { color: rgb(var(--a1)); }
+/* страница волны */
+.wv-prof .wv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.wv-stats > div { background: rgba(255,255,255,.04); border-radius: 14px; padding: 14px 16px; }
+.wv-stats b { display: block; font-size: 24px; font-weight: 800; }
+.wv-stats span { color: var(--mute); font-size: 12px; }
+.wv-h { font-weight: 700; margin: 14px 0 8px; }
+.wv-as { display: flex; flex-wrap: wrap; gap: 8px; }
+.wv-a { display: inline-flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px; border-radius: 999px; background: rgba(255,255,255,.06); font-size: 13px; }
+.wv-a button { border: 0; background: transparent; color: var(--mute); cursor: pointer; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; }
+.wv-a button:hover { background: rgba(255,255,255,.1); color: #fff; }
+.wv-a .i { width: 13px; height: 13px; }
+.wv-btns { display: flex; gap: 10px; margin: 20px 0 8px; flex-wrap: wrap; }
+.wv-note { color: var(--mute); font-size: 13px; margin-top: 8px; }
+.perf-eco .wh-play, .perf-eco .wave-hero.playing .wh-play { box-shadow: none; }
+.wh-wl { display: inline-flex; align-items: center; gap: 5px; color: inherit; cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,.25); padding-bottom: 1px; transition: color .15s, border-color .15s; }
+.wh-wl:hover { color: #fff; border-color: rgb(var(--a1)); }
+.wh-wl .i { width: 11px; height: 11px; color: rgb(var(--a1)); }
+/* 2.0.4: страница волны проявляется целиком: карточка, потом список и профиль */
+body:not(.no-anim) #page.fade .wave-hero { animation: whIn .5s cubic-bezier(.2,.8,.25,1) both; }
+body:not(.no-anim) #page.fade .wave-hero .wh-play { animation: whPlay .6s cubic-bezier(.3,1.4,.5,1) .08s both; }
+body:not(.no-anim) #page.fade #wvUp { animation-delay: .08s; }
+body:not(.no-anim) #page.fade .wv-prof { animation-delay: .14s; }
+@keyframes whIn { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.985); } }
+@keyframes whPlay { from { opacity: 0; transform: scale(.7); } }

@@ -1,0 +1,73 @@
+/* One material vocabulary for transient controls. Text is never filtered. */
+:root{--surface-tint:20,20,25;--surface-alpha:.64;--surface-blur:22px;--surface-edge:rgba(255,255,255,.18);--surface-shadow:0 12px 36px rgba(0,0,0,.28)}
+body[data-surface-material]{--surface-tint:var(--panRGB,20,20,25)}
+/* Same material for context menus, nested menus and select lists, also without ui.glass. */
+body :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.acc-pop,.pop-panel,.lyb-q){
+ background:rgba(var(--surface-tint),var(--surface-alpha))!important;
+ backdrop-filter:blur(var(--surface-blur)) saturate(1.35)!important;
+ -webkit-backdrop-filter:blur(var(--surface-blur)) saturate(1.35)!important;
+ border-color:var(--surface-edge);box-shadow:var(--surface-shadow),inset 0 1px 0 rgba(255,255,255,.08);color:var(--ds-t1,#fff)
+}
+body[data-surface-material=blur].glass :is(.side,.bar,.modal-box,.clean-dialog,.ds-pal-box){background:rgba(var(--surface-tint),var(--surface-alpha))!important;backdrop-filter:blur(22px) saturate(1.35)!important;-webkit-backdrop-filter:blur(22px) saturate(1.35)!important}
+/* Liquid mode: a regular/dimmed material for text-heavy surfaces, a finer optical rim
+   on navigation and transport. Never put a displacement filter on foreground content. */
+body[data-surface-material=liquid]{--surface-alpha:.52;--surface-blur:5px;--surface-edge:rgba(255,255,255,.27)}
+body[data-surface-material=liquid] :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.acc-pop,.pop-panel,.lyb-q,.search,.side,.bar,.modal-box,.clean-dialog,.ds-pal-box){
+ background:var(--glass-rim,linear-gradient(transparent,transparent)),linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,0) 35%,rgba(255,255,255,.015) 100%),rgba(var(--surface-tint),var(--surface-alpha))!important;
+ background-size:100% 100%!important;background-repeat:no-repeat!important;
+ border:1px solid rgba(255,255,255,.10)!important;
+ backdrop-filter:blur(3px) saturate(1.25)!important;-webkit-backdrop-filter:blur(3px) saturate(1.25)!important;
+ box-shadow:0 8px 24px rgba(0,0,0,.18)!important
+}
+/* Explicitly scoped lenses, sized to the actual rounded geometry by the module.
+   Low diffusion retains the refracted backdrop; the text stays razor sharp. */
+body[data-surface-material=liquid]:not(.perf-lite) :is(#menu,#bar,.pulse-select-menu,.pulse-submenu,.pop-panel,.lyb-q,.modal-box,.clean-dialog,.ds-pal-box,.side,.search,.bar .ib)[data-glass-lens]{backdrop-filter:var(--glass-lens) blur(var(--glass-diffusion,3px)) saturate(1.25) brightness(var(--glass-brightness,.9))!important;-webkit-backdrop-filter:var(--glass-lens) blur(var(--glass-diffusion,3px)) saturate(1.25) brightness(var(--glass-brightness,.9))!important}
+/* Clear transport/navigation: sharp centre, thick refracting shoulder, no grey slab. */
+body[data-surface-material=liquid] #bar{--surface-alpha:.16;--glass-brightness:.55;--glass-diffusion:1.25px;border-radius:30px!important;background-size:100% 100%!important;text-shadow:none}
+body[data-surface-material=liquid] .search{--surface-alpha:.20;--glass-diffusion:1px;--glass-brightness:.7;background-size:100% 100%!important}
+body[data-surface-material=liquid] .side{--surface-alpha:.30;text-shadow:none}
+body[data-surface-material=liquid] :is(#menu,.pulse-select-menu,.pulse-submenu){text-shadow:none;background-size:100% 100%!important}
+/* Buttons get a calm, tactile glaze, not dozens of independent GPU lenses. */
+body[data-surface-material=liquid] :is(.btn,.bar .ib,.lys-b,.clean-dialog .ib){
+ --glass-brightness:1;--glass-diffusion:.5px;
+ background:var(--glass-rim,linear-gradient(transparent,transparent)),linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.02));background-size:100% 100%;
+ border:1px solid rgba(255,255,255,.10);box-shadow:none
+}
+body[data-surface-material=liquid] :is(.btn,.bar .ib):hover{background-color:rgba(255,255,255,.10);border-color:rgba(255,255,255,.34)}
+body[data-surface-material=liquid] :is(.btn.acc,.btn.w,.btn.danger,.ib.on,.ib.play){background:var(--ds-grad,rgba(var(--a1),.55));color:#fff;border-color:rgba(255,255,255,.35)}
+body[data-surface-material=liquid] :is(.seg,.chips,.pp-switch){border-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.11)}
+body[data-surface-material=liquid] :is(.btn,.ib):focus-visible{outline:2px solid var(--ds-acc,#a5dcea);outline-offset:3px}
+/* The header remains a transparent drag strip; content surfaces are not lenses. */
+body[data-surface-material] .top{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.surface-options{width:260px;max-width:100%;min-height:44px}
+/* Accessibility wins over an explicitly selected cosmetic material. */
+@media(prefers-reduced-transparency:reduce){body[data-surface-material] :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.pop-panel,.lyb-q),body[data-surface-material] :is(.side,.bar,.modal-box,.clean-dialog,.ds-pal-box,.bar .ib){background:rgb(var(--surface-tint))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}}
+@media(forced-colors:active){body[data-surface-material] :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.pop-panel,.lyb-q),body[data-surface-material] :is(.side,.bar,.modal-box,.clean-dialog,.ds-pal-box,.btn,.bar .ib){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}}
+@media(prefers-reduced-motion:reduce){.surface-options,body[data-surface-material=liquid] :is(.btn,.bar .ib){transition:none!important;animation:none!important}}
+@supports not (backdrop-filter:blur(1px)){body[data-surface-material] :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.pop-panel,.lyb-q),body[data-surface-material] :is(.side,.bar,.modal-box,.clean-dialog,.ds-pal-box,.bar .ib){background:rgba(var(--surface-tint),.94)!important}}
+/* Eco really disables blur rather than merely removing the optical bezel. */
+body.perf-lite[data-surface-material] :is(#menu,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.acc-pop,.pop-panel,.lyb-q,.search,.side,.bar,.modal-box,.clean-dialog,.ds-pal-box,.bar .ib){background:rgba(var(--surface-tint),.9)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}
+/* Settings groups share the page-panel surface token; no fixed blue-grey fill. */
+body[data-surface-material].glass .set2 .set-card,body[data-surface-material=liquid] .set2 .set-card{background:var(--ds-s1)!important;border-color:rgba(255,255,255,.075);backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-surface-material] .set2 .set-card .set-l span{color:rgba(255,255,255,.82)}
+body[data-surface-material] .menu .mi>svg.i{color:rgba(255,255,255,.8)}
+@media(prefers-reduced-transparency:reduce){body[data-surface-material] .set2 .set-card,body:not([data-surface-material]) .menu{background:rgb(var(--surface-tint))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media(forced-colors:active){body[data-surface-material] .set2 .set-card,body:not([data-surface-material]) .menu{background:Canvas!important;color:CanvasText!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}body[data-surface-material] :is(.set2 .set-card .set-l span,.menu .mi>svg.i){color:CanvasText!important}}
+
+body[data-surface-material] .bar .b-sub,body[data-surface-material=liquid] .side .nv{color:rgba(255,255,255,.92)}
+
+/* Chromium standard scrollbars take precedence over ::-webkit-scrollbar when
+   scrollbar-width is thin. Explicit colours prevent the white OS track. */
+:root{color-scheme:dark;scrollbar-color:rgba(190,194,207,.42) transparent}
+.settings-workspace :is(.set-side>nav,.set-main),body.ui-clean .side{scrollbar-width:thin;scrollbar-color:rgba(190,194,207,.42) transparent}
+.settings-workspace :is(.set-side>nav,.set-main)::-webkit-scrollbar{width:7px;height:7px}
+.settings-workspace :is(.set-side>nav,.set-main)::-webkit-scrollbar-track{background:transparent}
+.settings-workspace :is(.set-side>nav,.set-main)::-webkit-scrollbar-thumb{background:rgba(190,194,207,.42);border-radius:6px}
+@media(forced-colors:active){:root,.settings-workspace :is(.set-side>nav,.set-main),body.ui-clean .side{scrollbar-color:auto;color-scheme:light dark}}
+
+body[data-surface-material=liquid] #bar .time{color:rgba(255,255,255,.92);text-shadow:0 1px 2px #000,0 0 3px #000}
+
+/* One ID-bearing scope for ALL accessibility surfaces: a second class-only
+   selector loses to the shared :is(#menu,...) liquid rule in Chromium. */
+@media(prefers-reduced-transparency:reduce){body[data-surface-material] :is(#menu,#bar,.side,.search,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.acc-pop,.pop-panel,.lyb-q,.modal-box,.clean-dialog,.ds-pal-box,.bar .ib){background:rgb(var(--surface-tint))!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}}
+@media(forced-colors:active){body[data-surface-material] :is(#menu,#bar,.side,.search,.menu.pulse-select-menu,.menu.pulse-submenu,.suggest,.acc-pop,.pop-panel,.lyb-q,.modal-box,.clean-dialog,.ds-pal-box,.btn,.bar .ib){background:Canvas!important;color:CanvasText!important;border:1px solid CanvasText!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important}}

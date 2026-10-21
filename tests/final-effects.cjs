@@ -1,0 +1,16 @@
+const fs=require('fs'),path=require('path'),assert=require('assert/strict'),{chromium}=require('playwright');(async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/local/bin/chromium',args:['--no-sandbox']});const page=await browser.newPage();await page.setContent('<html><body></body></html>');await page.addScriptTag({content:fs.readFileSync('renderer/viz.js','utf8')+'\nwindow.makeViz=makeViz;window.Viz=makeViz();'});const out=path.resolve('tests/artifacts');
+const matrix=await page.evaluate(()=>{
+   const realNow=performance.now.bind(performance),realRandom=Math.random;let time=1000,seed=123;Object.defineProperty(performance,'now',{configurable:true,value:()=>time});
+   Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+   const div=document.createElement('div');div.style.cssText='position:fixed;left:0;top:0;width:200px;height:140px;z-index:-10';document.body.append(div);
+   const art=document.createElement('canvas');art.width=art.height=64;const ag=art.getContext('2d');const grad=ag.createLinearGradient(0,0,64,64);grad.addColorStop(0,'#e63483');grad.addColorStop(.5,'#2f7edb');grad.addColorStop(1,'#68edaa');ag.fillStyle=grad;ag.fillRect(0,0,64,64);
+   const base={glow:0,trails:0,zoom:30,shake:0,flash:0,mirror:'off',hue:0,thick:100,density:100,bass:100};
+   const freq=Uint8Array.from({length:1024},(_,i)=>40+(i*37%170)),wave=Uint8Array.from({length:2048},(_,i)=>128+Math.sin(i*.04)*70);
+   function render(id,fx){seed=123;time=1000;const c=document.createElement('canvas');c.style.cssText='width:200px;height:140px';div.append(c);const v=makeViz({gpu:false,maxDpr:1});v.init(c);for(let i=0;i<(id==='joy'?30:6);i++){time=1000+i*16.67;v.draw({quality:'high',mode:'visual',style:id,playing:true,sens:1,freq,wave,beat:i%5===0?.95:.2,tempo:{bpm:120,pos:i/8,conf:.9},sr:48000,fx,cover:art});}const bytes=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let hash=2166136261,lit=0;for(let i=0;i<bytes.length;i++){hash=Math.imul(hash^bytes[i],16777619);if(bytes[i])lit++;}v.destroy();c.remove();return {hash,lit};}
+   const out=[];
+   try{for(const style of Viz.STYLES){for(const [key,low,high] of [['glow',0,200],['density',25,200],['thick',30,300],['bass',50,200],['hue',0,300],['zoom',0,100],['shake',0,100],['trails',0,90],['flash',0,100],['mirror','off','quad']]){const a=render(style.id,{...base,[key]:low}),b=render(style.id,{...base,[key]:high});out.push({style:style.id,effect:key,changed:a.hash!==b.hash,lit:a.lit,bLit:b.lit});}}}
+   finally{div.remove();Object.defineProperty(performance,'now',{configurable:true,value:realNow});Math.random=realRandom;}
+   return out;
+ });
+
+fs.writeFileSync(out+'/final-effects-matrix.json',JSON.stringify(matrix,null,2));console.log('Effect deltas',matrix.filter(x=>x.changed).length,'/',matrix.length,'Unchanged:',matrix.filter(x=>!x.changed).map(x=>x.style+':'+x.effect).join(', '));assert.equal(matrix.filter(x=>!x.changed).length,0,'Every exposed visual effect must change its rendering');await browser.close();process.exit(0);})().catch(e=>{console.error(e);process.exit(1)});

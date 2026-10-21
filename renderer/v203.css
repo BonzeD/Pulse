@@ -1,0 +1,54 @@
+/* ===================== Pulse 2.0.3 ===================== */
+
+/* ---------- производительность ---------- */
+/* размытый фон из обложки готовится один раз картинкой (app.js → preBlurCover), CSS-размытие больше не нужно —
+   раньше blur(90px) на весь экран пересчитывался каждый кадр под визуалом */
+.amb-img.pre,.pp-bg.pre,.art-glow.pre,.lys-bg.pre{filter:none!important}
+.pp-bg.pre,.lys-bg.pre{image-rendering:auto}
+/* обложка и текущая строка пульсируют transform-ом на своём слое — без перерисовки */
+.art,.art-glow{will-change:transform}
+.ly-line.cur{will-change:transform}
+
+/* ---------- свечение текста: светится само слово, по контуру букв, а не «пятно-фон» за строкой ---------- */
+/* уже спетые слова — просто белые; горит только то слово, которое поют сейчас */
+#lyrics .ly-line.cur .w.on{text-shadow:none}
+/* слово заливается (караоке): text-shadow просвечивал бы сквозь прозрачные буквы — светим drop-shadow по залитой части */
+.no-glow #lyrics .ly-line.cur .w.hot,.no-glow .ly-lines .ly-line.cur .w{text-shadow:none!important;filter:none!important}
+
+/* ---------- «Только текст» ---------- */
+.lys{--lysGc:var(--a1);--lysGlow:1;--lysDim:.65}
+.lys[data-glowc=white]{--lysGc:255,255,255}
+.lys::after{background:radial-gradient(ellipse at 40% 45%,transparent 30%,rgba(0,0,0,var(--lysDim)) 100%)}
+.lys-prog i{width:100%!important;transform:scaleX(0);transform-origin:0 50%;will-change:transform}
+.lys-main{transform-origin:0 100%;will-change:transform}
+.lys[data-layout=center] .lys-main{transform-origin:50% 100%}
+/* свечение «горящего» слова — плотно по буквам; сила и цвет — в настройках */
+.lys-kin .lw.hot,.lys-cl .lw.hot{text-shadow:0 0 calc(.06em * var(--lysGlow)) rgba(var(--lysGc),.95),0 0 calc(.18em * var(--lysGlow)) rgba(var(--lysGc),.5)}
+/* цвет текста */
+.lys[data-col=accent] .lys-kin .lw.in,.lys[data-col=accent] .lys-cl .lw.on{color:rgb(var(--a1))}
+.lys[data-col=accent] .lys-kin .lr.shown:not(:last-child) .lw:not(.hot){color:rgba(var(--a1),.7)}
+.lys[data-col=gradient] .lys-kin .lw.in,.lys[data-col=gradient] .lys-cl .lw.on{background:linear-gradient(100deg,var(--lg1,rgb(var(--a1))),var(--lg2,rgb(var(--a2))),var(--lg3,var(--lg2,rgb(var(--a2)))));-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.lys[data-col=gradient] .lys-kin .lw.hot,.lys[data-col=gradient] .lys-cl .lw.hot{text-shadow:none!important;filter:drop-shadow(0 0 calc(.07em * var(--lysGlow)) rgba(var(--lysGc),.85))}
+/* хроматический сдвиг */
+.lys.chroma .lys-kin .lw.hot,.lys.chroma .lys-cl .lw.hot{text-shadow:-.035em 0 rgba(255,40,90,.75),.035em 0 rgba(0,210,255,.75),0 0 calc(.12em * var(--lysGlow)) rgba(var(--lysGc),.55)!important}
+/* контур у неспетых слов («Классика») */
+.lys.outline .lys-cl .lw:not(.on){color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.5)}
+/* новые анимации появления */
+.lys[data-anim=drop] .lys-kin .lw:not(.in){transform:translateY(-.6em);filter:none}
+.lys[data-anim=flip] .lys-kin .lw:not(.in){transform:perspective(400px) rotateX(-85deg);filter:none}
+.lys[data-anim=slide] .lys-kin .lw:not(.in){transform:translateX(-.8em);filter:none}
+.lys[data-anim=zoom] .lys-kin .lw:not(.in){transform:scale(2.2);filter:blur(4px)}
+
+/* отражение — живой «близнец» текста: повторяет каждое появление, свечение и уход строки синхронно */
+.lys-refl{opacity:.32}
+.lys-refl .lys-blk{transform:none;transition:opacity .28s ease-out,transform .45s cubic-bezier(.2,.8,.25,1)}
+.lys-refl .lys-blk.out{display:block;opacity:0;transform:translateY(-40px)}
+/* в воде нет свечения — раньше ореол «горящего» слова превращался в светлый прямоугольник */
+.lys-refl .lw{text-shadow:none!important;filter:none!important}
+.lys-refl .lw:not(.in){filter:none!important}
+.lys-refl .lys-kin .lw.in:not(.hot){color:rgba(255,255,255,.86)}
+/* рябь: шум воды больше не пересчитывается каждый кадр (анимированный feTurbulence) — вода «колышется» дешёвым transform */
+.lys-refl.wave{animation:lysWave 5.5s ease-in-out infinite}
+@keyframes lysWave{0%,100%{transform:scaleY(-1) skewX(0deg)}50%{transform:scaleY(-1.035) skewX(-1deg)}}
+body.no-anim .lys-refl.wave{animation:none}
+.ly-inner{will-change:transform}

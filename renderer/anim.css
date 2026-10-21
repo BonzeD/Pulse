@@ -1,0 +1,56 @@
+/* 1.0.0 motion polish: one rhythm, small distances, no blur animation.
+   Entrance fill is backwards only: settled elements must not retain a transform
+   layer/containing block (especially settings with fixed descendants). */
+@keyframes axUp{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:none}}
+@keyframes axIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+@keyframes axSpring{from{opacity:0;transform:translate3d(0,12px,0) scale(.985)}to{opacity:1;transform:none}}
+@keyframes axPop{0%,100%{transform:scale(1)}38%{transform:scale(1.18)}70%{transform:scale(.97)}}
+@keyframes axBurst{from{opacity:.5;transform:scale(.7)}to{opacity:0;transform:scale(1.65)}}
+@keyframes axCover{from{opacity:.45;transform:scale(.985)}to{opacity:1;transform:none}}
+@keyframes axNav{from{opacity:.6;transform:translate3d(-2px,0,0)}to{opacity:1;transform:none}}
+@keyframes axTab{from{opacity:0;transform:translate3d(0,5px,0)}to{opacity:1;transform:none}}
+@keyframes axToastIco{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
+@keyframes spFade2{from{opacity:0}to{opacity:1}}
+@keyframes axPage{from{opacity:0}to{opacity:1}}
+@keyframes axLeave{to{opacity:0}}
+@keyframes axOut{to{opacity:0}}
+@keyframes axBoxOut{to{opacity:0;transform:translate3d(0,6px,0) scale(.99)}}
+@keyframes axMenu{from{opacity:0;transform:translate3d(0,-4px,0) scale(.985)}to{opacity:1;transform:none}}
+@keyframes axMenuOut{to{opacity:0;transform:translate3d(0,-3px,0) scale(.99)}}
+
+/* A quick crossfade, not a slide of the entire scroll container. */
+body:not(.no-anim) #page.fade{animation:axPage var(--motion-enter,240ms) var(--motion-out,ease-out) backwards}
+body:not(.no-anim) #page.leave{animation:axLeave 120ms var(--motion-in,ease-in) forwards;pointer-events:none}
+/* Animate shelves OR their track rows, not both. Only the first eight rows
+   get a stagger; a 500-track playlist must not spawn 500 animations. */
+body:not(.no-anim) #page.fade .shelf:not(:has(.tr)){animation:axUp 320ms var(--motion-out,ease-out) backwards}
+body:not(.no-anim) #page.fade .shelf:nth-child(2){animation-delay:30ms}
+body:not(.no-anim) #page.fade .shelf:nth-child(3){animation-delay:60ms}
+body:not(.no-anim) #page.fade .shelf:nth-child(n+4){animation-delay:80ms}
+body:not(.no-anim) #page.fade .tr:nth-child(-n+8){animation:axUp 260ms var(--motion-out,ease-out) backwards}
+body:not(.no-anim) #page.fade .tr:nth-child(2){animation-delay:15ms}
+body:not(.no-anim) #page.fade .tr:nth-child(3){animation-delay:30ms}
+body:not(.no-anim) #page.fade .tr:nth-child(4){animation-delay:45ms}
+body:not(.no-anim) #page.fade .tr:nth-child(5){animation-delay:60ms}
+body:not(.no-anim) #page.fade .tr:nth-child(6){animation-delay:75ms}
+body:not(.no-anim) #page.fade .tr:nth-child(7){animation-delay:90ms}
+body:not(.no-anim) #page.fade .tr:nth-child(8){animation-delay:105ms}
+body:not(.no-anim) .nv.on svg.i{animation:axNav 220ms var(--motion-out,ease-out) backwards}
+
+/* Exits match app.js removal timers exactly (modal 170ms / menu 120ms). */
+body:not(.no-anim) .modal.show{animation:spFade2 180ms ease-out backwards}
+body:not(.no-anim) .modal.show .modal-box{animation:axSpring 300ms var(--motion-out,ease-out) backwards}
+body:not(.no-anim) .modal.closing{animation:axOut 170ms ease-in forwards;pointer-events:none}
+body:not(.no-anim) .modal.closing .modal-box{animation:axBoxOut 170ms ease-in forwards}
+body:not(.no-anim) .menu.show{animation:axMenu 180ms var(--motion-out,ease-out) backwards;transform-origin:var(--menu-origin,24px 0)}
+body:not(.no-anim) .menu.hiding{animation:axMenuOut 120ms ease-in forwards;pointer-events:none}
+body:not(.no-anim) .toast{transition:opacity 180ms ease,transform 280ms var(--motion-out,ease-out)}
+body:not(.no-anim) .toast:not(.show){transform:translateY(10px)}
+body:not(.no-anim) .toast.show svg.i{animation:axToastIco 240ms var(--motion-out,ease-out) 30ms backwards}
+#btnLike{position:relative}
+body:not(.no-anim) #btnLike.pop svg.i{animation:axPop 380ms var(--motion-soft,ease-out)}
+body:not(.no-anim) #btnLike.pop::after{content:"";position:absolute;inset:5px;border-radius:50%;border:1px solid rgb(var(--a1));animation:axBurst 420ms ease-out forwards;pointer-events:none}
+body:not(.no-anim) #cover.swap{animation:axCover 420ms var(--motion-out,ease-out)}
+body:not(.no-anim) .tab.on,body:not(.no-anim) #setBody.tab-in{animation:axTab 240ms var(--motion-out,ease-out) backwards}
+body:not(.no-anim) #sideList.sl-in{animation:spFade2 200ms ease-out backwards}
+body:not(.no-anim) .loading{animation:spFade2 180ms ease-out 100ms backwards}

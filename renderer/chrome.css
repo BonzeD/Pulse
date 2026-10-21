@@ -1,0 +1,42 @@
+/* 1.0.0 release: one viewport artwork layer, no black scroll-state header.
+   Clip scrolling CONTENT below the titlebar instead of hiding it with an opaque slab.
+   Preblurred artwork stays GPU-composited; no extra live blur or animation loop. */
+body .top,body.glass .top,body.amb-all .top,body.liquid .top,body.perf-lite .top,body.scrolled .top,body.amb-all.scrolled .top,body.glass.scrolled .top,
+body.liquid.scrolled .top,body.perf-lite.scrolled .top,body.ui-clean.scrolled .top{
+  background:transparent!important;border-bottom-color:transparent!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+body .view{top:var(--top);padding-top:0}
+/* The player used to overlay a second rectangular artwork crop at y=64px.
+   Use the existing full-window artwork, including the space behind its tabs. */
+body.pp-open:not(.no-amb):not(.spicy-ppbg) .amb-img.on{visibility:visible!important}
+body.pp-open:not(.no-amb):not(.spicy-ppbg) .pp-bg{display:none!important}
+body.pp-open:not(.no-amb):not(.spicy-ppbg):not(.clean-panel-only):not(.lyonly) .pp{background:transparent!important}
+body.pp-open .pp-switch{flex-shrink:0;max-width:100%;align-self:center}
+body.pp-open .pp-switch button{white-space:nowrap}
+@media(max-width:760px){body.pp-open .pp-switch{flex-wrap:wrap;justify-content:center}body.pp-open .pp-switch button{padding-left:10px;padding-right:10px}}
+@media(prefers-reduced-motion:reduce){body .top{transition:none}}
+/* 1.0.0: a transparent player must not reveal the sidebar beneath its controls. */
+body:not(.ui-clean):not(.fs):not(.lyonly).pp-open .pp{left:calc(var(--side) + var(--ds-gap,8px));padding-left:24px;padding-right:24px;column-gap:24px;grid-template-columns:minmax(0,1fr) minmax(240px,38%)}
+@media(max-width:900px){body:not(.ui-clean):not(.fs):not(.lyonly).pp-open .pp{grid-template-columns:minmax(0,1fr)}body:not(.ui-clean):not(.fs):not(.lyonly).pp-open .pp>.pp-side{display:none}}
+/* Fixed descendants can explicitly restore visibility; hide those as well. */
+body.pp-open:not(.clean-panel-only):not(.lyonly) .view,
+body.pp-open:not(.clean-panel-only):not(.lyonly) .view *,
+body.pp-open:not(.clean-panel-only):not(.lyonly) .view-surface{visibility:hidden!important}
+/* Keep Fullscreen and Lyrics as two distinct hit targets in Clean. */
+body.ui-clean .stage-fs.stage-ly{left:60px;right:auto}
+/* 1.0.0: every open player mode is an immersive stage.
+   Hide navigation in Song, Video and Visual; restore it only on player close.
+   Keep saved sidebar width/mini preferences and the GPU/audio paths untouched. */
+body.pp-open:not(.lyonly):not(.clean-panel-only) #side{display:none!important}
+body.pp-open:not(.lyonly):not(.clean-panel-only):not(.fs) #pp{
+  left:var(--ds-gap,8px)!important;right:var(--ds-gap,8px)!important;
+}
+body.ui-clean.main-bar.pp-open:not(.lyonly):not(.clean-panel-only) #bar{
+  left:20px!important;right:20px!important;
+}
+@media(max-width:760px){
+  body.ui-clean.main-bar.pp-open:not(.lyonly):not(.clean-panel-only) #bar{left:12px!important;right:12px!important}
+}
+/* Fullscreen must not keep Clean's old fixed sidebar inset either. */
+body.fs.pp-open:not(.lyonly):not(.clean-panel-only) #pp{left:0!important;right:0!important}

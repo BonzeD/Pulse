@@ -1,0 +1,36 @@
+/* ===================== Pulse 2.0.5 — караоке по мотивам Spicy Lyrics ===================== */
+/* Внешний вид текущей строки рисует karaoke.js: градиент заливки (--kg), свечение (--kb/--ko), подъём и масштаб (transform).
+   Все CSS-переходы у слов выключены — они отставали от музыки и «съедали» короткие слова. */
+#lyrics.kara .ly-line.cur .w{
+  --kF:#fff;--kD:rgba(255,255,255,calc(var(--lyDim,.28) + .2));
+  color:transparent!important;-webkit-text-fill-color:transparent;
+  background-image:linear-gradient(90deg,var(--kF) var(--kg,-20%),var(--kD) calc(var(--kg,-20%) + 20%));
+  -webkit-background-clip:text;background-clip:text;
+  text-shadow:0 0 var(--kb,.08em) rgba(var(--a1),var(--ko,0))!important;
+  transition:none!important;filter:none!important;opacity:1!important;animation:none!important;
+  transform-origin:50% 60%;will-change:transform
+}
+.ly-colored #lyrics.kara .ly-line.cur .w{--kF:rgb(var(--lyC));--kD:rgba(var(--lyC),calc(var(--lyDim,.28) + .2))}
+#lyrics.kara.svc-col .ly-line.cur .w{--kF:var(--svc-hi)}
+body[data-lyanim=glow] #lyrics.kara .ly-line.cur .w{text-shadow:0 0 var(--kb,.08em) rgba(var(--a1),var(--ko,0)),0 0 calc(var(--kb,.08em) * 2.5) rgba(var(--a2),calc(var(--ko,0) * .5))!important}
+.no-glow #lyrics.kara .ly-line.cur .w,.no-glow #lyrics.kara .ly-line.cur .w .lt{text-shadow:none!important}
+/* слово по буквам: градиент и свечение у каждой буквы, у самого слова — нет (иначе буквы рисуются дважды) */
+#lyrics.kara .ly-line.cur .w.lg{background-image:none;text-shadow:none!important}
+#lyrics.kara .ly-line.cur .w .lt{
+  display:inline-block;white-space:pre;
+  background-image:linear-gradient(90deg,var(--kF) var(--kg,-20%),var(--kD) calc(var(--kg,-20%) + 20%));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:0 0 var(--kb,.08em) rgba(var(--a1),var(--ko,0))!important;
+  transform-origin:50% 70%;will-change:transform
+}
+#lyrics.kara .ly-line:not(.cur) .w .lt{display:inline;background:none;-webkit-text-fill-color:currentColor;text-shadow:none!important}
+/* «Спокойный» темп: вместо размытия каждого слова (filter на десятке элементов) — просто мягче контраст */
+#lyrics.kara.pace-calm .ly-line.cur .w{--kD:rgba(255,255,255,calc(var(--lyDim,.28) + .1))}
+body.perf-eco #lyrics.kara .ly-line.cur .w,body.perf-eco #lyrics.kara .ly-line.cur .w .lt{will-change:auto}
+
+/* ---------- производительность (без изменения вида) ---------- */
+/* строки текста не влияют на раскладку остального окна: браузер не пересчитывает страницу при каждом слове */
+#lyrics .ly-scroll{contain:layout paint}
+#lyrics .ly-line{contain:layout style}
+/* размытие дальних строк — без анимации фильтра (переход filter перерисовывал строку 30 кадров подряд) */
+.ly-line{transition:color .4s,transform var(--lt,.5s) cubic-bezier(.2,.8,.2,1),opacity .5s}

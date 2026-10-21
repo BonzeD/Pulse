@@ -1,0 +1,18 @@
+{
+  "ffmpeg.exe": {
+    "url": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz",
+    "sha256": "04e1307997530f9cf2fe35cba2ca7e8875ca91da02f89d6c7243df819c94ad00"
+  },
+  "ffprobe.exe": {
+    "url": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffprobe-win32-x64.gz",
+    "sha256": "3a7e2dc003dc2cd1472827e4c7c4f056ae1ae0ae7c5bbc580c99b49827351ba4"
+  },
+  "LICENSE.ffmpeg.txt": {
+    "url": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/win32-x64.LICENSE",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+  },
+  "README.upstream.txt": {
+    "url": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/win32-x64.README",
+    "sha256": "a636a7183c58006351acbaf35303c0ed85c6e1320fd4e80de453ba6157de6311"
+  }
+}

@@ -1,0 +1,30 @@
+/* 2.0.8: Mineradio внутри «Только текст». Фрейм лежит под сценой Pulse (.lys, z 58), сцена в этом режиме прозрачна
+   и пропускает мышь во фрейм; поверх остаются только кнопки сцены (.lys-ui), панель-«таблетка» и очередь. */
+.mr-stage{position:fixed;inset:0;z-index:57;background:#050407;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s,visibility 0s linear .35s}
+.mr-stage.show,.mr-stage.loading{opacity:1;visibility:visible;transition:opacity .35s}
+.mr-stage.show{pointer-events:auto}
+.mr-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:transparent;opacity:0;transition:opacity .4s}
+.mr-stage.show iframe{opacity:1}
+.mr-load{position:absolute;inset:0;display:grid;place-content:center;gap:6px;text-align:center;color:rgba(255,255,255,.75);font-size:13px;pointer-events:none;transition:opacity .3s}
+.mr-load b{font-size:22px;letter-spacing:.08em;color:#fff}
+.mr-load span{animation:mrPulse 1.4s ease-in-out infinite}
+.mr-stage.show .mr-load{opacity:0}
+@keyframes mrPulse{50%{opacity:.4}}
+/* пока грузится фрейм, сцену Pulse не прячем — переход без чёрного кадра */
+.lys.mr-on{background:transparent!important;pointer-events:none;cursor:default}
+.lys.mr-on > :not(.lys-ui){display:none!important}
+.lys.mr-on .lys-ui{pointer-events:auto;left:50%;right:auto;top:14px;transform:translate(-50%,-8px)}
+.lys.mr-on.ui .lys-ui,.lys.mr-on.lyb-pin .lys-ui{transform:translate(-50%,0)}
+.lys.mr-on [data-lys="refl"],.lys.mr-on [data-lys="pt"]{display:none}
+/* в Mineradio своя «таблетка» не нужна в «Прятать сама» до движения мыши — поведение как у Pulse */
+body.mr-on.lys-bar .bar{background:rgba(10,8,16,.46)!important}
+/* настройки: блок «О Mineradio» */
+.mr-about{margin:6px 0 10px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
+.mr-about-h{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.mr-about-h b{font-size:15px}
+.mr-about-h span{opacity:.6;font-size:12px}
+.mr-about p{margin:4px 0;font-size:12.5px;line-height:1.5;opacity:.85}
+.mr-about .mr-thanks{opacity:.6;font-size:11.5px}
+.mr-about-b{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mr-about-b .btn svg{width:14px;height:14px;margin-right:6px;vertical-align:-2px}
+

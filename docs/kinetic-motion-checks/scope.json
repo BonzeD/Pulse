@@ -1,0 +1,11 @@
+{
+  "appJsChanges": "Only widget motion preference; all graphics code byte-identical to fix1",
+  "unchanged": {
+    "renderer/viz.js": "58b4a90ce3031ad983dcf713b4ae06ce7b6a5dedda5b9e9c28daea280d43f39e",
+    "renderer/gpu.js": "07bf6f4507d9b3529f962c6ffafd6670b66a2db237d9c27e0aeb2d5c66169d6c",
+    "build/installer.nsi": "4f773f47641a9732fd55981547d980551cd2bfa35e4d673927bd22faecfd4a37",
+    "build/update-shutdown.nsh": "c43d428b7d2770e2ba3ae778e7df65880bc9b97cb42fd1a1625e3d6edc7e4af8",
+    "renderer/immersion.js": "738361920358fd9d4ad2b33d9c06f4d1b42560b9d8584aa14a46177d66a553b7",
+    "renderer/mineradio/app.js": "6bdc2bb00051daa30bc252a8918e1a03c48897a8f894a1a3474986f5557a00fa"
+  }
+}

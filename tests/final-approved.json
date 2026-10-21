@@ -1,0 +1,466 @@
+{
+  "build/installer.nsi": {
+    "sha256": "4f773f47641a9732fd55981547d980551cd2bfa35e4d673927bd22faecfd4a37",
+    "originalSha256": "f7d970a6679cc01013160417da883ba75ea776bb0bcb2daa3e81137bdcb33d3b",
+    "patches": [
+      {
+        "from": 865,
+        "to": 866,
+        "original": []
+      },
+      {
+        "from": 877,
+        "to": 890,
+        "original": [
+          "  nsExec::Exec 'taskkill /IM \"${EXE}\" /F'\n",
+          "  Sleep 700\n"
+        ]
+      },
+      {
+        "from": 1044,
+        "to": 1057,
+        "original": [
+          "  nsExec::Exec 'taskkill /IM \"${EXE}\" /F'\n",
+          "  Sleep 700\n"
+        ]
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "fe07668454824edd9cb79d2ac171e43d7417146919350527d10270e20b1ee22f",
+    "originalSha256": "4e7873328c1a8fb1edd3045697360a6d742a69a4a17a3e053a7eca20234153df",
+    "patches": [
+      {
+        "from": 6,
+        "to": 7,
+        "original": []
+      },
+      {
+        "from": 35,
+        "to": 37,
+        "original": []
+      },
+      {
+        "from": 41,
+        "to": 42,
+        "original": [
+          "  try { require('electron').dialog.showErrorBox('Pulse \u2014 \u043e\u0448\u0438\u0431\u043a\u0430', String((err && err.stack) || err)); } catch {}\n"
+        ]
+      },
+      {
+        "from": 98,
+        "to": 100,
+        "original": [
+          "function serveImg(req, res) {\n",
+          "  const u = new URL(req.url, 'http://x').searchParams.get('u') || '';\n",
+          "  if (!/^https:\\/\\/([\\w-]+\\.)*(ytimg\\.com|googleusercontent\\.com|ggpht\\.com|mzstatic\\.com|scdn\\.co|spotifycdn\\.com)\\//.test(u)) { res.writeHead(400); return res.end(); }\n",
+          "  const f = path.join(imgDir(), crypto.createHash('sha1').update(u).digest('hex') + '.img');\n",
+          "  fs.readFile(f, (err, data) => {\n",
+          "    if (!err && data.length) { res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=604800' }); return res.end(data); }\n",
+          "    fetch(u).then(async (r) => {\n",
+          "      const b = Buffer.from(await r.arrayBuffer());\n",
+          "      if (r.ok && b.length > 200) fs.writeFile(f, b, () => {});\n",
+          "      res.writeHead(r.status, { 'Content-Type': r.headers.get('content-type') || 'image/jpeg', 'Cache-Control': 'max-age=86400' }); res.end(b);\n",
+          "    }).catch(() => { res.writeHead(504); res.end(); });\n",
+          "  });\n",
+          "}\n"
+        ]
+      },
+      {
+        "from": 261,
+        "to": 262,
+        "original": []
+      },
+      {
+        "from": 305,
+        "to": 309,
+        "original": [
+          "app.on('second-instance', () => win && showMain());\n"
+        ]
+      },
+      {
+        "from": 341,
+        "to": 342,
+        "original": [
+          "}).catch(e => { require('electron').dialog.showErrorBox('Pulse \u2014 \u0437\u0430\u043f\u0443\u0441\u043a', String(e.message || e)); app.quit(); });\n"
+        ]
+      },
+      {
+        "from": 383,
+        "to": 384,
+        "original": [
+          "ipcHandle('media:import',mediaSafe(async()=>{const r=await require('electron').dialog.showOpenDialog(win,{title:'\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 \u0442\u0440\u0435\u043a\u0438',properties:['openFile','multiSelections'],filters:[{name:'\u0410\u0443\u0434\u0438\u043e \u0438 \u0432\u0438\u0434\u0435\u043e',extensions:require('./local-library').EXT}]});return r.canceled?{canceled:true}:media().importFiles(r.filePaths);}));\n"
+        ]
+      },
+      {
+        "from": 386,
+        "to": 387,
+        "original": [
+          "ipcHandle('media:cover',mediaSafe(async()=>{const r=await require('electron').dialog.showOpenDialog(win,{title:'\u0412\u044b\u0431\u0440\u0430\u0442\u044c \u043e\u0431\u043b\u043e\u0436\u043a\u0443',properties:['openFile'],filters:[{name:'\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f',extensions:['jpg','jpeg','png','webp']}]});return r.canceled?{canceled:true}:media().pickCover(r.filePaths[0]);}));\n"
+        ]
+      },
+      {
+        "from": 390,
+        "to": 391,
+        "original": [
+          "ipcHandle('media:export',mediaSafe(async(_e,id,format,fields,cover)=>{const f=require('./media-tools').EXPORTS[format];if(!f)throw Error('\u041d\u0435\u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u044b\u0439 \u0444\u043e\u0440\u043c\u0430\u0442');const data=await media().inspect(id);const name=(fields?require('./local-library').normalize(fields):data.fields).title.replace(/[<>:\"/\\\\|?*\\x00-\\x1f]/g,'_').replace(/[. ]+$/,'').slice(0,110)||'Track';const r=await require('electron').dialog.showSaveDialog(win,{title:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043e\u0442\u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u0442\u0440\u0435\u043a',defaultPath:path.join(app.getPath('music'),name+'.'+f.ext),filters:[{name:f.label,extensions:[f.ext]}],properties:['showOverwriteConfirmation','createDirectory']});if(r.canceled)return {canceled:true};const dest=r.filePath.toLowerCase().endsWith('.'+f.ext)?r.filePath:r.filePath+'.'+f.ext;return media().exportFile(id,format,dest,fields,cover);}));\n"
+        ]
+      },
+      {
+        "from": 475,
+        "to": 476,
+        "original": []
+      }
+    ]
+  },
+  "renderer/gpu.js": {
+    "sha256": "07bf6f4507d9b3529f962c6ffafd6670b66a2db237d9c27e0aeb2d5c66169d6c",
+    "originalSha256": "d287b01e9db967fae3ea9d6ac302929b49ec4743205e508ce6ff00312c09597d",
+    "patches": [
+      {
+        "from": 114,
+        "to": 115,
+        "original": []
+      },
+      {
+        "from": 117,
+        "to": 118,
+        "original": []
+      },
+      {
+        "from": 140,
+        "to": 146,
+        "original": [
+          "  vC = vec4(min(aC * lit + a * a * 0.25, vec3(1.0)), clamp(0.55 + aP.z * 0.35 + a * 0.4, 0.0, 1.0) * uK.w);\n"
+        ]
+      },
+      {
+        "from": 149,
+        "to": 151,
+        "original": [
+          "in vec4 vC; out vec4 o;\n",
+          "void main() { vec2 c = gl_PointCoord - 0.5; float d = length(c); float a = vC.a * smoothstep(0.5, 0.18, d); if (a < 0.004) discard; o = vec4(vC.rgb * a, a); }`;\n"
+        ]
+      },
+      {
+        "from": 220,
+        "to": 221,
+        "original": [
+          "          P.cv = { ...pr, vao, vb, key: null, n: 0, uT: gl.getUniformLocation(pr.p, 'uT'), uK: gl.getUniformLocation(pr.p, 'uK'), uB: gl.getUniformLocation(pr.p, 'uB') }; }\n"
+        ]
+      },
+      {
+        "from": 224,
+        "to": 225,
+        "original": [
+          "        gl.uniform4f(p.uT, c.t, c.beat, c.hit, c.energy); gl.uniform4f(p.uK, c.relief, c.wave, c.scatter, c.intro); gl.uniform1fv(p.uB, c.bands);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/viz.js": {
+    "sha256": "58b4a90ce3031ad983dcf713b4ae06ce7b6a5dedda5b9e9c28daea280d43f39e",
+    "originalSha256": "e42da782de96aae76585e024813ae8857ef9690e16657cb77dacbe2ee868c578",
+    "patches": [
+      {
+        "from": 81,
+        "to": 82,
+        "original": [
+          "        const v = playing ? Math.max(0, base * SENS) : 0.02; bands[i] += (v - bands[i]) * (1 - Math.pow(0.7, fk));\n"
+        ]
+      },
+      {
+        "from": 109,
+        "to": 111,
+        "original": [
+          "    const FX = o.fx || {};\n"
+        ]
+      },
+      {
+        "from": 155,
+        "to": 156,
+        "original": []
+      },
+      {
+        "from": 175,
+        "to": 176,
+        "original": [
+          "      else { hideDirect(); S.draw(g); }\n"
+        ]
+      },
+      {
+        "from": 195,
+        "to": 196,
+        "original": [
+          "    const n = 48, gap = 3, bw = Math.max(2, (W * 0.8) / (n * 2) - gap), x0 = W / 2, base = H - 4, mh = H * 0.13;\n"
+        ]
+      },
+      {
+        "from": 206,
+        "to": 207,
+        "original": [
+          "    const { ctx, cx, cy } = g, R = g.R * 1.02, N = 128, rot = 0;\n"
+        ]
+      },
+      {
+        "from": 225,
+        "to": 226,
+        "original": [
+          "    for (let i = st.rings.length - 1; i >= 0; i--) { const s = st.rings[i]; s.r += g.dt * (R * 1.3) * g.speed * (1 + s.w / 5); s.a -= g.dt * 0.55 * g.speed; if (s.a <= 0) { st.rings.splice(i, 1); continue; } ctx.strokeStyle = g.mix(s.c + s.r / 900, s.a); ctx.lineWidth = (s.w) * LW; ctx.beginPath(); ctx.arc(cx, cy, s.r, 0, TAU); ctx.stroke(); }\n"
+        ]
+      },
+      {
+        "from": 231,
+        "to": 232,
+        "original": [
+          "    const { ctx, cx, cy, R } = g, N = 48;\n"
+        ]
+      },
+      {
+        "from": 237,
+        "to": 238,
+        "original": [
+          "        const r = R * (1.12 + L * 0.16) + g.band(m * 0.7) * R * (0.5 + L * 0.2) + n * R * 0.05 * (1 + g.level * 3) + g.beat * R * 0.08;\n"
+        ]
+      },
+      {
+        "from": 246,
+        "to": 247,
+        "original": [
+          "    const { ctx, cx, cy, R } = g, N = 96, rot = g.tick * (TAU / 96);\n"
+        ]
+      },
+      {
+        "from": 255,
+        "to": 256,
+        "original": [
+          "    const { ctx, W, H } = g, n = 64, gap = 3, bw = Math.max(2, (W * 0.86) / (n * 2) - gap), x0 = W / 2, base = H * 0.62, mh = H * 0.42;\n"
+        ]
+      },
+      {
+        "from": 257,
+        "to": 258,
+        "original": [
+          "      const v = Math.pow(bands[i], 1.25), h = 3 + v * mh * (1 + g.beat * 0.12), pk = 3 + Math.pow(peaks[i], 1.25) * mh;\n"
+        ]
+      },
+      {
+        "from": 261,
+        "to": 263,
+        "original": [
+          "        ctx.fillStyle = gr; g.rr(x, base - h, bw, h, bw / 2); ctx.fill();\n",
+          "        ctx.fillStyle = g.mix(i / n, 0.2); g.rr(x, base + 4, bw, h * 0.35, bw / 2); ctx.fill();\n"
+        ]
+      },
+      {
+        "from": 268,
+        "to": 269,
+        "original": [
+          "    const { ctx, W, H } = g, cy = H * 0.5, n = 96;\n"
+        ]
+      },
+      {
+        "from": 276,
+        "to": 277,
+        "original": [
+          "    ctx.fillStyle = `rgba(255,255,255,${0.35 + g.beat * 0.5})`; ctx.fillRect(0, cy - 0.5, W, 1);\n"
+        ]
+      },
+      {
+        "from": 281,
+        "to": 282,
+        "original": [
+          "      ctx.beginPath(); const pts = 120;\n"
+        ]
+      },
+      {
+        "from": 321,
+        "to": 324,
+        "original": [
+          "    const { ctx, W, H } = g, cx = W / 2, cy = H * 0.45, sides = 6, maxR = Math.hypot(W, H) * 0.7;\n",
+          "    for (let k = 0; k < 14; k++) {\n",
+          "      const z = ((k + g.tick * 0.5) % 14) / 14, r = Math.pow(z, 2.2) * maxR + 10, rot = g.tick * 0.08 + k * 0.15;\n"
+        ]
+      },
+      {
+        "from": 326,
+        "to": 327,
+        "original": [
+          "      ctx.strokeStyle = g.mix(k / 14 + g.pos * 0.02, z * (0.5 + g.beat * 0.5)); ctx.lineWidth = (1 + z * 4) * LW; ctx.stroke();\n"
+        ]
+      },
+      {
+        "from": 339,
+        "to": 340,
+        "original": [
+          "    for (let i = -14; i <= 14; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 8, hy); ctx.lineTo(W / 2 + i * W * 0.16, H); ctx.stroke(); }\n"
+        ]
+      },
+      {
+        "from": 345,
+        "to": 347,
+        "original": [
+          "    for (let L = 0; L < 5; L++) {\n",
+          "      const base = H * (0.25 + L * 0.1), amp = H * (0.06 + g.band(L * 0.15) * 0.25) * (1 + g.beat * 0.4), ph = g.pos * 0.25 + L * 1.3;\n"
+        ]
+      },
+      {
+        "from": 355,
+        "to": 356,
+        "original": [
+          "    const { ctx, W, H } = g, cx = W / 2, cy = H * 0.45, n = 300, maxR = Math.min(W, H) * 0.46, rot = g.tick * (TAU / 32);\n"
+        ]
+      },
+      {
+        "from": 357,
+        "to": 358,
+        "original": [
+          "    for (let i = 0; i < n; i++) { const f = i / n, a = f * TAU * 7 + rot, v = g.band(f * 0.9), r = f * maxR * (1 + g.beat * 0.06); ctx.fillStyle = g.mix(f + g.pos * 0.02, 0.35 + v * 0.65); ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 1.2 + v * 6, 0, TAU); ctx.fill(); }\n"
+        ]
+      },
+      {
+        "from": 360,
+        "to": 361,
+        "original": [
+          "    const { ctx, W, H } = g, cx = W / 2, cy = H * 0.45, seg = 12, R = Math.min(W, H) * 0.46, rot = g.tick * (TAU / 48);\n"
+        ]
+      },
+      {
+        "from": 364,
+        "to": 365,
+        "original": [
+          "      for (let k = 0; k < 10; k++) { const f = k / 10, v = g.band(f), r = 20 + f * R; ctx.fillStyle = g.mix(f + g.pos * 0.02, 0.18 + v * 0.5); ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(r + 10 + v * 40, (6 + v * 26) * (1 + g.beat * 0.4)); ctx.lineTo(r + 18 + v * 60, 0); ctx.closePath(); ctx.fill(); }\n"
+        ]
+      },
+      {
+        "from": 369,
+        "to": 370,
+        "original": [
+          "    const { ctx, W, H } = g, cols = 48, rows = 18, cw = (W * 0.84) / cols, ch = (H * 0.6) / rows, x0 = W * 0.08, y0 = H * 0.75, r = Math.min(cw, ch) * 0.32;\n"
+        ]
+      },
+      {
+        "from": 390,
+        "to": 391,
+        "original": [
+          "    const { ctx, W, H } = g, cx = W / 2, cy = H * 0.45, R = Math.min(W, H) * 0.2 * (1 + g.beat * 0.08), w = g.wave, N = 256; ctx.lineJoin = 'round';\n"
+        ]
+      },
+      {
+        "from": 408,
+        "to": 409,
+        "original": [
+          "    const x = st.x, sp = Math.max(1, Math.round(2 * g.speed));\n"
+        ]
+      },
+      {
+        "from": 410,
+        "to": 412,
+        "original": [
+          "    const n = g.NB;\n",
+          "    for (let i = 0; i < n; i++) { const v = g.bands[i], c = g.mix(i / n * 0.7 + g.bar * 0.2, Math.min(1, v * 1.4)), bw = w / 2 / n + 1; x.fillStyle = c; x.fillRect(w / 2 + (i / n) * (w / 2), h - sp, bw, sp); x.fillRect(w / 2 - ((i + 1) / n) * (w / 2), h - sp, bw, sp); }\n"
+        ]
+      },
+      {
+        "from": 419,
+        "to": 420,
+        "original": [
+          "      const f = i / n, v = g.band(f * 0.8), a = rot + f * TAU, wd = (0.03 + v * 0.09) * (1 + g.beat * 0.5);\n"
+        ]
+      },
+      {
+        "from": 473,
+        "to": 474,
+        "original": [
+          "    ctx.lineCap = 'round'; const N = 96;\n"
+        ]
+      },
+      {
+        "from": 481,
+        "to": 482,
+        "original": [
+          "      const w = tw * Math.min(1, k), h = th * Math.min(1, k), x = c * tw + (tw - w) / 2, y = r * th + (th - h) / 2;\n"
+        ]
+      },
+      {
+        "from": 495,
+        "to": 496,
+        "original": [
+          "    const { ctx, W, H } = g, st = g.state, N = 12;\n"
+        ]
+      },
+      {
+        "from": 513,
+        "to": 514,
+        "original": [
+          "    const P = cam3(g, st.yaw, Math.sin(g.t * 0.12) * 0.35, 8, Math.min(W, H) * 0.9, W / 2, H / 2), n = 70, out = [];\n"
+        ]
+      },
+      {
+        "from": 563,
+        "to": 564,
+        "original": [
+          "      c.intro = 1 - Math.pow(1 - c.intro, 3); c.size = 2.2 / F.N * 1.15; c.dpr = R.canvas.width / Math.max(1, g.W);\n"
+        ]
+      },
+      {
+        "from": 569,
+        "to": 570,
+        "original": [
+          "      const { ctx } = g, F = coverField(g.coverImg, Math.min(70, cfN())), c = cfParams(g), N = F.N, d = F.data, intro = 1 - Math.pow(1 - c.intro, 3);\n"
+        ]
+      },
+      {
+        "from": 577,
+        "to": 578,
+        "original": [
+          "        const kk = c.f / zz, s = Math.max(1, sz * kk * (1 + a * 0.9)), lit = 0.72 + a * 0.9 + c.beat * 0.25;\n"
+        ]
+      },
+      {
+        "from": 590,
+        "to": 591,
+        "original": [
+          "      const { W, H } = g, st = g.state, N = 12;\n"
+        ]
+      },
+      {
+        "from": 612,
+        "to": 613,
+        "original": [
+          "      const n0 = 70, P = [];\n"
+        ]
+      }
+    ]
+  },
+  "ytm.js": {
+    "sha256": "92f4db197663e2f7f58932a1a23ddb138fadd2b4442748350a03d9883000113d",
+    "originalSha256": "98ae94f3e3f59c3a21a2fd814f217e1fdeaec9804664fd652054e6e084a01027",
+    "patches": [
+      {
+        "from": 7,
+        "to": 13,
+        "original": [
+          "  const t = (thumbs || []).slice(-1)[0]; if (!t) return null;\n",
+          "  let u = t.url;\n",
+          "  if (/googleusercontent|ggpht/.test(u)) u = u.replace(/=w\\d+-h\\d+.*$/, `=w${size}-h${size}-l90-rj`).replace(/=s\\d+.*$/, `=s${size}`);\n",
+          "  return u.startsWith('//') ? 'https:' + u : u;\n"
+        ]
+      },
+      {
+        "from": 46,
+        "to": 47,
+        "original": [
+          "  const art = bigArt(thumbsOf(v.thumbnail)) || ctx.art || null;\n"
+        ]
+      },
+      {
+        "from": 65,
+        "to": 66,
+        "original": [
+          "  const title = txt(v.title), sub = txt(v.subtitle), art = bigArt(thumbsOf(v.thumbnailRenderer || v.thumbnail));\n"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+onA('play', () => { if (engine === 'audio') { playing = true; onPlayState(); } });
+onA('playing', () => { if (engine === 'audio') { errStreak = 0; setLoading(false); onStarted(); } });
+onA('waiting', () => engine === 'audio' && setLoading(true));
+onA('pause', () => { if (engine === 'audio') { playing = false; onPlayState(); } });
+onA('ended', () => { if (engine === 'audio') onEnded(); });
+onA('progress', () => { try { const d = audio.duration, b = audio.buffered; if (d && b.length) $('seekBuf').style.width = (b.end(b.length - 1) / d) * 100 + '%'; } catch {} });
+const retried = new Set();
+onA('error', () => {
+  if (engine !== 'audio' || !audio.getAttribute('src')) return;
+  const t = curTrack(); setLoading(false);
+  // первая ошибка потока — просто переподключаемся (ссылка YouTube могла протухнуть), с того же места
+  if (t && audio.getAttribute('src').startsWith('/stream/') && !retried.has(t.id)) { retried.add(t.id); const at = audio.currentTime || 0; setLoading(true); audio.src = `/stream/${t.id}?r=${Date.now()}`; audio.addEventListener('loadedmetadata', () => { if (at > 1) audio.currentTime = at; }, { once: true }); E.play(); return; }
+  if (t && audio.getAttribute('src').startsWith('/stream/') && ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, true); }
+  toast(off[t?.id] ? 'Не удалось открыть скачанный файл — пропускаю' : 'Не удалось воспроизвести — пропускаю');
+  if (t) { markFailed(t); markRows(); }
+  if (++errStreak <= 8) setTimeout(() => next(true), 700);
+});
+function useIframe(t, autoplay, start = 0) {
+  audio.pause(); audio.removeAttribute('src'); audio.load(); engine = 'yt'; audioTrackId = null;
+  const vid = ytVid(t) || t.id; // 2.0.2
+  autoplay ? player.loadVideoById({ videoId: vid, startSeconds: start }) : player.cueVideoById({ videoId: vid, startSeconds: start });
+  updateMode();
+}
+const E = {
+  time: () => (engine === 'audio' ? audio.currentTime : ready && player.getCurrentTime ? player.getCurrentTime() : 0) || 0,
+  dur: () => (engine === 'audio' ? (isFinite(audio.duration) ? audio.duration : 0) : ready && player.getDuration ? player.getDuration() : 0) || curTrack()?.dur || 0,
+  play: () => { if (engine === 'audio') { initAudioGraph(); actx.resume(); audio.play().catch(() => {}); } else if (ready) player.playVideo(); },
+  pause: () => { if (typeof djFinish === 'function') djFinish(); return engine === 'audio' ? audio.pause() : ready && player.pauseVideo(); },
+  seek: (t) => { if (typeof djFinish === 'function') djFinish(); if (engine === 'audio') audio.currentTime = t; else if (ready) player.seekTo(t, true); beatState.kp = -1; },
+  volume: (v) => { if (gain) gain.gain.value = v / 100; else audio.volume = v / 100; if (ready) { player.setVolume(v); if (v > 0) player.unMute(); } },
+  load(t, autoplay, start = 0) {
+    if (typeof djFinish === 'function') djFinish(true);
+    const tok = ++loadTok; setLoading(false); $('seekBuf').style.width = '0';
+    const at = () => { if (start > 1) audio.addEventListener('loadedmetadata', () => (audio.currentTime = start), { once: true }); };
+    // 2.0.4: в режиме «Видео» клип показываем и для скачанного трека (раньше играл файл, а на месте видео висел старый кадр с кнопкой Play)
+    if (off[t.id] && lib.mode === 'video' && ready && canEmbed(t) && online()) { useIframe(t, autoplay, start); return true; }
+    if (off[t.id]) {
+      if (ready && engine === 'yt') try { player.stopVideo(); } catch {}
+      engine = 'audio'; audioTrackId = t.id; at();
+      audio.src = `/offline/${encodeURIComponent(off[t.id].file)}`;
+      if (autoplay) E.play(); updateMode();
+      return true;
+    }
+    if (lib.mode === 'video' && ready && canEmbed(t) && online()) { useIframe(t, autoplay, start); return true; }
+    if (ready && engine === 'yt') try { player.stopVideo(); } catch {}
+    audio.pause(); audio.removeAttribute('src'); audio.load();
+    engine = 'audio'; audioTrackId = t.id; updateMode();
+    if (!online()) { toast('Нет интернета — играют только скачанные треки'); return false; }
+    setLoading(true);
+    // если звук не готов за 12 с — не держим тишину: включаем через встроенный YouTube (если трек это разрешает)
+    const slow = setTimeout(() => { if (tok !== loadTok || !ready || !canEmbed(t) || engine !== 'audio' || audio.getAttribute('src')) return; loadTok++; setLoading(false); toast('Звук долго не отдаётся — включаю через встроенный YouTube'); useIframe(t, autoplay, start); }, 12000);
+    pulse.resolve(t.id).then((r) => {
+      clearTimeout(slow); if (r && r.vid && r.vid !== t.id) vidMap[t.id] = r.vid; // 2.0.2: запоминаем запись YouTube для трека сервиса
+      if (tok !== loadTok) return;
+      if (lib.mode === 'video' && ready && r && r.ok && canEmbed(t) && isSvcId(t.id)) { setLoading(false); return useIframe(t, autoplay, start); }
+      if (r && r.ok) { at(); audio.src = `/stream/${t.id}`; if (autoplay) E.play(); else setLoading(false); return; }
+      setLoading(false);
+      if (ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, autoplay, start); }
+      toast(r ? r.error : 'Не удалось получить звук'); markFailed(t); markRows();
+      if (autoplay && ++errStreak <= 8) setTimeout(() => next(true), 800);
+    });
+    return true;
+  }
+};

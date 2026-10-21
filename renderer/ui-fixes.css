@@ -1,0 +1,142 @@
+/* Pulse 1.0.0 UI repair. These rules precede shared motion and user CSS. */
+/* Width is driven by an interruptible FLIP, not a reflowing half-width measurement. */
+body .side{transition:none;transform-origin:0 0;overflow-x:clip}
+.side :is(.nv,.cl-sw,.nv>svg,.nv>span,.nv>em,.cl-sw>button,.new-pl,.side-list,.side-sep,.clean-nav>summary){transform-origin:0 0}
+body .view,body .view-surface{transition:left 320ms var(--motion-soft,cubic-bezier(.22,.8,.3,1))}
+/* One keyboard-accessible focus ring for a composite search field, never an oval around text. */
+body .set-search:focus-within{border-color:var(--ds-acc);box-shadow:0 0 0 3px rgba(var(--a1),.2)}
+body .set-search input,body .set-search input:focus,body .set-search input:focus-visible{outline:none!important;box-shadow:none!important;border:0;border-radius:0;background:transparent;caret-color:var(--ds-t1);line-height:1.4;height:auto;user-select:text}
+/* Sidecar sizing changes layout, not raster scale. */
+body:not(.ui-clean) #pp{grid-template-columns:minmax(0,1fr) minmax(0,var(--pp-panel-width,min(480px,38vw)))}
+body.ui-clean.clean-panel-only #pp{width:min(var(--pp-panel-width,420px),calc(100vw - 32px))}
+#pp .pp-side{position:relative;z-index:5;min-width:0}
+.pp-resize{position:absolute;top:0;bottom:0;left:-20px;width:20px;z-index:12;cursor:col-resize;touch-action:none;display:flex;align-items:center;justify-content:center;outline:none}
+.pp-resize i{height:44px;width:3px;border-radius:8px;background:rgba(255,255,255,.22);transition:background-color .15s,height .15s}
+.pp-resize:hover i,.pp-resize:focus-visible i,.panel-resizing .pp-resize i{height:64px;background:var(--ds-acc)}
+.panel-resizing,.panel-resizing *{cursor:col-resize!important;user-select:none!important}
+body.ui-clean.clean-panel-only .pp-resize{left:-20px}
+@media(max-width:900px){body:not(.ui-clean):not(.fs) #pp{grid-template-columns:minmax(0,1fr)}.pp-resize{display:none}}
+/* Visuals may extend up behind the mode selector; UI is always above both canvases. */
+body.ds-panels.pp-open:not(.clean-panel-only) #pp,body.ui-clean.pp-open:not(.clean-panel-only) #pp{overflow:visible}
+#pp .pp-media,#pp .pp-stage{overflow:visible}
+#pp #viz{top:calc(-1 * var(--top,64px) - 112px);bottom:calc(-1 * var(--top,64px) - 112px);left:-64px;right:-64px;width:calc(100% + 128px);height:calc(100% + var(--top,64px) * 2 + 224px);z-index:0;--viz-inset:64px}
+/* Fade INSIDE the musical viewport. Overscan is transparent, not the fade's origin. */
+#pp :is(#viz,#vizDirect){--viz-feather:clamp(56px,12vw,180px);
+ -webkit-mask-image:linear-gradient(90deg,transparent 0,transparent var(--viz-inset,0px),#000 calc(var(--viz-inset,0px) + var(--viz-feather)),#000 calc(100% - var(--viz-inset,0px) - var(--viz-feather)),transparent calc(100% - var(--viz-inset,0px)),transparent 100%);
+ mask-image:linear-gradient(90deg,transparent 0,transparent var(--viz-inset,0px),#000 calc(var(--viz-inset,0px) + var(--viz-feather)),#000 calc(100% - var(--viz-inset,0px) - var(--viz-feather)),transparent calc(100% - var(--viz-inset,0px)),transparent 100%)}
+#pp .art-wrap{z-index:1}#pp .vis-line{z-index:2}
+#pp .pp-switch,#pp .viz-ctl,#pp .stage-fs{z-index:4}
+/* Same design tokens as Pulse menus; spacious sections rather than legacy sharp drawers. */
+#lyFix{left:0;right:0;bottom:8px;max-height:min(88%,680px);border-radius:var(--ds-r3,20px);background:var(--ds-pop,#19171f);border:1px solid var(--ds-line2,rgba(255,255,255,.14));box-shadow:var(--ds-sh3);backdrop-filter:blur(28px) saturate(1.2);overflow:hidden}
+#lyFix .fx-head{padding:12px 12px 10px 18px;gap:12px;flex-shrink:0}
+#lyFix .fx-tabs{margin:0 12px 10px;flex-shrink:0;border-radius:12px}
+#lyFix .fx-tabs button{min-width:0;height:36px;font-size:12px;padding:0 4px;gap:4px}
+#lyFix .fx-body{padding:0 14px 14px;overscroll-behavior:contain;scrollbar-gutter:stable}
+#lyFix .fx-sec{margin-top:8px;padding:14px;border:1px solid var(--ds-line);border-radius:14px;background:var(--ds-s1)}
+#lyFix .fx-sec>b{display:flex;align-items:center;gap:8px;line-height:1.4;margin-bottom:6px}
+#lyFix .fx-sec>b svg.i{width:18px;height:18px;flex-shrink:0;color:var(--ds-acc)}
+#lyFix .fx-sec>span{line-height:1.6}
+#lyFix .fx-row{gap:6px}#lyFix .fx-val{font-size:13px;min-width:52px}
+#lyFix .fx-ta{display:block;width:100%;max-width:100%;min-height:140px;resize:vertical;padding:12px;user-select:text}
+#lyFix #fxQ{flex:1 1 140px;min-width:0;width:100%;height:36px;padding:8px 10px;border-radius:10px;background:var(--ds-s2);border:1px solid var(--ds-line)}
+#lyFix .fx-item div{min-width:0;flex:1}#lyFix .fx-item b,#lyFix .fx-item span{display:block;overflow-wrap:anywhere}
+#lyFix .fx-item em{flex-shrink:0;font-style:normal}#lyFix .fx-item u{font-size:10px;text-decoration:none}
+#pp .pop-panel{max-width:calc(100vw - 32px);max-height:min(72vh,680px);overflow:auto;overscroll-behavior:contain;border-radius:var(--ds-r3,20px);background:var(--ds-pop)}
+/* Hide and recover the SAME player; no duplicate controls, no keyboard traps. */
+body #bar #btnBarHide{display:grid!important;position:absolute;right:8px;top:-14px;width:28px;height:28px;min-height:28px;border-radius:50%;background:var(--ds-pop);border:1px solid var(--ds-line2);z-index:6}
+/* Keep the horizontal centering transform; animate independent vertical translation + scale. */
+body #bar{translate:0 0!important;scale:1!important;transform-origin:50% 100%;
+ transition:opacity 240ms ease,translate 420ms cubic-bezier(.22,.8,.3,1),scale 420ms cubic-bezier(.22,.8,.3,1),visibility 0s 0s}
+body.player-bar-hidden #bar{opacity:0!important;translate:0 calc(100% + 36px)!important;scale:.96!important;visibility:hidden!important;pointer-events:none!important;
+ transition:opacity 280ms ease,translate 380ms cubic-bezier(.22,.8,.3,1),scale 380ms cubic-bezier(.22,.8,.3,1),visibility 0s 380ms}
+/* Transparent discovery region does NOT intercept clicks on the page beneath it. */
+#barRevealZone{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(360px,calc(100vw - 32px));height:104px;z-index:65;display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px;pointer-events:none;-webkit-app-region:no-drag}
+#barRevealZone[hidden],body #btnBarShow[hidden]{display:none!important}
+body #btnBarShow{position:relative;bottom:auto;left:auto;height:36px;background:var(--ds-pop);border:1px solid var(--ds-line2);box-shadow:var(--ds-sh2);
+ opacity:0;transform:translateY(10px) scale(.96);pointer-events:none;transition:opacity 180ms ease,transform 260ms cubic-bezier(.22,.8,.3,1)}
+body.player-reveal-hover #btnBarShow,#barRevealZone:focus-within #btnBarShow{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+body.no-anim #bar,body.no-anim #btnBarShow{transition:none!important}
+@media(prefers-reduced-motion:reduce){body #bar,body #btnBarShow{transition:none!important}}
+body.lys-bar:not(.player-bar-hidden):not(.lyb-auto) .lys-prog,body.lys-bar.lyb-auto.lyb-awake:not(.player-bar-hidden) .lys-prog{display:none}
+body.player-bar-hidden .lys-prog{display:block}
+@media(prefers-reduced-motion:reduce){body .view,body .view-surface,.pp-resize i{transition:none}}
+body.no-anim .view,body.no-anim .view-surface{transition:none}
+
+body.sidebar-moving .side .nv{overflow:visible}
+
+body.lys-bar:not(.player-bar-hidden):has(#bar:hover,#bar:focus-within) .lys-prog{display:none}
+
+/* Direct WebGL owns a stage-sized framebuffer, not the 2D overscan bitmap. */
+#pp #vizDirect{inset:0;width:100%;height:100%;z-index:0;pointer-events:none;--viz-inset:0px}
+#pp #vizDirect[hidden]{display:none!important}
+/* No invisible artwork surface, iframe focus outline or shadow in coverless presets. */
+body.mode-visual[data-vcover=hide] #artWrap,body.mode-visual[data-vcover=hide] #artWrap *{visibility:hidden!important;pointer-events:none!important}
+
+/* Keyboard focus belongs to the visible grip, not a full-height neon frame. */
+#ppResize:focus-visible{box-shadow:none;background:transparent}
+#ppResize:focus-visible i{box-shadow:0 0 0 2px var(--ds-bg),0 0 0 4px var(--ds-acc)}
+
+/* A native parent-document recovery strip: independent of iframe bridge/focus.
+   Reserve only the requested bottom-center region, and only while MineRadio hides the bar. */
+body.mr-on #barRevealZone:not([hidden]){pointer-events:auto;z-index:90}
+body.mr-on #barRevealZone:not([hidden]):hover #btnBarShow{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+
+#czDock .czd-foot{flex-wrap:wrap;gap:6px;padding:10px}
+#czDock .czd-foot>button{min-height:36px}
+#czDock .czd-foot [data-cz="done"]{margin-left:auto}
+#czDock .czl-eye:disabled{opacity:.25;cursor:not-allowed}
+#czDock :is(button,input,select,textarea):focus-visible{outline:2px solid var(--ds-acc);outline-offset:2px}
+/* Editor toast must not stretch between a top anchor and the normal player's bottom anchor. */
+body.cz-edit #toast{left:24px;top:calc(var(--top) + 12px);bottom:auto!important;height:auto;min-height:0;translate:none;max-width:calc(100vw - var(--czW,348px) - 48px)}
+body.cz-edit.czd-float #toast{max-width:calc(100vw - 48px)}
+/* Window overlay objects are not part of a widget/wallpaper/Discord preview. */
+body.cz-part:has(#czStage) #czLayer{display:none!important}
+/* Settings workspace: content and navigation scroll independently above the player.
+   Sticky was constrained by the short parent's bottom edge and clipped its own title. */
+#page:has(>.set2.settings-workspace){height:100%;min-height:0;overflow:hidden;padding-bottom:16px!important}
+.set2.settings-workspace{display:grid;grid-template-columns:236px minmax(0,1fr);height:var(--settings-height,calc(100dvh - 220px));min-height:180px;overflow:hidden;padding-bottom:0;gap:32px}
+body:not(.ui-clean) .set2.settings-workspace .set-side{position:static;top:auto;height:100%;max-height:none!important;min-height:0;overflow:visible;display:flex;flex-direction:column;padding:0}
+.set2.settings-workspace .set-side>.sh-title,.set2.settings-workspace .set-search,.set2.settings-workspace .ds-setmode{flex-shrink:0}
+body:not(.ui-clean) .settings-workspace .set-side>nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable;padding-bottom:16px}
+.set2.settings-workspace .set-main{min-width:0;min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable;padding:0 8px 40px 0}
+.settings-workspace .set-side nav a{min-height:44px;flex-shrink:0;cursor:pointer}.settings-workspace .set-side nav a:focus-visible{outline:2px solid var(--A1,#8cd7ef);outline-offset:-3px}
+.settings-mobile-nav{display:none;font:inherit;min-height:44px;padding:10px 36px 10px 12px;max-width:100%;width:100%;background:#161a22;color:#fff;border:1px solid #ffffff40;border-radius:10px;color-scheme:dark}
+body.ui-clean .set2.settings-workspace{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr);gap:0}
+body.ui-clean .settings-workspace .set-side{min-height:0;z-index:4}
+@media(max-width:900px){.set2.settings-workspace{grid-template-columns:195px minmax(0,1fr);gap:20px}}
+@media(max-width:760px){.set2.settings-workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:16px;padding-left:0;padding-right:0}body:not(.ui-clean) .set2.settings-workspace .set-side{height:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}body:not(.ui-clean) .settings-workspace .set-side>.sh-title{font-size:24px;margin:0}body:not(.ui-clean) .settings-workspace .set-side>nav{display:none}body:not(.ui-clean) .settings-workspace .settings-mobile-nav{display:block}.set2.settings-workspace .set-main{padding-right:2px}.settings-workspace .set-search{margin:0;min-height:44px}.settings-workspace .ds-setmode{margin:0!important}.settings-workspace .set-card .set-row{flex-wrap:wrap}.settings-workspace .set-r{max-width:100%}}
+.settings-workspace .set-side>nav::-webkit-scrollbar,.settings-workspace .set-main::-webkit-scrollbar{display:block;width:7px;height:7px}.settings-workspace .set-side>nav::-webkit-scrollbar-thumb,.settings-workspace .set-main::-webkit-scrollbar-thumb{background:#ffffff45;border-radius:5px}.settings-workspace .set-side>nav::-webkit-scrollbar-track{background:#ffffff08}
+@media(max-width:760px){
+ body:not(.ui-clean):has(.settings-workspace) #view{left:8px!important;right:8px!important}
+ body:not(.ui-clean):has(.settings-workspace) .side{display:none!important}
+ body.settings-nav-open:not(.ui-clean):has(.settings-workspace) .side{display:flex!important;left:8px;width:220px!important;top:64px;bottom:170px;z-index:80;transform:none!important;box-shadow:0 12px 60px #000c}
+ body:not(.ui-clean):has(.settings-workspace) .top{gap:4px;padding-left:8px;padding-right:8px}
+ body:not(.ui-clean):has(.settings-workspace) .top-l{width:auto!important;gap:8px}
+ body:not(.ui-clean):has(.settings-workspace) .brand b,body:not(.ui-clean):has(.settings-workspace) .brand .net,body:not(.ui-clean):has(.settings-workspace) #gsearch,body:not(.ui-clean):has(.settings-workspace) #btnFwd{display:none}
+ body:not(.ui-clean):has(.settings-workspace) .top-c{min-width:0;flex:1;gap:4px}
+ body:not(.ui-clean):has(.settings-workspace) .top-r{gap:4px}
+ body:not(.ui-clean):has(.settings-workspace) .win button{width:32px;min-width:32px}
+}
+@media(max-width:760px){body:not(.ui-clean):has(.settings-workspace) #view{background:var(--ds-s1,#101012)!important;box-shadow:none!important;border-radius:12px}body:not(.ui-clean):has(.settings-workspace) #page{background:var(--ds-s1,#101012)}}
+/* Clean UI's desktop selectors were more specific than its own mobile overrides. */
+@media(max-width:760px){
+ body.ui-clean .settings-workspace .set-side{grid-template-columns:minmax(0,1fr)!important;gap:8px;padding-bottom:16px}
+ body.ui-clean .settings-workspace .set-side>.sh-title{grid-column:1/-1;grid-row:1;margin:0;font-size:24px}
+ body.ui-clean .settings-workspace .set-side>.set-search{grid-column:1/-1;grid-row:2;min-width:0;max-width:100%;width:100%}
+ body.ui-clean .settings-workspace .ds-setmode{grid-column:1/-1;grid-row:3;max-width:none}
+ body.ui-clean .settings-workspace .clean-setting-picker{grid-column:1/-1;grid-row:4;max-width:100%}
+ body.ui-clean .settings-workspace .clean-setting-picker>nav{width:100%;max-height:260px;grid-template-columns:1fr}
+ body:has(.settings-workspace) .top{gap:4px;padding-left:8px;padding-right:8px}
+ body:has(.settings-workspace) .top-l{width:auto!important;gap:8px}
+ body:has(.settings-workspace) .brand b,body:has(.settings-workspace) .brand .net,body:has(.settings-workspace) #gsearch,body:has(.settings-workspace) #btnFwd{display:none!important}
+ body:has(.settings-workspace) .top-c{min-width:0;flex:1;gap:4px}
+ body:has(.settings-workspace) .top-r{gap:4px}
+ body:has(.settings-workspace) .win button{width:32px;min-width:32px}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;height:140px!important;min-height:140px!important;width:auto!important;transform:none!important;padding:12px!important;grid-template-columns:44px minmax(0,1fr) 44px 52px 44px!important;grid-template-rows:46px 56px!important;gap:8px!important}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar #btnPrev{grid-row:2!important;grid-column:1!important}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar #btnPlay{grid-row:2!important;grid-column:2!important;justify-self:center}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar #btnNext{grid-row:2!important;grid-column:3!important}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar .vol{grid-row:2!important;grid-column:4/6!important}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar .b-meta{grid-row:1!important;grid-column:2/5!important}
+ body.ui-clean.main-bar:has(.settings-workspace) #bar #btnCleanActions{grid-row:1!important;grid-column:5!important}
+}

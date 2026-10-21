@@ -1,0 +1,90 @@
+/* 1.0.0: панель «Только текст» стала основной. Никаких новых GPU/аудио-движков. */
+body.main-bar{--bar:92px}
+/* Без горизонтального среза: содержимое донизу, последние кнопки поднимаются за счёт padding. */
+.view-surface{display:none}
+body.main-bar.ds-panels .view-surface{display:block;position:fixed;top:var(--top);left:calc(var(--side) + var(--ds-gap));right:var(--ds-gap);bottom:var(--ds-gap);border-radius:var(--ds-r3);background:var(--ds-s1);pointer-events:none;z-index:4}
+body.main-bar .view{bottom:0;scroll-padding-bottom:calc(var(--bar) + 32px)}
+body.main-bar.ds-panels .view{bottom:var(--ds-gap,8px)}
+body.main-bar.ds-panels .view{background:transparent;border-bottom-left-radius:0;border-bottom-right-radius:0}
+body.main-bar .side,body.main-bar .pp{bottom:0}
+body.main-bar.ds-panels .side,body.main-bar.ds-panels .pp{bottom:var(--ds-gap,8px)}
+body.main-bar .view .page{padding-bottom:calc(var(--bar) + 48px)}
+body.main-bar .side-list{min-height:0;flex:1 1 0;margin-bottom:0;padding-bottom:104px;scroll-padding-bottom:104px}
+body.main-bar .pp{padding-bottom:112px}
+body.main-bar .set2 .set-side{max-height:calc(100vh - var(--top,64px) * 2 - var(--bar) - 24px)}
+body.main-bar .bar{
+  width:min(1120px,calc(100vw - 48px))!important;bottom:16px!important;
+  height:76px!important;padding:14px 18px 4px 14px!important;z-index:25;
+  /* Отдельная тёмная таблетка как в MineRadio. Вне самой панели нет масок и подложек. */
+  background:rgba(12,12,18,.68)!important;backdrop-filter:blur(18px) saturate(1.15)!important;-webkit-backdrop-filter:blur(18px) saturate(1.15)!important;
+  border:1px solid rgba(255,255,255,.11)!important;border-radius:24px;box-shadow:none!important;animation:none;transition:opacity .2s;
+}
+body.main-bar .bar-l,body.main-bar .bar-c,body.main-bar .bar-r{display:contents!important}
+body.main-bar .bar .seek{position:absolute;margin:0;left:24px;right:24px;top:2px;height:16px}
+body.main-bar .bar .b-meta{flex:0 1 240px;min-width:100px;max-width:280px}
+body.main-bar .bar .b-art{width:42px;height:42px;border-radius:10px;box-shadow:none;cursor:pointer}
+body.main-bar .bar .ib{flex:0 0 36px;position:relative;cursor:pointer}
+body.main-bar .bar #btnPlay{flex-basis:46px;flex-shrink:0;position:relative;transform:none}
+body.main-bar .bar #btnPlay.is-loading::after{pointer-events:none}
+body.main-bar .bar #btnMore,body.main-bar .bar #btnPP{display:grid!important}
+body.main-bar .bar #btnMore{order:5}
+body.main-bar .bar #btnPP{order:14}
+body.main-bar .bar #btnLybStyle,body.main-bar .bar #btnLybView,body.main-bar .bar #btnLybFs,body.main-bar .bar #btnDj{display:none!important}
+body.main-bar .bar .time{display:block;flex:0 0 auto;margin-left:8px;font-size:11.5px;pointer-events:none}
+body.main-bar .bar .time span{font-size:inherit;min-width:0}
+/* Громкость как в старой панели: ползунок в одном ряду с кнопкой, без попапа. */
+body.main-bar .bar .vol{position:relative;flex:0 0 auto;min-width:36px;align-items:center}
+body.main-bar .bar .vol input{
+  position:static;inset:auto;width:0;max-width:none;margin:0;opacity:0;
+  pointer-events:none;box-shadow:none;flex:0 0 auto;
+  transition:width .18s ease,opacity .18s ease,margin .18s ease;
+}
+body.main-bar .bar .vol::before{content:none}
+body.main-bar .bar .vol:hover input,body.main-bar .bar .vol:focus-within input{
+  width:84px;margin:0 4px;opacity:1;pointer-events:auto;
+}
+body.main-bar .bar button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+/* Цвет меняется у активных действий, а не у самих SVG-иконок. */
+svg.i{color:inherit;background:none;box-shadow:none;filter:none}
+.brand .logo,.brand .logo-img{background:none;color:inherit;padding:0;box-shadow:none;border-radius:0}
+.cl-sw button svg.i{filter:none!important}
+@media(max-width:1100px){
+  body.main-bar .bar{width:calc(100vw - 32px)!important;gap:4px}
+  body.main-bar .bar .b-meta{flex-basis:180px;min-width:90px}
+}
+@media(max-width:900px){
+  body.main-bar .bar{padding-left:12px!important;padding-right:12px!important}
+  body.main-bar .bar #btnLybAdd{display:none!important}
+  body.main-bar .bar .b-meta{flex-basis:150px;min-width:60px}
+  body.main-bar .bar .b-sub{display:block!important}
+}
+@media(max-width:760px){
+  body.main-bar .bar{width:calc(100vw - 24px)!important;bottom:12px!important;height:148px!important;display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) repeat(5,36px);grid-template-rows:42px 42px 28px;gap:4px;padding:14px 12px 8px!important}
+  body.main-bar{--bar:172px}
+  body.main-bar .view .page{padding-bottom:calc(var(--bar) + 48px)}
+  body.main-bar .side-list{margin-bottom:0;padding-bottom:180px;scroll-padding-bottom:180px}
+  body.main-bar .pp{padding-bottom:188px}
+  body.main-bar .bar .b-art{grid-column:1;grid-row:1;margin:0}
+  body.main-bar .bar .b-meta{grid-column:2 / 6;grid-row:1;max-width:none;min-width:0;order:0}
+  body.main-bar .bar #btnLike{grid-column:6;grid-row:1}
+  body.main-bar .bar #btnMore{grid-column:7;grid-row:1}
+  body.main-bar .bar #btnPrev{grid-column:1;grid-row:2}
+  body.main-bar .bar #btnPlay{grid-column:2;grid-row:2;width:40px;height:40px;margin:0;justify-self:center}
+  body.main-bar .bar #btnNext{grid-column:3;grid-row:2}
+  body.main-bar .bar #btnLybQueue{grid-column:4;grid-row:2}
+  body.main-bar .bar .vol{grid-column:1 / -1;grid-row:3;justify-self:end}
+  body.main-bar .bar .vol input{width:84px;margin:0 4px;opacity:1;pointer-events:auto}
+  body.main-bar .bar #btnLybLy{grid-column:6;grid-row:2}
+  body.main-bar .bar #btnPP{grid-column:7;grid-row:2}
+  body.main-bar .bar .time,body.main-bar .bar #btnRepeat,body.main-bar .bar .lb-sp{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){body:is(.main-bar,.lys-bar) .bar .play.is-loading::after{animation:none}}
+
+@supports not (backdrop-filter:blur(1px)){body.main-bar .bar{background:rgba(12,12,18,.96)!important}}
+/* This label is generated by CSS rather than a translatable DOM text node. */
+html:lang(en) body.ds-panels .side-list::before{content:"Playlists"}
+
+/* 1.0.0 panel13: Japanese UI labels and readable native font fallback. */
+html:lang(ja) body.ds-panels .side-list::before{content:"プレイリスト"}
+html:lang(ja) body{font-family:"Yu Gothic UI",Meiryo,"Noto Sans JP",system-ui,sans-serif}

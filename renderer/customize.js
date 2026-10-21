@@ -1,0 +1,931 @@
+'use strict';
+// Pulse 1.9.2 — ПОДГОТОВКА глобальной кастомизации («пересобрать приложение под себя»).
+// Здесь лежит фундамент: модель данных, реестр объектов интерфейса, движок применения, API для плагинов и вкладка в настройках.
+// Сам визуальный редактор раскладки и запуск пользовательского кода пока НЕ включены (см. CZ_FLAGS и CUSTOMIZE.md).
+//
+// Модель (S().layout, входит в конфиги как раздел «Кастомизация»):
+//   { v: 1,
+//     items:   { <regionId>: { x, y, scale, hidden } },   // правки встроенных объектов: сдвиг (px), масштаб (%), скрыт
+//     objects: [ { id, name, on, mount, html, css, js, x, y, scale } ] }  // свои объекты, созданные кодом
+
+// 1.9.3: ниже в файле — живой редактор окна (czEdit)
+const CZ_FLAGS = { editor: true, userCode: false }; // 1.9.3: живой редактор окна включён; код пользователя — после песочницы
+const CZ_DEF = () => ({ v: 1, items: {}, objects: [] });
+
+// ---------- реестр объектов интерфейса ----------
+// sel — CSS-селектор; move/scale/hide — что разрешено с этим объектом. Плагины добавляют свои через Pulse.layout.register().
+const CZ_REGIONS = {
+  top:      { n: 'Верхняя панель',         g: 'Каркас',   sel: '#top',        move: true, scale: true, hide: false },
+  brand:    { n: 'Логотип',                g: 'Каркас',   sel: '#brand',      move: true,  scale: true,  hide: true },
+  search:   { n: 'Поиск',                  g: 'Каркас',   sel: '#gsearch',    move: true,  scale: true,  hide: true },
+  side:     { n: 'Боковая панель',         g: 'Каркас',   sel: '#side',       move: true, scale: true, hide: true },
+  view:     { n: 'Основная область',       g: 'Каркас',   sel: '#view',       move: true, scale: true, hide: false },
+  bar:      { n: 'Плеер внизу',            g: 'Плеер',    sel: '#bar',        move: true, scale: true, hide: false },
+  barNow:   { n: 'Текущий трек (низ)',     g: 'Плеер',    sel: '#barMid',     move: true,  scale: true,  hide: true },
+  seek:     { n: 'Полоса перемотки',       g: 'Плеер',    sel: '#seek',       move: true, scale: true, hide: true },
+  stage:    { n: 'Сцена (обложка/визуал)', g: 'Экран плеера', sel: '#stage',  move: true,  scale: true,  hide: true },
+  art:      { n: 'Обложка',                g: 'Экран плеера', sel: '#artWrap', move: true, scale: true,  hide: true },
+  visLine:  { n: 'Строка на визуале',      g: 'Экран плеера', sel: '#visLine', move: true, scale: true,  hide: true },
+  ppTabs:   { n: 'Вкладки справа',         g: 'Экран плеера', sel: '#ppTabs',  move: true, scale: true, hide: true },
+  lyrics:   { n: 'Текст песни',            g: 'Экран плеера', sel: '#lyrics',  move: true, scale: true, hide: true }
+};
+
+// ---------- движок: всё применяется одним <style>, без правки инлайн-стилей (легко откатить, не конфликтует с app.js) ----------
+// права объекта: встроенный из реестра или выбранный мышью (свой селектор — можно всё)
+function czCaps(id, it) {
+  if (CZ_REGIONS[id]) return CZ_REGIONS[id];
+  if (it && it.sel) return { n: it.n || 'Элемент', g: 'Свои', sel: it.sel, move: true, scale: true, hide: true };
+  return null;
+}
+// добавить класс к body, сохранив привязку к странице («body[data-czr=home] …»)
+const czBody = (sel, cls) => { const m = sel.match(/^body(\[[^\]]+\])\s+(.*)$/); return m ? `body${cls}${m[1]} ${m[2]}` : `body${cls} ${sel}`; };
+function czLayout() { const s = S(); if (!s.layout || typeof s.layout !== 'object') s.layout = CZ_DEF(); const L = s.layout; L.items = L.items || {}; L.objects = L.objects || []; return L; }
+// 2.0: кроме сдвига/масштаба/скрытия — ширина, высота, прозрачность, скругление, слой (z), порядок в ряду, фон
+function czCss() {
+  const L = czLayout(); let css = '';
+  for (const id in L.items) {
+    const it = L.items[id], R = czCaps(id, it); if (!R || !it) continue;
+    const r = [], sel = R.sel;
+    if (R.hide && it.hidden) css += `${czBody(sel, ':not(.cz-edit)')}{display:none!important}\n${czBody(sel, '.cz-edit')}{opacity:.3!important;outline:1px dashed rgba(255,255,255,.6)!important}\n`;
+    if (R.move && (it.x || it.y)) r.push(`translate:${+it.x || 0}px ${+it.y || 0}px!important`);
+    if (R.scale && it.scale && it.scale !== 100) r.push(`scale:${Math.max(0.3, Math.min(3, it.scale / 100))}!important`, 'transform-origin:center');
+    if (it.w > 0) r.push(`width:${+it.w}px!important`, 'min-width:0!important', 'max-width:none!important', 'flex:0 0 auto!important');
+    if (it.h > 0) r.push(`height:${+it.h}px!important`, 'min-height:0!important', 'max-height:none!important');
+    if (it.op != null && it.op !== 100) r.push(`opacity:${Math.max(0, Math.min(100, +it.op)) / 100}!important`);
+    if (it.rad != null && it.rad >= 0) r.push(`border-radius:${+it.rad}px!important`);
+    if (it.z) { r.push(`z-index:${+it.z}!important`); if (it.rel) r.push('position:relative'); }
+    if (it.ord) r.push(`order:${+it.ord}!important`);
+    if (it.bg) r.push(`background:${czBg(it.bg)}!important`);
+    // 2.0: эффекты — цвет текста, тень, рамка, размытие под элементом, поворот
+    const cc = (v) => (v === 'accent' ? 'var(--A1)' : v);
+    if (it.tc) r.push(`color:${cc(it.tc)}!important`);
+    if (it.sh > 0) r.push(`box-shadow:0 ${Math.round(it.sh / 3)}px ${+it.sh}px rgba(0,0,0,.55)!important`);
+    if (it.bw > 0) r.push(`border:${+it.bw}px solid ${cc(it.bc) || 'rgba(255,255,255,.3)'}!important`);
+    if (it.bk > 0) r.push(`backdrop-filter:blur(${+it.bk}px)!important`);
+    if (it.rot) r.push(`rotate:${+it.rot}deg!important`);
+    if (r.length && it.inl) r.push('display:inline-block');
+    if (r.length) css += `${sel}{${r.join(';')}}\n`;
+  }
+  // свои объекты привязаны к странице
+  const P = { home: 1, explore: 1, library: 1, downloads: 1, settings: 1 };
+  for (const p in P) css += `body:not([data-czr="${p}"]) #czLayer>[data-page="${p}"],body.pp-open #czLayer>[data-page="${p}"]{display:none!important}\n`;
+  css += 'body:not(.pp-open) #czLayer>[data-page="pp"]{display:none!important}\n';
+  return css;
+}
+function czApply() {
+  let st = document.getElementById('czStyle');
+  if (!st) { st = document.createElement('style'); st.id = 'czStyle'; document.head.appendChild(st); }
+  const css = czCss(); if (st.textContent !== css) st.textContent = css;
+  czObjects();
+}
+// ---------- свои объекты (2.0): надпись, часы, картинка, кнопка-ссылка, плашка ----------
+// Рисуются в слое поверх окна (shadow DOM — их стили не протекают в приложение). Пользовательский JS не выполняется.
+const CZ_OBJ = {
+  text: { n: 'Надпись', icon: 'note', hint: 'Любой текст поверх окна', def: { text: 'Моя надпись', size: 22, weight: 700, color: '#ffffff', bg: '', rad: 10, w: 0, h: 0 } },
+  clock: { n: 'Часы', icon: 'gauge', hint: 'Время, можно с датой', def: { size: 34, weight: 800, color: '#ffffff', bg: '', fmt: 'hm', rad: 12, w: 0, h: 0 } },
+  image: { n: 'Картинка', icon: 'cover', hint: 'По ссылке или из файла', def: { src: '', w: 160, h: 160, rad: 14, fit: 'cover' } },
+  link: { n: 'Кнопка-ссылка', icon: 'link', hint: 'Открывает сайт по клику', def: { text: 'Мой канал', url: 'https://', size: 14, weight: 700, color: '#ffffff', bg: 'accent', rad: 99, w: 0, h: 0 } },
+  box: { n: 'Плашка', icon: 'layers', hint: 'Цветной фон под чем-то', def: { w: 240, h: 120, bg: 'rgba(255,255,255,0.08)', rad: 18, blur: 12 } }
+};
+const czSafeUrl = (u) => (/^(https?:|data:image\/|file:)/i.test(String(u || '').trim()) ? String(u).trim() : '');
+const czBg = (b) => (b === 'accent' ? 'linear-gradient(135deg,var(--A1),var(--A2))' : b || 'transparent');
+function czClockText(fmt) {
+  const d = new Date(), p = (n) => String(n).padStart(2, '0'), hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  if (fmt === 'hms') return `${hm}:${p(d.getSeconds())}`;
+  if (fmt === 'date') return `${hm} · ${d.toLocaleDateString((window.PulseI18n ? PulseI18n.locale() : 'en-US'), { day: 'numeric', month: 'long' })}`;
+  return hm;
+}
+function czObjHtml(o) {
+  const t = o.type || 'text', fs = +o.size || 16, base = `:host{all:initial}.o{box-sizing:border-box;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;font-size:${fs}px;font-weight:${+o.weight || 600};color:${o.color || '#fff'};background:${czBg(o.bg)};border-radius:${o.rad != null ? +o.rad : 10}px;line-height:1.2;text-align:center;overflow:hidden}`;
+  if (t === 'text') return `<style>${base}.o{padding:${o.bg ? '8px 14px' : '0'};white-space:pre-wrap}</style><div class="o">${esc(o.text || '')}</div>`;
+  if (t === 'clock') return `<style>${base}.o{padding:${o.bg ? '8px 14px' : '0'};font-variant-numeric:tabular-nums;white-space:nowrap}</style><div class="o" data-clock="${esc(o.fmt || 'hm')}">${czClockText(o.fmt)}</div>`;
+  if (t === 'link') return `<style>${base}.o{padding:0 18px;min-height:36px;white-space:nowrap;cursor:pointer;text-decoration:none}.o:hover{filter:brightness(1.15)}</style><a class="o">${esc(o.text || 'Ссылка')}</a>`;
+  if (t === 'image') { const s = czSafeUrl(o.src); return `<style>${base}img{width:100%;height:100%;object-fit:${o.fit === 'contain' ? 'contain' : 'cover'};display:block}.ph{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);border:1.5px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.04)}</style>${s ? `<div class="o" style="background:none"><img src="${esc(s)}" alt=""></div>` : '<div class="o ph">Картинка: вставь ссылку справа</div>'}`; }
+  return `<style>${base}.o{${+o.blur ? `backdrop-filter:blur(${+o.blur}px);` : ''}}</style><div class="o"></div>`;
+}
+function czObjects() {
+  const L = czLayout(), on = L.objects.filter((o) => o && o.on !== false);
+  let layer = document.getElementById('czLayer');
+  if (!on.length) { if (layer) layer.remove(); return; }
+  if (!layer) { layer = document.createElement('div'); layer.id = 'czLayer'; document.body.appendChild(layer); }
+  const keep = new Set(on.map((o) => o.id));
+  [...layer.children].forEach((el) => { if (!keep.has(el.dataset.cz)) el.remove(); });
+  on.forEach((o) => {
+    let host = layer.querySelector(`[data-cz="${CSS.escape(o.id)}"]`);
+    if (!host) { host = document.createElement('div'); host.dataset.cz = o.id; host.attachShadow({ mode: 'open' }); layer.appendChild(host); }
+    const html = o.type ? czObjHtml(o) : `<style>${o.css || ''}</style>${o.html || ''}`; // без type — объект плагина (html/css)
+    const w = +o.w > 0 ? `width:${+o.w}px;` : '', h = +o.h > 0 ? `height:${+o.h}px;` : '';
+    host.style.cssText = `position:absolute;left:${+o.x || 0}px;top:${+o.y || 0}px;${w}${h}scale:${(o.scale || 100) / 100};transform-origin:top left;z-index:${10 + (+o.z || 0)};opacity:${o.op != null ? o.op / 100 : 1}`;
+    host.dataset.page = o.page || 'all'; host.classList.toggle('lnk', o.type === 'link'); host.classList.toggle('czh-hid', !!o.hidden);
+    if (host.dataset.k !== html) { host.dataset.k = html; host.shadowRoot.innerHTML = html; }
+  });
+}
+// часы тикают
+setInterval(() => { const l = document.getElementById('czLayer'); if (!l) return; l.querySelectorAll('[data-cz]').forEach((h) => { const c = h.shadowRoot && h.shadowRoot.querySelector('[data-clock]'); if (c) { const t = czClockText(c.dataset.clock); if (c.textContent !== t) c.textContent = t; } }); }, 1000);
+// клик по кнопке-ссылке (вне редактора)
+document.addEventListener('click', (e) => {
+  if (document.body.classList.contains('cz-edit')) return;
+  const h = e.target && e.target.closest && e.target.closest('#czLayer>[data-cz].lnk'); if (!h) return;
+  const o = czLayout().objects.find((x) => x.id === h.dataset.cz), u = o && czSafeUrl(o.url); if (!u || u.startsWith('data:')) return;
+  try { pulse.openUrl ? pulse.openUrl(u) : window.open(u); } catch {}
+});
+{ const base = applyCustom; applyCustom = function () { base.apply(this, arguments); try { czApply(); } catch (e) { console.error('[customize]', e); } }; }
+PX.on('ready', czApply);
+
+// ---------- API для плагинов и будущего редактора ----------
+const czChanged = () => { save(); settingChanged('layout.items'); };
+window.Pulse.layout = {
+  flags: CZ_FLAGS,
+  regions: () => Object.entries(CZ_REGIONS).map(([id, r]) => ({ id, name: r.n, group: r.g, selector: r.sel, move: r.move, scale: r.scale, hide: r.hide })),
+  register(id, def) { if (!id || CZ_REGIONS[id] || !def || !def.sel) return false; CZ_REGIONS[id] = { n: def.name || id, g: def.group || 'Плагины', sel: def.sel, move: !!def.move, scale: !!def.scale, hide: !!def.hide }; czApply(); return true; },
+  get: (id) => (id ? { ...(czLayout().items[id] || {}) } : JSON.parse(JSON.stringify(czLayout()))),
+  set(id, patch) { if (!CZ_REGIONS[id]) return false; const L = czLayout(); L.items[id] = { ...(L.items[id] || {}), ...patch }; czChanged(); return true; },
+  clear(id) { const L = czLayout(); delete L.items[id]; czChanged(); },
+  addObject(o) { const L = czLayout(), id = o.id || 'o' + Date.now().toString(36); L.objects = L.objects.filter((x) => x.id !== id).concat({ id, name: o.name || 'Объект', on: true, mount: o.mount || 'layer', html: String(o.html || ''), css: String(o.css || ''), js: CZ_FLAGS.userCode ? String(o.js || '') : '', x: +o.x || 0, y: +o.y || 0, scale: +o.scale || 100 }); czChanged(); return id; },
+  removeObject(id) { const L = czLayout(); L.objects = L.objects.filter((x) => x.id !== id); czChanged(); },
+  reset: (opts) => czReset(opts)
+};
+
+// ---------- сброс в исходный вид, связанный с «Конфигами» ----------
+const czIsDefault = () => { const L = czLayout(); return !Object.keys(L.items).length && !L.objects.length; };
+function czReset({ silent = false, backup = true } = {}) {
+  if (czIsDefault()) { if (!silent) toast('Уже исходный вид', 'info'); return false; }
+  // перед сбросом текущая раскладка сохраняется отдельным конфигом — её можно вернуть одной кнопкой в «Конфиги»
+  if (backup && typeof cfgList === 'function') {
+    const name = `Резерв кастомизации · ${fmtDate(Date.now())}`;
+    cfgList().push({ id: 'c' + Date.now().toString(36), name, parts: ['layout'], at: Date.now(), data: { layout: JSON.parse(JSON.stringify(czLayout())) }, backup: true });
+  }
+  S().layout = CZ_DEF(); if (lib.cfgActive) { const c = cfgList().find((x) => x.id === lib.cfgActive); if (c && c.parts.includes('layout')) lib.cfgActive = null; }
+  czApply(); save(); rerenderSettings();
+  if (!silent) toast(backup ? 'Исходный вид возвращён · копия сохранена в «Конфиги»' : 'Исходный вид возвращён', 'refresh');
+  return true;
+}
+{ const base = customAct; customAct = function (a, el) { if (a.startsWith('cz.')) return czAct(a.slice(3), el); return base(a, el); }; }
+function czAct(a) {
+  const [cmd, arg] = [a.split(':')[0], a.split(':').slice(1).join(':')];
+  if (cmd === 'reset') { if (!czIsDefault() && !confirm('Вернуть исходный вид приложения?\nТекущая раскладка сохранится в «Конфиги» — её можно будет вернуть.')) return; return czReset(); }
+  if (cmd === 'clear') { window.Pulse.layout.clear(arg); return rerenderSettings(); }
+  if (cmd === 'edit') return czEdit(arg || 'home');
+  if (cmd === 'part') return czPart(arg || 'window');
+  if (cmd === 'dockreset') { const T = czStudio(); T.side = 'right'; delete T.w; delete T.fx; delete T.fy; delete T.fh; T.width = 'normal'; save(); czStudioApply(); return toast('Панель редактора снова справа', 'edit'); }
+  if (cmd === 'delobj') { czLayout().objects = czLayout().objects.filter((o) => o.id !== arg); save(); czApply(); return rerenderSettings(); }
+  if (cmd === 'tocfg') { lib.setTab = 'cfg'; save(); rerenderSettings(); const v = $('view'); if (v) v.scrollTop = 0; }
+}
+
+// ---------- вкладка «Кастомизация» ----------
+function customizeTab() {
+  const L = czLayout(), changed = Object.keys(L.items).filter((id) => czCaps(id, L.items[id])), def = czIsDefault();
+  const backups = typeof cfgList === 'function' ? cfgList().filter((c) => c.parts && c.parts.includes('layout')).length : 0;
+  const caps = (r) => [r.move && 'двигать', r.scale && 'масштаб', r.hide && 'скрывать'].filter(Boolean).join(' · ') || 'только просмотр';
+  const state = (id) => { const it = L.items[id]; if (!it) return ''; const p = []; if (it.hidden) p.push('скрыт'); if (it.x || it.y) p.push(`сдвиг ${+it.x || 0}, ${+it.y || 0}`); if (it.scale && it.scale !== 100) p.push(it.scale + '%'); return p.join(' · '); };
+  const groups = {}; for (const id in CZ_REGIONS) (groups[CZ_REGIONS[id].g] = groups[CZ_REGIONS[id].g] || []).push(id);
+  const own = Object.keys(L.items).filter((id) => !CZ_REGIONS[id] && L.items[id] && L.items[id].sel); if (own.length) groups['Выбрано в редакторе'] = own;
+  const list = Object.entries(groups).map(([g, ids]) => `<div class="cz-g"><div class="cz-gh">${esc(g)}</div>${ids.map((id) => { const r = czCaps(id, L.items[id]), s = state(id);
+    return `<div class="cz-it ${s ? 'on' : ''}"><div><b>${esc(r.n)}</b><span>${s ? esc(s) : esc(caps(r))}</span></div>${s ? `<button class="ib sm" data-sact="cx:cz.clear:${id}" title="Вернуть этот объект">${ico('undo')}</button>` : ''}</div>`; }).join('')}</div>`).join('');
+  return { id: 'customize', icon: 'tune', title: 'Кастомизация', rows: [
+    { raw: `<div class="cz-reset ${def ? 'idle' : ''}"><div><b>${def ? 'Исходный вид' : 'Отменить всю кастомизацию'}</b><span>${def ? 'Сейчас ничего не изменено' : `Изменено объектов: ${changed.length}${L.objects.length ? ` · своих объектов: ${L.objects.length}` : ''}. Перед сбросом текущий вид сохранится в «Конфиги»`}</span></div><button class="btn sm ${def ? 'ghost' : 'acc'}" data-sact="cx:cz.reset" ${def ? 'disabled' : ''}>${ico('refresh')}Вернуть исходный вид</button></div>` },
+    R('Кастомизация', 'Собери Pulse под себя: двигай и масштабируй любые части окна, убирай лишнее. Всё возвращается одной кнопкой', '', 'кастомизация раскладка интерфейс пересобрать'),
+    grp('Объекты интерфейса'),
+    R('Редактор приложения', 'Перетаскивание и масштаб прямо в окне: главная, обзор, библиотека, плеер внизу, экран плеера (Ctrl+Shift+E)', `<button class="btn sm acc" data-sact="cx:cz.edit:home">${ico('edit')}Открыть редактор</button>`, 'редактор раскладка двигать'),
+    { raw: `<div class="cz-list">${list}</div>` },
+    grp('Свои объекты'),
+    R('Создать объект кодом', 'HTML + CSS (+ JS в песочнице) — свои кнопки, часы, панели. Плагины уже могут добавлять объекты через Pulse.layout.addObject()', `<button class="btn sm" disabled title="В разработке">${ico('plus')}Скоро</button>`, 'код объект html css'),
+    R('Сейчас', '', `<span class="ed-auto">${L.objects.length ? `объектов: ${L.objects.length}` : 'нет своих объектов'}</span>`),
+    grp('Конфиги'),
+    R('Раскладка входит в конфиги', `Раздел «Кастомизация» сохраняется и переключается вместе с остальными настройками (Alt + 1…9)${backups ? ` · конфигов с раскладкой: ${backups}` : ''}`, `<button class="btn sm" data-sact="cx:cz.tocfg">${ico('layers')}Открыть «Конфиги»</button>`, 'конфиг раскладка')
+  ] };
+}
+
+// =====================================================================================
+// 1.9.3 — ЖИВОЙ РЕДАКТОР ОКНА: клик — выбрать любую часть приложения, тянуть — двигать, колесо — размер,
+// Delete — скрыть, стрелки — точно, Ctrl+Z / Ctrl+Y — отмена/повтор, Esc — снять выбор / выйти.
+// Пока редактор открыт, клики не доходят до приложения (ничего не включается и не открывается).
+// =====================================================================================
+const CZ_PAGES = [['home', 'Главная', 'home'], ['explore', 'Обзор', 'explore'], ['library', 'Библиотека', 'library'], ['pp', 'Экран плеера', 'music']];
+const czE = { on: false, el: null, key: null, hov: null, drag: null, hist: [], fut: [], from: null, raf: 0, barTop: false, left: false, mini: false, help: false, page: null, info: null };
+let czSession = null;
+const czSetRoute = () => { try { document.body.dataset.czr = route().r; } catch {} };
+{ const base = renderRoute; renderRoute = function () { czSetRoute(); return base.apply(this, arguments); }; }
+PX.on('ready', czSetRoute);
+
+const CZ_SKIP = new Set(['HTML', 'BODY', 'SCRIPT', 'STYLE']);
+const czNoPick = (el) => !el || el.nodeType !== 1 || CZ_SKIP.has(el.tagName) || ['page', 'view', 'pp', 'ambient', 'czBar', 'czDock', 'czHi', 'czSel', 'czLayer'].includes(el.id) || !!el.closest('#czBar,#czDock,#toast');
+// из точки клика — осмысленный элемент: не внутренности иконки и не голый текст внутри кнопки
+function czPick(t, up) {
+  let el = t && t.nodeType === 1 ? t : t && t.parentElement;
+  if (!el) return null;
+  const svg = el.closest('svg'); if (svg) el = svg.parentElement;
+  const ctl = el.closest('button,a,input,select,textarea,label,img,canvas,.chip,.ib,[data-go],[data-act],[data-play]');
+  if (ctl && !czNoPick(ctl)) el = ctl;
+  if (el.tagName === 'INPUT' && el.parentElement && Object.values(CZ_REGIONS).some((R) => el.parentElement.matches(R.sel))) el = el.parentElement; // поле поиска → весь поиск
+  while (el && !czNoPick(el) && getComputedStyle(el).display === 'contents') el = el.parentElement;
+  for (let i = 0; i < (up || 0) && el && el.parentElement && !czNoPick(el.parentElement); i++) el = el.parentElement;
+  return czNoPick(el) ? null : el;
+}
+// 1.9.4: выбор «снаружи внутрь», как в Figma: первый клик — внешний блок (панель, ряд, карточка),
+// следующий клик внутри выбранного — на уровень глубже. Ctrl+клик — сразу самый вложенный элемент.
+function czLevels(leaf) {
+  const chain = []; for (let el = leaf; el && !czNoPick(el); el = el.parentElement) chain.push(el);
+  const regs = Object.values(CZ_REGIONS).map((R) => R.sel).join(',');
+  const keep = []; let prev = null;
+  for (const el of chain) {
+    const isReg = regs && el.matches(regs), grp = el.children.length >= 2 && getComputedStyle(el).display !== 'contents';
+    if (el !== leaf && !isReg && !grp && el.parentElement && el.parentElement.id !== 'czLayer') continue;
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    if (prev && !isReg && Math.abs(r.width - prev.width) < 2 && Math.abs(r.height - prev.height) < 2 && Math.abs(r.left - prev.left) < 2 && Math.abs(r.top - prev.top) < 2) continue; // та же рамка — лишняя обёртка
+    keep.push(el); prev = r;
+  }
+  return keep.reverse(); // снаружи → внутрь
+}
+function czPickLevel(t, e) {
+  const leaf = czPick(t, 0); if (!leaf) return { el: null };
+  if (e && e.altKey) return { el: czPick(t, 1) };
+  if (e && (e.ctrlKey || e.metaKey)) return { el: leaf };
+  if (leaf.parentElement && leaf.parentElement.id === 'czLayer') return { el: leaf };
+  const L = czLevels(leaf); if (!L.length) return { el: leaf };
+  const cur = czE.el;
+  if (cur && cur.isConnected && (cur === leaf || cur.contains(leaf))) {
+    const i = L.indexOf(cur), next = i >= 0 ? L[i + 1] : L.find((x) => x !== cur && cur.contains(x));
+    return { el: cur, deeper: next || null };
+  }
+  return { el: L[0] };
+}
+const CZ_VOL = /^(on|off|fade|active|hov|hover|sel|selected|show|shown|open|playing|loading|cur|now|liked|dis|disabled|cz-|ed-)/;
+function czSelector(el) {
+  const parts = []; let e = el;
+  while (e && e.nodeType === 1 && e !== document.body) {
+    if (e.id) { parts.unshift('#' + CSS.escape(e.id)); break; }
+    const cls = [...e.classList].find((c) => !CZ_VOL.test(c));
+    let p = e.tagName.toLowerCase() + (cls ? '.' + CSS.escape(cls) : '');
+    const par = e.parentElement;
+    if (par) { const kids = [...par.children]; if (kids.filter((x) => x.tagName === e.tagName && (!cls || x.classList.contains(cls))).length > 1) p += `:nth-child(${kids.indexOf(e) + 1})`; }
+    parts.unshift(p); e = par;
+  }
+  const s = parts.join(' > ');
+  return el.closest('#page') ? `body[data-czr="${(route() || {}).r || 'home'}"] ${s}` : s;
+}
+const czHash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return 'u' + (h >>> 0).toString(36); };
+const CZ_NAMES = { btnPlay: 'Пауза / играть', btnPrev: 'Назад (трек)', btnNext: 'Вперёд (трек)', btnPP: 'Открыть плеер', btnNav: 'Меню', vol: 'Громкость', btnMute: 'Звук', bArt: 'Обложка (низ)', bTitle: 'Название трека', bSub: 'Исполнитель', btnBack: 'Назад', btnFwd: 'Вперёд', accBtn: 'Аккаунт' };
+function czName(el) {
+  if (CZ_NAMES[el.id]) return CZ_NAMES[el.id];
+  const t = (el.getAttribute('title') || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '').trim();
+  if (t) return t.slice(0, 40);
+  const tx = (el.innerText || '').replace(/\s+/g, ' ').trim();
+  if (tx && tx.length <= 40) return tx;
+  if (tx) return tx.slice(0, 32) + '…';
+  return el.tagName.toLowerCase() + (el.classList[0] ? '.' + el.classList[0] : '');
+}
+// ключ элемента: встроенный объект реестра или свой (по селектору)
+
+// =====================================================================================
+// 2.0 — РЕДАКТОР (единый): живое окно Pulse + панель справа.
+// Выбор: клик по любой части окна или по списку «Слои». Тянуть — двигать, уголок рамки — размер,
+// панель — точные значения (положение, ширина/высота, прозрачность, скругление, слой, порядок в ряду).
+// «Добавить» — свои надписи, часы, картинки, кнопки-ссылки и плашки.
+// Мини-виджет, обои, Discord, текст и визуал — те же правки в своих холстах (кнопки «Другие части»).
+// =====================================================================================
+const czIsObj = (k) => typeof k === 'string' && k.startsWith('obj:');
+const czObj = (k) => (czIsObj(k) ? czLayout().objects.find((o) => o.id === k.slice(4)) : null);
+function czKeyOf(el) {
+  if (el.parentElement && el.parentElement.id === 'czLayer') { const o = czLayout().objects.find((x) => x.id === el.dataset.cz); return { key: 'obj:' + el.dataset.cz, n: o ? o.name || (CZ_OBJ[o.type] || {}).n || 'Объект' : 'Объект', obj: true, R: { move: true, scale: true, hide: true } }; }
+  for (const id in CZ_REGIONS) { const R = CZ_REGIONS[id]; if ((R.move || R.scale || R.hide) && el.matches(R.sel)) return { key: id, R, n: R.n }; }
+  const sel = czSelector(el); return { key: czHash(sel), sel, n: czName(el), R: { move: true, scale: true, hide: true } };
+}
+const czItem = (k) => (czIsObj(k) ? czObj(k) || {} : czLayout().items[k] || {});
+const czSnap = () => JSON.stringify({ i: czLayout().items, o: czLayout().objects });
+function czPush() { czE.hist.push(czSnap()); if (czE.hist.length > 150) czE.hist.shift(); czE.fut = []; }
+const CZ_EMPTY = (it) => !it.hidden && !it.x && !it.y && (!it.scale || it.scale === 100) && !(it.w > 0) && !(it.h > 0) && (it.op == null || it.op === 100) && (it.rad == null || it.rad < 0) && !it.z && !it.ord && !it.bg && !it.tc && !(it.sh > 0) && !(it.bw > 0) && !(it.bk > 0) && !it.rot;
+const CZ_LIMITS = { x:[-20000,20000], y:[-20000,20000], scale:[30,300], w:[0,16384], h:[0,16384], op:[0,100], rad:[-1,1000], z:[-1000,1000], ord:[-1000,1000], size:[8,240], sh:[0,200], bw:[0,40], bk:[0,100], blur:[0,100], rot:[-180,180] };
+function czCleanPatch(patch) {
+  const out = { ...patch };
+  for (const [key,[min,max]] of Object.entries(CZ_LIMITS)) if (key in out) {
+    const value = Number(out[key]);
+    if (!Number.isFinite(value)) delete out[key]; else out[key] = Math.max(min,Math.min(max,value));
+  }
+  return out;
+}
+function czSet(patch, noHist) {
+  if (!czE.key) return;
+  const L = czLayout(), k = czE.key;
+  patch = czCleanPatch(patch);
+  if (!czIsObj(k) && czE.info && !czE.info.R.hide) delete patch.hidden;
+  if (!Object.keys(patch).length) return;
+  if (!noHist) czPush();
+  if (czIsObj(k)) { const o = czObj(k); if (o) Object.assign(o, patch); return czCommit(); }
+  const info = czE.info, it = { ...(L.items[k] || {}), ...patch };
+  if (info && info.sel) { it.sel = info.sel; it.n = info.n; if (czE.el && getComputedStyle(czE.el).display === 'inline') it.inl = 1; }
+  if (patch.z && czE.el && getComputedStyle(czE.el).position === 'static') it.rel = 1;
+  if (CZ_EMPTY(it)) delete L.items[k]; else L.items[k] = it;
+  czCommit();
+}
+function czCommit() { save(); czApply(); czDockSync(); }
+function czUndo(redo) {
+  const from = redo ? czE.fut : czE.hist, to = redo ? czE.hist : czE.fut; if (!from.length) return toast(redo ? 'Нечего повторять' : 'Нечего отменять', 'undo');
+  to.push(czSnap()); const s = JSON.parse(from.pop()); czLayout().items = s.i || {}; czLayout().objects = s.o || []; czE.el = czE.el && czE.el.isConnected ? czE.el : null; czCommit();
+}
+function czSelect(el) { czE.el = el; czE.info = el ? czKeyOf(el) : null; czE.key = czE.info ? czE.info.key : null; czDockSync(true); }
+const czHost = (id) => document.querySelector(`#czLayer>[data-cz="${CSS.escape(id)}"]`);
+
+// ---------- вход / выход ----------
+function czEnter() {
+  if (!czE.on) {
+    czE.from = route().r === 'settings' ? { r: 'settings', tab: lib.setTab } : null;
+    clearTimeout(cfgAutoT);
+    czSession = JSON.parse(JSON.stringify(S()));
+    czE.on = true; czE.hist = []; czE.fut = [];
+    document.body.classList.add('cz-edit');
+    const mk = (id) => { let d = $(id); if (!d) { d = document.createElement('div'); d.id = id; document.body.appendChild(d); } return d; };
+    mk('czHi'); const sel = mk('czSel'); sel.innerHTML = '<i class="czh" title="Тяни — размер"></i>';
+    czE.left = czStudio().side === 'left';
+    const dock = mk('czDock'); dock.className = (czE.left ? 'left' : '') + (czE.mini ? ' mini' : ''); czStudioApply();
+    czE.raf = requestAnimationFrame(czLoop); czApply();
+  }
+}
+function czEdit(page) {
+  czEnter(); czLeavePart();
+  czGoPage(page || (['home', 'explore', 'library'].includes(route().r) ? route().r : 'home'));
+}
+function czGoPage(p) {
+  if (p === 'pp') { if (!curTrack()) toast('Включи любую песню — тогда откроется экран плеера', 'music'); else if (!document.body.classList.contains('pp-open')) openPP(); }
+  else if (route().r !== p || document.body.classList.contains('pp-open')) { if (document.body.classList.contains('pp-open')) closePP(); go({ r: p }); }
+  czE.page = p; czSelect(null);
+}
+function czExit(toScope, cancelled = false) {
+  if (!czE.on) return;
+  czE.on = false; cancelAnimationFrame(czE.raf); czEndDrag(true); czLeavePart(true);
+  clearTimeout(czPH.t); czPH.t = 0; czSession = null;
+  document.body.classList.remove('cz-edit'); ['czHi', 'czSel', 'czBar', 'czDock', 'czStage'].forEach((id) => { const d = $(id); if (d) d.remove(); });
+  czE.el = czE.hov = null; save(); czApply();
+  const n = Object.keys(czLayout().items).length + czLayout().objects.length;
+  toast(n ? `Сохранено · изменений: ${n}` : 'Редактор закрыт', 'check');
+  if (czE.from) { lib.setTab = czE.from.tab; go({ r: 'settings' }); }
+  if (!cancelled) cfgAutoSave();
+}
+function czCancelSession() {
+  if (!czSession) return;
+  if (JSON.stringify(S()) !== JSON.stringify(czSession) && !confirm('Отменить все изменения этого сеанса редактора?\nНастройки вернутся к состоянию перед открытием.')) return;
+  const snapshot = czSession;
+  clearTimeout(cfgAutoT); czExit(null, true);
+  clearTimeout(wHist.t); wHist.t = 0; wHist.undo = []; wHist.redo = [];
+  lib.settings = snapshot; wHist.base = JSON.stringify(S().widget);
+  applySettings(); save();
+  if (route().r === 'settings') rerenderSettings();
+  toast('Изменения сеанса отменены', 'undo');
+}
+window.czEdit = czEdit; window.czExit = czExit;
+
+// ---------- панель редактора ----------
+const CZ_OTHER = [['widget', 'Мини-виджет', 'widget'], ['wall', 'Обои', 'wallpaper'], ['discord', 'Discord', 'discord'], ['ly', 'Текст песни', 'lyrics'], ['viz', 'Визуал', 'sparkle'], ['app', 'Оформление окна', 'palette']];
+const czNumF = (f, label, v, ph, unit) => `<label class="czf"><span>${label}</span><input type="number" data-czf="${f}" value="${v == null || v === '' ? '' : v}" placeholder="${ph || ''}"><em>${unit || ''}</em></label>`;
+const czRngF = (f, label, v, min, max, step, unit) => `<div class="czr"><span>${label}</span><input type="range" data-czf="${f}" min="${min}" max="${max}" step="${step}" value="${v}"><em data-czv="${f}">${v}${unit}</em></div>`;
+const czColF = (f, label, v, auto) => `<label class="czc2"><span>${label}</span><i style="background:${esc(v && v !== 'accent' ? v : 'transparent')}"><input type="color" data-czf="${f}" value="${/^#[0-9a-f]{6}$/i.test(v || '') ? v : '#ffffff'}"></i>${auto ? `<button class="czmini ${!v ? 'on' : ''}" data-czset="${f}:">нет</button>` : ''}${f === 'bg' || f === 'bc' || f === 'tc' ? `<button class="czmini ${v === 'accent' ? 'on' : ''}" data-czset="${f}:accent">акцент</button>` : ''}</label>`;
+function czLayers() {
+  const L = czLayout(), out = [], seen = new Set();
+  const vis = (el) => el && el.isConnected && (el.getClientRects().length > 0 || L.items[czKeyOf(el).key]);
+  for (const id in CZ_REGIONS) { const el = document.querySelector(CZ_REGIONS[id].sel); if (vis(el)) { out.push({ key: id, n: CZ_REGIONS[id].n, g: CZ_REGIONS[id].g, el }); seen.add(id); } }
+  for (const k in L.items) { const it = L.items[k]; if (seen.has(k) || !it.sel) continue; let el = null; try { el = document.querySelector(it.sel); } catch {} out.push({ key: k, n: it.n || 'Элемент', g: 'Изменено тобой', el, gone: !el }); }
+  L.objects.forEach((o) => out.push({ key: 'obj:' + o.id, n: o.name || (CZ_OBJ[o.type] || {}).n || 'Объект', g: 'Добавлено тобой', el: czHost(o.id), obj: o }));
+  return out;
+}
+function czDockHtml() {
+  const el = czE.el, k = czE.key, it = k ? czItem(k) : {}, R = czE.info ? czE.info.R : null, o = czIsObj(k) ? czObj(k) : null;
+  const curP = czE.part ? '' : document.body.classList.contains('pp-open') ? 'pp' : route().r;
+  const pages = `<div class="czd-pages">${CZ_PAGES.map(([p, n, i]) => `<button class="${p === curP ? 'on' : ''}" data-czp="${p}">${ico(i)}<span>${n}</span></button>`).join('')}</div>`;
+  const other = `<div class="czd-pages">${CZ_OTHER.map(([s, n, i]) => `<button class="${s === czE.part ? 'on' : ''}" data-czgo="${s}">${ico(i)}<span>${n}</span></button>`).join('')}</div>`;
+  const add = `<div class="czd-add">${Object.entries(CZ_OBJ).map(([t, d]) => `<button data-czadd="${t}" title="${esc(d.hint)}">${ico(d.icon)}<span>${d.n}</span></button>`).join('')}</div>`;
+  if (czE.part) return czDockFrame(pages, other, czPartBody(czE.part));
+  let props = '';
+  if (el) {
+    const par = el.parentElement, pd = par ? getComputedStyle(par).display : '', row = /flex|grid/.test(pd) && !o;
+    const pos = `<div class="czg"><div class="czg-h">Положение</div><div class="czf2">${czNumF('x', 'X', Math.round(+it.x || 0), '0', 'px')}${czNumF('y', 'Y', Math.round(+it.y || 0), '0', 'px')}</div>
+      <div class="czrow"><button class="czb" data-cz="center" title="${o ? 'По центру окна' : 'Вернуть на исходное место'}">${ico(o ? 'expand' : 'undo')}${o ? 'По центру' : 'На место'}</button>${row ? `<button class="czb" data-cz="ordm" title="Переставить раньше в ряду">${ico('back')}Раньше</button><button class="czb" data-cz="ordp" title="Переставить позже в ряду">Позже${ico('fwd')}</button>` : ''}</div></div>`;
+    const size = `<div class="czg"><div class="czg-h">Размер</div>${czRngF('scale', 'Масштаб', it.scale || 100, 30, 300, 5, '%')}
+      <div class="czf2">${czNumF('w', 'Ширина', +it.w > 0 ? Math.round(it.w) : '', 'авто', 'px')}${czNumF('h', 'Высота', +it.h > 0 ? Math.round(it.h) : '', 'авто', 'px')}</div>
+      <div class="czrow"><button class="czb" data-cz="fit" title="Взять текущий размер и задать числами">${ico('tune')}Текущий → числами</button>${+it.w > 0 || +it.h > 0 ? `<button class="czb" data-cz="auto">${ico('refresh')}Авто</button>` : ''}</div></div>`;
+    const look = `<div class="czg"><div class="czg-h">Вид</div>${czRngF('op', 'Прозрачность', it.op != null ? it.op : 100, 0, 100, 5, '%')}${czRngF('rad', 'Скругление', it.rad != null && it.rad >= 0 ? it.rad : 0, 0, 60, 1, 'px')}${o ? '' : czColF('bg', 'Фон', it.bg || '', true)}</div>`
+      + (o ? '' : `<div class="czg"><div class="czg-h">Эффекты</div>${czColF('tc', 'Цвет текста', it.tc || '', true)}${czRngF('sh', 'Тень', +it.sh || 0, 0, 60, 2, 'px')}${czRngF('bw', 'Рамка', +it.bw || 0, 0, 8, 1, 'px')}${+it.bw > 0 ? czColF('bc', 'Цвет рамки', it.bc || '', true) : ''}${czRngF('bk', 'Размытие под ним', +it.bk || 0, 0, 40, 1, 'px')}${czRngF('rot', 'Поворот', +it.rot || 0, -180, 180, 1, '°')}${it.rot ? `<div class="czrow"><button class="czb" data-czset="rot:0">${ico('undo')}Без поворота</button></div>` : ''}</div>`);
+    const layer = `<div class="czg"><div class="czg-h">Слой</div><div class="czrow"><button class="czb" data-cz="zdn" title="Убрать под соседей">${ico('down')}Ниже</button><span class="czz">${+it.z || 0}</span><button class="czb" data-cz="zup" title="Поднять над соседями">${ico('up')}Выше</button><button class="czb ${it.hidden ? 'on' : ''}" data-cz="hide" ${R && !R.hide ? 'disabled' : ''} title="Скрыть (Delete)">${ico('eye')}${it.hidden ? 'Скрыт' : 'Скрыть'}</button></div></div>`;
+    let content = '';
+    if (o) {
+      const t = o.type, f = [];
+      if (t === 'text' || t === 'link') f.push(`<label class="czt"><span>Текст</span><textarea data-czf="text" rows="${t === 'text' ? 2 : 1}">${esc(o.text || '')}</textarea></label>`);
+      if (t === 'link') f.push(`<label class="czt"><span>Ссылка</span><input data-czf="url" value="${esc(o.url || '')}" placeholder="https://…"></label>`);
+      if (t === 'image') f.push(`<label class="czt"><span>Ссылка на картинку</span><input data-czf="src" value="${esc(o.src && !o.src.startsWith('data:') ? o.src : '')}" placeholder="https://…/picture.png"></label><div class="czrow"><button class="czb" data-cz="file">${ico('file')}Выбрать файл</button><button class="czb ${o.fit === 'contain' ? 'on' : ''}" data-czset="fit:${o.fit === 'contain' ? 'cover' : 'contain'}">${o.fit === 'contain' ? 'Вписать' : 'Заполнить'}</button></div>`);
+      if (t === 'clock') f.push(`<div class="czseg">${[['hm', '12:30'], ['hms', '12:30:45'], ['date', 'С датой']].map(([v, n]) => `<button class="${(o.fmt || 'hm') === v ? 'on' : ''}" data-czset="fmt:${v}">${n}</button>`).join('')}</div>`);
+      if (t !== 'image' && t !== 'box') f.push(czRngF('size', 'Шрифт', o.size || 16, 8, 120, 1, 'px'), `<div class="czseg">${[[500, 'Обычный'], [700, 'Жирный'], [900, 'Очень']].map(([v, n]) => `<button class="${+(o.weight || 600) === v ? 'on' : ''}" data-czset="weight:${v}">${n}</button>`).join('')}</div>`, czColF('color', 'Цвет текста', o.color || '#ffffff'));
+      if (t !== 'image') f.push(czColF('bg', 'Фон', o.bg || '', true));
+      if (t === 'box') f.push(czRngF('blur', 'Размытие под ней', o.blur || 0, 0, 40, 1, 'px'));
+      f.push(`<label class="czt"><span>Где показывать</span><select data-czf="page">${[['all', 'На всех страницах'], ['home', 'Только на главной'], ['explore', 'Только в обзоре'], ['library', 'Только в библиотеке'], ['pp', 'Только на экране плеера']].map(([v, n]) => `<option value="${v}" ${(o.page || 'all') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`);
+      f.push(`<label class="czt"><span>Название в списке</span><input data-czf="name" value="${esc(o.name || '')}"></label>`);
+      content = `<div class="czg"><div class="czg-h">Содержимое</div>${f.join('')}</div>`;
+    }
+    const st = []; if (!o) { if (it.x || it.y) st.push('сдвинут'); if (it.scale && it.scale !== 100) st.push(it.scale + '%'); if (it.w > 0 || it.h > 0) st.push('свой размер'); if (it.hidden) st.push('скрыт'); if (it.tc || it.sh > 0 || it.bw > 0 || it.bk > 0 || it.rot) st.push('эффекты'); }
+    props = `<div class="czd-sel"><div class="czd-selh"><div><b>${esc(czE.info.n)}</b><span>${o ? 'Твой объект' : st.length ? 'Изменено: ' + st.join(', ') : 'Без изменений'}</span></div>
+      ${o ? '' : `<button class="ib sm" data-cz="up" title="Выбрать блок, в котором он лежит (Alt+клик)">${ico('up')}</button>`}<button class="ib sm" data-cz="unsel" title="Снять выбор (Esc)">${ico('x')}</button></div>
+      ${content}${pos}${size}${look}${layer}
+      <div class="czrow czd-danger">${o ? `<button class="czb" data-cz="dup">${ico('plus')}Копия</button><button class="czb red" data-cz="del">${ico('trash')}Удалить</button>` : `<button class="czb" data-cz="clr">${ico('refresh')}Сбросить этот элемент</button>`}</div></div>`;
+  }
+  const layers = czLayers(), groups = {};
+  layers.forEach((x) => (groups[x.g] = groups[x.g] || []).push(x));
+  const lhtml = Object.entries(groups).map(([g, xs]) => `<div class="czl-g">${esc(g)}</div>${xs.map((x) => { const i2 = czItem(x.key), ch = x.obj || (czLayout().items[x.key]); return `<div class="czl ${x.key === k ? 'on' : ''} ${x.gone ? 'gone' : ''}" data-czl="${esc(x.key)}"><span>${esc(x.n)}</span>${ch && !x.obj ? '<i class="czl-dot" title="Изменено"></i>' : ''}<button class="czl-eye ${i2.hidden ? 'off' : ''}" ${!x.obj && CZ_REGIONS[x.key] && !CZ_REGIONS[x.key].hide ? 'disabled' : ''} data-czeye="${esc(x.key)}" title="${i2.hidden ? 'Показать' : 'Скрыть'}">${ico('eye')}</button></div>`; }).join('')}`).join('');
+  return czDockFrame(pages, other, `${props || `<div class="czd-tip">${ico('tap')}<div><b>Кликни по любой части окна</b><span>или выбери её в списке «Слои» ниже — здесь появятся её настройки</span></div></div>`}
+    <div class="czd-sec"><div class="czd-h">Добавить своё</div>${add}</div>
+    <div class="czd-sec"><div class="czd-h">Слои на этой странице</div><div class="czd-layers">${lhtml || '<div class="czd-sub">Пусто</div>'}</div></div>`);
+}
+// общая рамка панели: шапка, «Что редактируем», тело, низ — одинаковая для окна и для всех частей
+function czDockFrame(pages, other, body) {
+  const pt = czE.part, n = Object.keys(czLayout().items).length + czLayout().objects.length;
+  const can = czCanUndo();
+  return `<i class="czd-rs" title="Тяни — ширина панели"></i><i class="czd-rsb" title="Тяни — высота панели"></i><div class="czd-head" title="Тяни за заголовок, чтобы переместить панель"><div class="czd-t">${ico('edit')}<b>Редактор</b><i class="czd-grip"></i></div>
+      <button class="ib sm ${czE.help ? 'on' : ''}" data-cz="help" title="Подсказки">${ico('info')}</button><button class="ib sm ${czE.cfg ? 'on' : ''}" data-cz="cfg" title="Настройки редактора">${ico('settings')}</button><button class="ib sm" data-cz="done" title="Закрыть редактор (Enter)">${ico('x')}</button></div>
+    <div class="czd-body">
+    ${czE.help ? czHelpHtml() : ''}${czE.cfg ? czStudioHtml() : ''}
+    <div class="czd-sec czd-what"><div class="czd-h">Что редактируем</div><div class="czd-sub">Окно Pulse</div>${pages}<div class="czd-sub">Отдельные части</div>${other}</div>
+    ${body}
+    </div>
+    <div class="czd-foot"><button class="btn sm ghost" data-cz="cancel" title="Отменить все изменения с открытия редактора">Отмена</button><button class="ib sm" data-cz="undo" title="Отменить (Ctrl+Z)" ${can[0] ? '' : 'disabled'}>${ico('undo')}</button><button class="ib sm czb-redo" data-cz="redo" title="Повторить (Ctrl+Y)" ${can[1] ? '' : 'disabled'}>${ico('undo')}</button>
+      ${pt ? (CZ_RESET[pt] ? `<button class="btn sm" data-cz="preset" title="Вернуть исходный вид этой части">Сбросить</button>` : '<span class="czd-gap"></span>') : `<button class="btn sm" data-cz="all" title="Вернуть исходный вид окна (копия сохранится в «Конфиги»)" ${n ? '' : 'disabled'}>Сбросить</button>`}<button class="btn sm acc" data-cz="done">${ico('check')}Готово</button></div>`;
+}
+// ---------- 2.0: настройки самого редактора (S().studio) ----------
+const CZ_W = { narrow: 300, normal: 348, wide: 420 };
+const czStudio = () => { const s = S(); if (!s.studio) s.studio = { side: 'right', width: 'normal', look: 'auto', stage: 'theme', tips: true, shade: true, collapsed: {} }; if (!s.studio.collapsed) s.studio.collapsed = {}; return s.studio; };
+function czStudioApply() {
+  const T = czStudio(), b = document.body;
+  b.style.setProperty('--czW', Math.max(280, Math.min(+T.w || CZ_W[T.width] || 348, innerWidth - 32)) + 'px');
+  czDockPlace();
+  b.classList.toggle('czs-glass', T.look === 'glass'); b.classList.toggle('czs-solid', T.look === 'solid');
+  b.dataset.czstage = T.stage || 'theme';
+  b.classList.toggle('czs-notips', T.tips === false); b.classList.toggle('czs-noshade', T.shade === false);
+  const want = T.side === 'left'; if (czE.on && want !== czE.left) { czE.left = want; const d = $('czDock'), st = $('czStage'); if (d) d.classList.toggle('left', want); if (st) st.classList.toggle('left', want); }
+}
+window.czStudioApply = czStudioApply;
+// 1.9.4: панель редактора — тянется за заголовок (к краю = пристыковать, в середине = плавает), ширина — за край
+function czDockPlace() {
+  const T = czStudio(), d = $('czDock'); if (!d) return; const fl = T.side === 'float';
+  d.classList.toggle('float', fl); document.body.classList.toggle('czd-float', fl);
+  const safeWidth = Math.max(280, Math.min(+T.w || CZ_W[T.width] || 348, innerWidth - 32)); document.body.style.setProperty('--czW', safeWidth + 'px');
+  if (fl) { const w = safeWidth, top = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--top')) || 64;
+    const h = Math.max(260, Math.min(+T.fh || innerHeight - top - 60, innerHeight - top - 16));
+    const x = Math.max(8, Math.min(+T.fx || innerWidth - w - 40, innerWidth - w - 8)), y = Math.max(top + 8, Math.min(+T.fy || top + 24, innerHeight - h - 8));
+    d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.height = h + 'px'; }
+  else { d.style.left = d.style.top = d.style.height = ''; }
+}
+let czDD = null;
+document.addEventListener('pointerdown', (e) => {
+  if (!czE.on || e.button !== 0 || !e.target.closest) return;
+  const d = $('czDock'); if (!d || !d.contains(e.target)) return;
+  const rs = e.target.closest('.czd-rs'), rsb = e.target.closest('.czd-rsb'), hd = !rs && !rsb && e.target.closest('.czd-head');
+  if (!rs && !rsb && !hd) return; if (hd && e.target.closest('button')) return;
+  e.preventDefault(); e.stopPropagation();
+  const r = d.getBoundingClientRect();
+  czDD = { k: rs ? 'w' : rsb ? 'h' : 'move', x0: e.clientX, y0: e.clientY, r, moved: false };
+  document.body.classList.add('czd-drag');
+}, true);
+window.addEventListener('pointermove', (e) => {
+  if (!czDD) return; const D = czDD, d = $('czDock'), T = czStudio(); if (!d) return;
+  const dx = e.clientX - D.x0, dy = e.clientY - D.y0;
+  if (D.k === 'w') { const right = !d.classList.contains('left') && !d.classList.contains('float'); const w = Math.round(Math.max(280, Math.min(640, D.r.width + (right ? -dx : dx)))); T.w = w; document.body.style.setProperty('--czW', w + 'px'); return; }
+  if (D.k === 'h') { T.fh = Math.round(Math.max(260, D.r.height + dy)); d.style.height = T.fh + 'px'; return; }
+  if (!D.moved && Math.hypot(dx, dy) < 5) return; D.moved = true;
+  if (T.side !== 'float') { T.side = 'float'; czE.left = false; d.classList.remove('left'); const st = $('czStage'); if (st) st.classList.remove('left'); if (!T.fh) T.fh = Math.min(innerHeight - 140, 760); }
+  T.fx = Math.round(D.r.left + dx); T.fy = Math.round(D.r.top + dy); czDockPlace();
+  const snap = e.clientX < 70 ? 'l' : e.clientX > innerWidth - 70 ? 'r' : ''; let g = $('czSnap');
+  if (snap) { if (!g) { g = document.createElement('div'); g.id = 'czSnap'; document.body.appendChild(g); } g.className = snap; } else if (g) g.remove();
+}, true);
+window.addEventListener('pointerup', (e) => {
+  if (!czDD) return; const D = czDD, T = czStudio(); czDD = null; document.body.classList.remove('czd-drag');
+  const g = $('czSnap'); if (g) g.remove();
+  if (D.k === 'move' && D.moved) { const snap = e.clientX < 70 ? 'left' : e.clientX > innerWidth - 70 ? 'right' : ''; if (snap) { T.side = snap; czE.left = snap === 'left'; const d = $('czDock'), st = $('czStage'); if (d) d.classList.toggle('left', czE.left); if (st) st.classList.toggle('left', czE.left); czDockPlace(); } }
+  save();
+});
+addEventListener('resize', () => { if (czE.on) czDockPlace(); });
+function czStudioHtml() {
+  const T = czStudio(), sg = (k, opts) => `<div class="czseg">${opts.map(([v, n]) => `<button class="${String(T[k]) === String(v) ? 'on' : ''}" data-czst="${k}:${v}">${n}</button>`).join('')}</div>`;
+  const tgl = (k, n) => `<button class="czb ${T[k] !== false ? 'on' : ''}" data-czst="${k}:${T[k] === false ? '1' : '0'}">${ico(T[k] !== false ? 'check' : 'x')}${n}</button>`;
+  return `<div class="czd-sel czd-cfg"><div class="czg"><div class="czg-h">Настройки редактора</div>
+    <div class="czc2"><span>Фон панели</span>${sg('look', [['auto', 'Как Pulse'], ['glass', 'Стекло'], ['solid', 'Сплошной']])}</div>
+    <div class="czc2"><span>Холст</span>${sg('stage', [['theme', 'Как Pulse'], ['grid', 'Сетка'], ['dark', 'Тёмный']])}</div>
+    <div class="czrow">${tgl('tips', 'Подсказки')}${tgl('shade', 'Затемнять вокруг')}</div>
+    <span class="czd-note">Панель двигается: тяни за заголовок «Редактор» к краю окна или оставь плавать; ширина — за край панели. Заголовки разделов сворачиваются кликом. Эти же настройки есть в «Настройки → Редактор».</span></div></div>`;
+}
+// сворачиваемые разделы панели — запоминаются
+function czFolds(root) {
+  const C = czStudio().collapsed;
+  (root || document).querySelectorAll('#czDock .czd-h,#czDock .czg-h').forEach((h) => { const k = h.textContent.trim(); h.parentElement.classList.toggle('fold', !!C[k]); h.title = C[k] ? 'Развернуть' : 'Свернуть'; });
+}
+window.czFolds = czFolds;
+function czFoldToggle(h) {
+  const C = czStudio().collapsed, k = h.textContent.trim(); if (!k) return;
+  if (C[k]) delete C[k]; else C[k] = 1; save(); czFolds($('czDock'));
+}
+function czHelpHtml() {
+  const k = (a, b) => `<span><kbd>${a}</kbd> ${b}</span>`;
+  return `<div class="czd-help"><b>Как пользоваться</b>${czE.part ? k('Клик', 'выбрать элемент') : k('Клик', 'выбрать блок') + k('Ещё клик', 'внутрь блока, глубже') + k('Ctrl+клик', 'сразу мелкий элемент')}${k('Тяни', 'двигать')}${czE.part ? '' : k('Уголок рамки', 'размер')}${k('Колесо', 'больше / меньше')}${k('←↑→↓', 'точно (Shift ×10)')}${k('Del', 'скрыть')}${k('Ctrl+Z', 'отменить')}${k('Esc', 'снять выбор')}${k('Enter', 'готово')}</div>`;
+}
+function czDockSync(force) {
+  const d = $('czDock'); if (!d) return;
+  if (czE.dockDown && !force) { czE.dockPend = true; return; } // кнопка зажата в панели — перерисуем после клика
+  const a = document.activeElement;
+  if (!force && a && d.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.type !== 'range') return; // не мешаем печатать
+  const b = d.querySelector('.czd-body'), y = b ? b.scrollTop : 0;
+  d.innerHTML = czDockHtml(); czFolds(d); const nb = d.querySelector('.czd-body'); if (nb) nb.scrollTop = y;
+}
+const czBarSync = () => czDockSync();
+function czAddObj(t) {
+  const d = CZ_OBJ[t]; if (!d) return; czPush();
+  const L = czLayout(), id = 'o' + Date.now().toString(36), n = L.objects.filter((x) => x.type === t).length + 1;
+  const o = { id, type: t, name: `${d.n}${n > 1 ? ' ' + n : ''}`, on: true, page: 'all', x: Math.round(innerWidth / 2 - 120 + n * 14), y: Math.round(innerHeight / 2 - 60 + n * 14), scale: 100, z: L.objects.length, op: 100, ...JSON.parse(JSON.stringify(d.def)) };
+  L.objects.push(o); save(); czApply();
+  const h = czHost(id); if (h) { czSelect(h); const r = h.getBoundingClientRect(); czE.el = h; czSet({ x: Math.round((innerWidth - r.width) / 2), y: Math.round((innerHeight - r.height) / 2) }, true); }
+  toast(`${d.n} добавлен${t === 'text' || t === 'image' || t === 'box' ? 'а' : t === 'clock' ? 'ы' : ''} — тяни мышью, справа — настройки`, 'plus');
+}
+function czDockClick(e) {
+  const fh = e.target.closest('.czd-h,.czg-h'); if (fh && !e.target.closest('button,input,select,label')) return czFoldToggle(fh);
+  const st = e.target.closest('[data-czst]'); if (st) { const [k, v] = st.dataset.czst.split(':'); czStudio()[k] = v === '1' ? true : v === '0' ? false : v; save(); czStudioApply(); return czDockSync(true); }
+  const b = e.target.closest('[data-czp],[data-cz],[data-czgo],[data-czadd],[data-czl],[data-czeye],[data-czset],[data-czws],[data-czps],[data-czpeye]'); if (!b || b.disabled) return;
+  if (b.dataset.czws != null) return czWScale(+b.dataset.czws);
+  if (b.dataset.czps) { const [pth, dv] = b.dataset.czps.split(':'); return czPSize(pth, +dv); }
+  if (b.dataset.czpeye) return czPToggleHide(czE.part, b.dataset.czpeye);
+  if (b.dataset.czp) { czLeavePart(); return czGoPage(b.dataset.czp); }
+  if (b.dataset.czgo) return czPart(b.dataset.czgo);
+  if (b.dataset.czadd) return czAddObj(b.dataset.czadd);
+  if (b.dataset.czeye) { e.stopPropagation(); const k = b.dataset.czeye, prev = [czE.el, czE.info, czE.key]; const x = czLayers().find((y) => y.key === k); if (!x) return; czE.key = k; czE.info = x.el ? czKeyOf(x.el) : { key: k, n: x.n, sel: (czLayout().items[k] || {}).sel, R: { hide: true } }; czE.el = x.el; czSet({ hidden: !czItem(k).hidden }); [czE.el, czE.info, czE.key] = prev; return czDockSync(true); }
+  if (b.dataset.czl) { const x = czLayers().find((y) => y.key === b.dataset.czl); if (!x || !x.el) return toast('Этого элемента сейчас нет на экране — открой нужную страницу', 'info'); czSelect(x.el); x.el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+  if (b.dataset.czset) { const [f, ...v] = b.dataset.czset.split(':'); let val = v.join(':'); if (f === 'weight' || f === 'rot') val = +val; return czSet({ [f]: val }); }
+  const c = b.dataset.cz, it = czE.key ? czItem(czE.key) : {};
+  if (c === 'done') return czExit();
+  if (c === 'cancel') return czCancelSession();
+  if (c === 'cfg') { czE.cfg = !czE.cfg; return czDockSync(true); }
+  if (c === 'undo') return czE.part ? czPartUndo(-1) : czUndo(false);
+  if (c === 'redo') return czE.part ? czPartUndo(1) : czUndo(true);
+  if (c === 'preset') { if (!confirm('Вернуть исходный вид этой части?\nCtrl+Z — отменить.')) return; return customAct('edreset:' + czE.part); }
+  if (c === 'help') { czE.help = !czE.help; return czDockSync(true); }
+  if (c === 'flip') { czE.left = !czE.left; czStudio().side = czE.left ? 'left' : 'right'; save(); czDockPlace(); $('czDock').classList.toggle('left', czE.left); const s = $('czStage'); if (s) s.classList.toggle('left', czE.left); return; }
+  if (c === 'mini') { czE.mini = !czE.mini; $('czDock').classList.toggle('mini', czE.mini); return czDockSync(true); }
+  if (c === 'all') { if (czIsDefault()) return toast('Уже исходный вид', 'info'); if (!confirm('Вернуть исходный вид всего окна?\nТекущая раскладка сохранится в «Конфиги».')) return; czPush(); czReset(); czSelect(null); return; }
+  if (!czE.el) return;
+  if (c === 'unsel') return czSelect(null);
+  if (c === 'up') { const p = czPick(czE.el.parentElement); if (p) czSelect(p); else toast('Выше выбрать нечего', 'info'); return; }
+  if (c === 'hide') return czSet({ hidden: !it.hidden });
+  if (c === 'clr') return czSet({ x: 0, y: 0, scale: 100, hidden: false, w: 0, h: 0, op: 100, rad: -1, z: 0, ord: 0, bg: '', tc: '', sh: 0, bw: 0, bc: '', bk: 0, rot: 0, rel: 0 });
+  if (c === 'center') { if (czIsObj(czE.key)) { const r = czE.el.getBoundingClientRect(); return czSet({ x: Math.round((innerWidth - r.width) / 2), y: Math.round((innerHeight - r.height) / 2) }); } return czSet({ x: 0, y: 0 }); }
+  if (c === 'zup') return czSet({ z: (+it.z || 0) + 1 });
+  if (c === 'zdn') { if (!czIsObj(czE.key) && !(+it.z > 0)) return toast('Уже в самом низу своего блока', 'info'); return czSet({ z: (+it.z || 0) - 1 }); }
+  if (c === 'ordm' || c === 'ordp') return czSet({ ord: (+it.ord || 0) + (c === 'ordm' ? -1 : 1) });
+  if (c === 'fit') { const sc = (it.scale || 100) / 100, r = czE.el.getBoundingClientRect(), par = czE.el.parentElement, k = par && par.offsetWidth ? par.getBoundingClientRect().width / par.offsetWidth || 1 : 1; return czSet({ w: Math.round(r.width / sc / k), h: Math.round(r.height / sc / k) }); }
+  if (c === 'auto') return czSet({ w: 0, h: 0 });
+  if (c === 'dup') { const o = czObj(czE.key); if (!o) return; czPush(); const n = { ...JSON.parse(JSON.stringify(o)), id: 'o' + Date.now().toString(36), name: (o.name || 'Объект') + ' (копия)', x: (+o.x || 0) + 24, y: (+o.y || 0) + 24 }; czLayout().objects.push(n); save(); czApply(); const h = czHost(n.id); if (h) czSelect(h); return; }
+  if (c === 'del') { const o = czObj(czE.key); if (!o) return; czPush(); czLayout().objects = czLayout().objects.filter((x) => x !== o); czE.el = null; czE.key = null; czE.info = null; return czCommit(); }
+  if (c === 'file') { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.onchange = () => { const f = i.files[0]; if (!f) return; if (f.size > 3e6) return toast('Картинка больше 3 МБ — возьми поменьше или вставь ссылку', 'alert'); const r = new FileReader(); r.onload = () => czSet({ src: r.result }); r.readAsDataURL(f); }; i.click(); }
+}
+function czDockInput(e, final) {
+  const f = e.target.dataset && e.target.dataset.czf; if (!f || !czE.key) return;
+  let v = e.target.value; const num = ['x', 'y', 'w', 'h', 'scale', 'op', 'rad', 'size', 'blur', 'sh', 'bw', 'bk', 'rot'].includes(f);
+  if (num) { v = v === '' ? 0 : +v; if (isNaN(v)) return; }
+  if (f === 'scale') v = Math.max(30, Math.min(300, v));
+  const lab = document.querySelector(`[data-czv="${f}"]`); if (lab) lab.textContent = v + (f === 'scale' || f === 'op' ? '%' : f === 'rot' ? '°' : 'px');
+  if (e.target.type === 'color') { const i = e.target.parentElement; if (i) i.style.background = v; }
+  if (!final && (e.target.type === 'number' || e.target.tagName === 'TEXTAREA' || e.target.type === 'text' || !e.target.type)) { czSet({ [f]: v }, czMerge('f' + f, 1500)); return; }
+  czSet({ [f]: v }, czMerge('f' + f, 900));
+}
+
+// ---------- мышь и клавиатура (перехват на window, до обработчиков приложения) ----------
+const czInBar = (e) => !!(e.target && e.target.closest && e.target.closest('#czDock,#czBar,#czStage'));
+const czBlock = (e) => { if (!czE.on || czInBar(e)) return; e.preventDefault(); e.stopImmediatePropagation(); };
+['click', 'dblclick', 'mousedown', 'mouseup', 'auxclick', 'contextmenu', 'touchstart', 'dragstart', 'submit'].forEach((t) => window.addEventListener(t, czBlock, { capture: true, passive: false }));
+const czParK = (el) => { const par = el.parentElement; return par && par.offsetWidth ? par.getBoundingClientRect().width / par.offsetWidth || 1 : 1; };
+window.addEventListener('pointerdown', (e) => {
+  if (!czE.on || czInBar(e)) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (e.button !== 0) return;
+  // уголок рамки — размер
+  if (e.target.closest && e.target.closest('#czSel .czh') && czE.el) {
+    const it = czItem(czE.key), r = czE.el.getBoundingClientRect(), o = czIsObj(czE.key);
+    czE.drag = { rs: true, sx: e.clientX, sy: e.clientY, w0: r.width, h0: r.height, s0: it.scale || 100, ow: +it.w > 0 ? +it.w : r.width / ((it.scale || 100) / 100), oh: +it.h > 0 ? +it.h : r.height / ((it.scale || 100) / 100), o, on: false };
+    return;
+  }
+  const pk = czPickLevel(e.target, e), el = pk.el;
+  if (!el) { czSelect(null); return; }
+  if (el !== czE.el) czSelect(el);
+  const it = czItem(czE.key);
+  czE.drag = { sx: e.clientX, sy: e.clientY, x0: +it.x || 0, y0: +it.y || 0, x: +it.x || 0, y: +it.y || 0, k: czIsObj(czE.key) ? 1 : czParK(el), on: false, can: czE.info.R.move, o: czIsObj(czE.key), deeper: pk.deeper };
+}, { capture: true, passive: false });
+window.addEventListener('pointermove', (e) => {
+  if (!czE.on) return;
+  const d = czE.drag;
+  if (d && d.rs) {
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy; if (!d.on && Math.hypot(dx, dy) < 2) return;
+    d.on = true; document.body.classList.add('cz-drag');
+    if (d.o) { d.w = Math.max(16, Math.round(d.ow + dx / ((czItem(czE.key).scale || 100) / 100))); d.h = e.shiftKey ? Math.round(d.oh * d.w / d.ow) : Math.max(12, Math.round(d.oh + dy / ((czItem(czE.key).scale || 100) / 100))); czE.el.style.width = d.w + 'px'; czE.el.style.height = d.h + 'px'; }
+    else { d.s = Math.max(30, Math.min(300, Math.round(d.s0 * Math.max((d.w0 + dx) / d.w0, (d.h0 + dy) / d.h0) / 5) * 5)); czE.el.style.setProperty('scale', String(d.s / 100), 'important'); }
+    return;
+  }
+  if (d) {
+    const dx = (e.clientX - d.sx) / d.k, dy = (e.clientY - d.sy) / d.k;
+    if (!d.on && Math.hypot(dx, dy) < 3) return;
+    if (!d.can) { if (!d.warned) { d.warned = true; toast('Этот блок не двигается — можно менять размер или скрыть', 'info'); } return; }
+    if (!d.on) { d.on = true; document.body.classList.add('cz-drag'); }
+    let x = Math.round(d.x0 + dx), y = Math.round(d.y0 + dy);
+    if (!e.shiftKey && !d.o) { if (Math.abs(x) < 6) x = 0; if (Math.abs(y) < 6) y = 0; } // прилипание к исходному месту
+    if (!e.shiftKey && d.o) { const r = czE.el.getBoundingClientRect(), cx = (innerWidth - r.width) / 2, cy = (innerHeight - r.height) / 2; if (Math.abs(x - cx) < 8) x = Math.round(cx); if (Math.abs(y - cy) < 8) y = Math.round(cy); }
+    d.x = x; d.y = y;
+    if (d.o) { czE.el.style.left = x + 'px'; czE.el.style.top = y + 'px'; } else czE.el.style.setProperty('translate', `${x}px ${y}px`, 'important');
+    return;
+  }
+  if (czInBar(e)) czE.hov = null; else { const pk = czPickLevel(e.target, e); czE.hov = pk.deeper || pk.el; }
+}, true);
+function czEndDrag(cancel) {
+  const d = czE.drag; czE.drag = null; document.body.classList.remove('cz-drag');
+  if (!d || !d.on || !czE.el) return;
+  if (d.rs) { if (cancel) { if (!d.o) czE.el.style.removeProperty('scale'); return czApply(); } if (d.o) return czSet({ w: d.w, h: d.h }); czE.el.style.removeProperty('scale'); return czSet({ scale: d.s }); }
+  if (!d.o) czE.el.style.removeProperty('translate');
+  if (cancel) return czApply();
+  if (d.x !== d.x0 || d.y !== d.y0) { czWheelK = ''; czSet({ x: d.x, y: d.y }); }
+}
+window.addEventListener('pointerup', (e) => { if (!czE.on) return; const dd = czE.drag; czEndDrag(false); if (dd && !dd.rs && !dd.on && dd.deeper && dd.deeper.isConnected) czSelect(dd.deeper); if (!czInBar(e)) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+window.addEventListener('blur', () => { if (czE.on) czEndDrag(true); });
+window.addEventListener('pointercancel', () => { if (czE.on) czEndDrag(true); }, true);
+let czWheelT = 0, czWheelK = '';
+// серия одинаковых действий подряд (прокрутка, стрелки, ввод) = один шаг отмены
+const czMerge = (kind, ms) => { const now = Date.now(), m = czWheelK === kind + czE.key && now - czWheelT < ms; czWheelT = now; czWheelK = kind + czE.key; return m; };
+window.addEventListener('wheel', (e) => {
+  if (!czE.on || !czE.el || czInBar(e) || !czE.info.R.scale) return;
+  const r = czE.el.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return; // вне объекта — обычная прокрутка
+  e.preventDefault(); e.stopImmediatePropagation();
+  const cur = czItem(czE.key).scale || 100, v = Math.max(30, Math.min(300, cur + (e.deltaY < 0 ? 5 : -5)));
+  czSet({ scale: v }, czMerge('sc', 600));
+}, { capture: true, passive: false });
+window.addEventListener('input', (e) => { if (czE.on && czInBar(e)) czDockInput(e, false); }, true);
+window.addEventListener('change', (e) => { if (czE.on && czInBar(e)) { czDockInput(e, true); if (e.target.tagName === 'SELECT' || e.target.type === 'color') czDockSync(true); } }, true);
+window.addEventListener('keydown', (e) => {
+  if (!czE.on) return;
+  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.code === 'KeyI')) return;
+  if (e.key === 'Tab') {
+    const controls = [...document.querySelectorAll('#czDock button:not([disabled]),#czDock input:not([disabled]),#czDock select:not([disabled]),#czDock textarea:not([disabled])')].filter(el => el.getClientRects().length);
+    if (controls.length) { const i = controls.indexOf(document.activeElement); controls[(i + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus(); }
+    e.preventDefault(); e.stopImmediatePropagation(); return;
+  }
+  if (czInBar(e) && e.target.closest('button') && (e.key === 'Enter' || e.key === ' ')) { e.stopImmediatePropagation(); return; }
+  if (czInBar(e) && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') e.target.blur(); if (e.key === 'Escape') e.target.blur(); return; }
+  e.preventDefault(); e.stopImmediatePropagation();
+  const k = e.key, ctrl = e.ctrlKey || e.metaKey;
+  if (czE.part) return czPartKey(e);
+  if (ctrl && e.code === 'KeyZ') return czUndo(e.shiftKey);
+  if (ctrl && e.code === 'KeyY') return czUndo(true);
+  if (ctrl && e.code === 'KeyD' && czIsObj(czE.key)) return czDockClick({ target: { closest: () => ({ dataset: { cz: 'dup' } }) } });
+  if (k === 'Escape') { if (czE.drag && czE.drag.on) { czEndDrag(true); return czDockSync(); } return czE.el ? czSelect(null) : czExit(); }
+  if (k === 'Enter') return czExit();
+  if (!czE.el) return;
+  const R = czE.info.R, it = czItem(czE.key);
+  if ((k === 'Delete' || k === 'Backspace') && czIsObj(czE.key) && e.shiftKey) return czDockClick({ target: { closest: () => ({ dataset: { cz: 'del' } }) } });
+  if ((k === 'Delete' || k === 'Backspace' || k === 'h' || k === 'р') && R.hide) return czSet({ hidden: !it.hidden });
+  if ((k === 'Delete' || k === 'Backspace') && !R.hide) return toast('Этот блок нельзя скрыть — без него Pulse не работает. Можно уменьшить или сдвинуть');
+  if ((k === '0' || k === 'Home') && !czIsObj(czE.key)) return czSet({ x: 0, y: 0, scale: 100, hidden: false });
+  if ((k === '+' || k === '=' || k === '-') && R.scale) return czSet({ scale: Math.max(30, Math.min(300, (it.scale || 100) + (k === '-' ? -5 : 5))) }, czMerge('sc', 700));
+  if (k === 'PageUp' || k === ']') return czSet({ z: (+it.z || 0) + 1 });
+  if (k === 'PageDown' || k === '[') return czSet({ z: (+it.z || 0) - 1 });
+  const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
+  if (dir && R.move) { const st = e.shiftKey ? 10 : 1; czSet({ x: (+it.x || 0) + dir[0] * st, y: (+it.y || 0) + dir[1] * st }, czMerge('mv', 700)); }
+}, true);
+
+// рамки наведения/выбора следят за объектами каждый кадр (страница прокручивается, плеер анимируется)
+function czBox(box, el, label) {
+  if (!box) return;
+  if (!el || !el.isConnected) { box.style.display = 'none'; return; }
+  const r = el.getBoundingClientRect(); if (!r.width && !r.height) { box.style.display = 'none'; return; }
+  box.style.display = 'block'; box.style.transform = `translate(${r.left}px,${r.top}px)`; box.style.width = r.width + 'px'; box.style.height = r.height + 'px';
+  if (label != null && box.dataset.l !== label) box.dataset.l = label;
+  box.classList.toggle('lb', r.top < 30);
+}
+let czPageSeen = '';
+function czLoop() {
+  if (!czE.on) return;
+  if (czE.el && !czE.el.isConnected) czSelect(null); // страница перерисовалась
+  const pg = czE.part || (document.body.classList.contains('pp-open') ? 'pp' : route().r); if (pg !== czPageSeen) { czPageSeen = pg; czDockSync(true); }
+  if (czE.part) { czBox($('czHi'), null); czBox($('czSel'), null); czE.raf = requestAnimationFrame(czLoop); return; }
+  czBox($('czHi'), czE.hov && czE.hov !== czE.el && !czE.drag ? czE.hov : null, czE.hov ? czName(czE.hov) : '');
+  const d = czE.drag, lab = czE.info ? czE.info.n + (d && d.on ? (d.rs ? (d.o ? ` · ${d.w}×${d.h}` : ` · ${d.s}%`) : ` · ${d.x}, ${d.y}`) : '') : '';
+  czBox($('czSel'), czE.el, lab);
+  czE.raf = requestAnimationFrame(czLoop);
+}
+document.addEventListener('click', (e) => { if (czE.on && czInBar(e)) czDockClick(e); });
+window.addEventListener('pointerdown', (e) => { if (czE.on && czInBar(e)) czE.dockDown = true; }, true);
+window.addEventListener('pointerup', () => { if (!czE.dockDown) return; setTimeout(() => { czE.dockDown = false; if (czE.dockPend) { czE.dockPend = false; czDockSync(true); } }, 0); }, true);
+// Ctrl+Shift+E — открыть/закрыть редактор из любого места
+window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyE') { e.preventDefault(); e.stopImmediatePropagation(); czE.on ? czExit() : czEdit(document.body.classList.contains('pp-open') ? 'pp' : (['home', 'explore', 'library'].includes(route().r) ? route().r : 'home')); } }, true);
+// 2.0: кнопка «Редактор» (карандаш) убрана из верхней панели — вход: Ctrl+Shift+E или Настройки → Редактор
+
+// ---------- карточка «Всё окно» во вкладке «Редактор» (сюда же переехала бывшая вкладка «Кастомизация») ----------
+function czEditorCard() {
+  const L = czLayout(), ids = Object.keys(L.items).filter((id) => czCaps(id, L.items[id]));
+  const st = (it) => { const p = []; if (it.hidden) p.push('скрыт'); if (it.x || it.y) p.push(`сдвиг ${+it.x || 0}, ${+it.y || 0}`); if (it.scale && it.scale !== 100) p.push(it.scale + '%'); if (it.w > 0 || it.h > 0) p.push(`${it.w || 'авто'}×${it.h || 'авто'}`); if (it.op != null && it.op !== 100) p.push(`прозрачность ${it.op}%`); if (it.z) p.push(`слой ${it.z}`); return p.join(' · ') || 'изменён'; };
+  const pg = (sel) => { const m = /data-czr="([^"]+)"/.exec(sel || ''); return m ? ({ home: 'Главная', explore: 'Обзор', library: 'Библиотека' }[m[1]] || m[1]) + ' · ' : ''; };
+  const backups = typeof cfgList === 'function' ? cfgList().filter((c) => c.parts && c.parts.includes('layout')).length : 0;
+  return `<div class="czc">
+    <div class="czc-intro">Выбери, что настроить — откроется редактор: слева то, что меняешь, справа панель с настройками. Изменения видны сразу. «Готово» сохраняет результат, «Отмена» возвращает всё к началу сеанса. Быстрый вход: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></div>
+    <div class="czc-parts">${CZ_PARTS.map(([id, n, i, d, tags]) => `<button class="czc-part ${id === 'window' ? 'main' : ''}" data-sact="cx:cz.part:${id}"><i>${ico(i)}</i><b>${n}</b><span>${d}</span><div>${tags.map((x) => `<em>${x}</em>`).join('')}</div></button>`).join('')}</div>
+    <div class="czc-h2">Настройки редактора</div>
+    <div class="set-card czc-cfg">${[
+      R('Панель редактора', 'Тяни её за заголовок — к левому или правому краю, или оставь плавать где угодно. Ширину меняй, потянув за край панели', `<button class="btn sm" data-sact="cx:cz.dockreset:1">${ico('undo')}Вернуть справа</button>`, 'редактор панель сторона ширина'),
+      R('Фон панели', '«Как Pulse» — полупрозрачная поверх цветов обложки, если в Pulse включён фон из обложки или стекло', seg('studio.look', [['auto', 'Как Pulse'], ['glass', 'Всегда стекло'], ['solid', 'Сплошной']]), 'редактор стекло прозрачность'),
+      R('Холст', 'Фон, на котором лежит виджет, обои и остальные части', seg('studio.stage', [['theme', 'Как Pulse'], ['grid', 'Сетка'], ['dark', 'Тёмный']]), 'редактор холст сетка'),
+      R('Подсказки в панели', '«Кликни по элементу…» и другие подсказки', tg('studio.tips')),
+      R('Затемнять окно вокруг выбора', 'Чтобы выбранный элемент было лучше видно', tg('studio.shade'))
+    ].map(rowHtml).join('')}</div>
+    <div class="czc-list"><div class="czc-h"><b>Что уже изменено · ${ids.length + L.objects.length}</b>${ids.length || L.objects.length ? `<button class="btn sm ghost" data-sact="cx:cz.reset">${ico('refresh')}Вернуть исходный вид</button>` : ''}</div>
+    ${ids.length || L.objects.length ? ids.map((id) => { const it = L.items[id], R = czCaps(id, it); return `<div class="cz-it on"><div><b>${esc(pg(it.sel) + R.n)}</b><span>${esc(st(it))}</span></div><button class="ib sm" data-sact="cx:cz.clear:${id}" title="Вернуть этот элемент">${ico('undo')}</button></div>`; }).join('')
+      + L.objects.map((o) => `<div class="cz-it on"><div><b>${esc(o.name || 'Объект')}</b><span>${esc((CZ_OBJ[o.type] || {}).n || 'объект плагина')} · добавлен тобой</span></div><button class="ib sm" data-sact="cx:cz.delobj:${esc(o.id)}" title="Удалить">${ico('trash')}</button></div>`).join('')
+      : '<div class="czc-empty">Пока ничего не менялось — окно в исходном виде</div>'}
+    <div class="czc-note">Раскладка входит в «Конфиги»${backups ? ` · сохранённых копий: ${backups}` : ''}. «Вернуть исходный вид» сначала сохраняет копию — её можно вернуть.</div></div>
+  </div>`;
+}
+
+const czLauncher = () => czEditorCard();
+const CZ_PARTS = [
+  ['window', 'Окно Pulse', 'home', 'Главная, обзор, библиотека, экран плеера, меню и плеер внизу', ['двигать', 'размер', 'слои', 'скрыть', 'свои надписи и картинки']],
+  ['widget', 'Мини-виджет', 'widget', 'Маленький плеер поверх других окон', ['двигать', 'размер', 'скрыть', 'цвета и кнопки']],
+  ['wall', 'Обои', 'wallpaper', 'Музыкальные обои на рабочем столе', ['двигать', 'размер', 'скрыть', 'фон']],
+  ['discord', 'Discord', 'discord', 'Карточка «Слушает» в твоём профиле', ['строки', 'картинка', 'кнопки']],
+  ['ly', 'Текст песни', 'lyrics', 'Как выглядит текст на экране плеера', ['размер', 'подсветка', 'цвета']],
+  ['viz', 'Визуал', 'sparkle', 'Анимация, которая танцует под музыку', ['чувствительность', 'свечение', 'линии']],
+  ['app', 'Оформление окна', 'palette', 'Скругление, размер текста, ширина меню и плеера', ['общие настройки', 'без перемещения блоков']]
+];
+
+// =====================================================================================
+// 2.0 — ЧАСТИ PULSE В ТОМ ЖЕ РЕДАКТОРЕ: мини-виджет, обои, Discord, текст, визуал, интерфейс.
+// Холст части — слева (#czStage), панель — та же справа. Разделы у всех одинаковые:
+// Положение · Размер · Видимость · Оформление + список «Слои». Настройки берутся из реестра ED (editor.js).
+// =====================================================================================
+const CZ_WSZ = { card: 'wall.infoSize', ly: 'wall.lySize', clock: 'wall.clockSize', viz: 'wall.scale' };
+const CZ_WVIS = { card: 'wall.info', ly: 'wall.lyrics', clock: 'wall.clock', ctl: 'wall.controls' };
+const CZ_RANGE = { 'wall.infoSize': [60, 180], 'wall.lySize': [60, 180], 'wall.clockSize': [50, 170], 'wall.scale': [60, 160], 'ly.size': [70, 150] };
+const CZ_RESET = { widget: 1 };
+const CZ_PART_HOW = {
+  widget: 'Кликни по элементу виджета · тяни — двигать · колесо — размер',
+  wall: 'Карточку, строку текста и часы тяни мышью куда угодно · колесо — размер',
+  discord: 'Так тебя увидят друзья в Discord. Кликни по строке, картинке или кнопке',
+  ly: 'Кликни по поющейся строке или по остальным строкам',
+  viz: 'Визуал на экране плеера. Кликни по нему — справа его настройки',
+  app: 'Общий вид Pulse: скругления, размер текста, стекло, ширина меню и высота плеера. Это не перемещение блоков — для него открой «Окно Pulse»'
+};
+const czPartName = (sc) => (CZ_OTHER.find((x) => x[0] === sc) || [, sc])[1];
+const czPartIcon = (sc) => (CZ_OTHER.find((x) => x[0] === sc) || [, , 'edit'])[2];
+
+function czPart(sc) {
+  if (!sc || sc === 'window' || CZ_PAGES.some(([p]) => p === sc)) return czEdit(sc === 'window' ? null : sc);
+  if (typeof ED === 'undefined' || !ED[sc]) return czEdit();
+  czEnter(); czSelect(null);
+  if (document.body.classList.contains('pp-open') && sc !== 'ly' && sc !== 'viz') closePP();
+  czE.part = sc; czPHReset(sc);
+  let st = $('czStage'); if (st) st.remove();
+  if (sc !== 'app') { st = document.createElement('div'); st.id = 'czStage'; st.className = 'set-wrap' + (czE.left ? ' left' : ''); st.innerHTML = czStageHtml(sc); document.body.appendChild(st); }
+  document.body.classList.add('cz-part');
+  czDockSync(true); if (typeof edMark === 'function') edMark(sc);
+}
+window.czPart = czPart;
+function czLeavePart(silent) {
+  if (!czE.part) return; czE.part = null;
+  const st = $('czStage'); if (st) st.remove(); document.body.classList.remove('cz-part');
+  if (!silent) czDockSync(true);
+}
+function czStageHtml(sc) {
+  let pv = ''; try { pv = ED_PV[sc](); } catch (e) { console.error(e); }
+  const tools = sc === 'widget' ? `<div class="czs-tools"><span>Размер виджета</span>${seg('widget.size', [['mini', 'Мини'], ['standard', 'Стандарт'], ['large', 'Большой']])}</div>` : '';
+  return `<div class="czs-head"><i>${ico(czPartIcon(sc))}</i><div><b>${czPartName(sc)}</b><span>${CZ_PART_HOW[sc] || ''}</span></div>${tools}</div>
+    <div class="edt-canvas czs-canvas"><div class="ed ed-tab" data-ed-scope="${sc}">${pv}</div></div>`;
+}
+function czPartBody(sc) {
+  return `<div class="set-wrap ed-panel czd-set" id="edp-${sc}">${czPartPanel(sc)}</div>`;
+}
+const czG = (title, body) => `<div class="czg"><div class="czg-h">${title}</div>${body}</div>`;
+const czPF = (attr, f, label, v, unit) => `<label class="czf"><span>${label}</span><input type="number" data-${attr}="${f}" value="${v}" placeholder="авто"><em>${unit}</em></label>`;
+const czRngP = (pth) => { const [mn, mx] = CZ_RANGE[pth] || [50, 200], v = getP(pth); return `<input type="range" min="${mn}" max="${mx}" step="5" value="${v}" data-rg="${pth}"><em data-rv="${pth}">${v}%</em>`; };
+function czWallXY(k) { // где элемент обоев стоит сейчас (доли холста), если своего места ещё нет
+  const el = document.querySelector(`#czStage .pv-wall [data-ed="${k}"]`), box = document.querySelector('#czStage .pv-wall'); if (!el || !box) return null;
+  const r = el.getBoundingClientRect(), b = box.getBoundingClientRect(); if (!b.width || !r.width) return null;
+  return [(r.left + r.width / 2 - b.left) / b.width, (r.top + r.height / 2 - b.top) / b.height];
+}
+function czPHidden(sc, x) {
+  if (sc === 'widget') return !!((wFree()[x] || {}).h || (S().widget.hideBtns || []).includes(x));
+  if (sc === 'wall' && CZ_WVIS[x]) return !getP(CZ_WVIS[x]);
+  const hp = (CZ_HIDE[sc] || {})[x]; if (hp) return !getP(hp);
+  return false;
+}
+const CZ_HIDE = { discord: { img: 'discord.cover', l1: 'discord.title', l2: 'discord.artist', album: 'discord.album', time: 'discord.time', btns: 'discord.buttons' } };
+const czPCanHide = (sc, x) => (sc === 'widget' && EL_N[x] && x !== 'bg' && x !== 'layout') || (sc === 'wall' && !!CZ_WVIS[x]) || !!(CZ_HIDE[sc] || {})[x];
+function czPToggleHide(sc, x) {
+  if (sc === 'widget') { if ((S().widget.hideBtns || []).includes(x)) return customAct('edhide:' + x); const v = wFree()[x] || {}; setFree(x, { h: !v.h }); return edPanels(); }
+  const p = (sc === 'wall' && CZ_WVIS[x]) || (CZ_HIDE[sc] || {})[x];
+  if (p) { setP(p, !getP(p)); settingChanged(p); save(); return edPanels(); }
+}
+function czWScale(dv) {
+  const k = edSel.widget; if (!k || !EL_N[k]) return;
+  const v = wFree()[k] || {}, s = dv === 0 ? 100 : Math.max(40, Math.min(250, (v.s || 100) + dv));
+  setFree(k, { s }, true); edPanels();
+}
+function czPSize(pth, dv) {
+  const [mn, mx] = CZ_RANGE[pth] || [50, 200], v = Math.max(mn, Math.min(mx, (+getP(pth) || 100) + dv));
+  setP(pth, v); settingChanged(pth); save(); edPanels();
+}
+function czPartSections(sc, k, e) {
+  const rows = e.rows || [], out = [], st = []; let rest = rows;
+  if (sc === 'widget' && EL_N[k] && k !== 'bg' && k !== 'layout') {
+    const v = wFree()[k] || {}, s = v.s || 100, i = rows.findIndex((r) => r.h === 'Оформление'); rest = i >= 0 ? rows.slice(i + 1) : [];
+    if (v.x || v.y) st.push('сдвинут'); if (s !== 100) st.push(s + '%'); if (czPHidden(sc, k)) st.push('скрыт');
+    out.push(czG('Положение', `<div class="czf2">${czPF('czw', 'x', 'X', v.x || 0, 'px')}${czPF('czw', 'y', 'Y', v.y || 0, 'px')}</div><div class="czrow">${v.x || v.y ? `<button class="czb" data-sact="cx:edfree:pos:${k}">${ico('undo')}На место</button>` : ''}<span class="czd-note">или тяни мышью · стрелки — точно</span></div>`));
+    out.push(czG('Размер', `<div class="czr"><span>Масштаб</span><input type="range" min="40" max="250" step="5" value="${s}" data-free="${k}"><em data-freev="${k}">${s}%</em></div><div class="czrow"><button class="czb" data-czws="-10">${ico('down')}Меньше</button><button class="czb" data-czws="10">${ico('up')}Больше</button>${s !== 100 ? `<button class="czb" data-czws="0">${ico('undo')}100%</button>` : ''}</div>`));
+    out.push(czG('Видимость', `<div class="czrow"><button class="czb ${czPHidden(sc, k) ? 'on' : ''}" data-czpeye="${k}">${ico('eye')}${czPHidden(sc, k) ? 'Скрыт — показать' : 'Скрыть'}</button></div>`));
+  } else if (sc === 'wall' && (CZ_WSZ[k] || CZ_WVIS[k])) {
+    const W = S().wall, drop = new Set(['Показывать', 'Где', 'Размер', 'Своё место']), where = rows.find((r) => r.t === 'Где');
+    if (WXY[k]) {
+      const xy = W[WXY[k]], c = xy || czWallXY(k);
+      out.push(czG('Положение', `<div class="czf2">${czPF('czxy', 'x', 'X', c ? Math.round(c[0] * 100) : '', '%')}${czPF('czxy', 'y', 'Y', c ? Math.round(c[1] * 100) : '', '%')}</div>${where ? `<div class="czrow czd-where"><span class="czd-note">Быстро:</span>${where.c}</div>` : ''}<div class="czrow">${xy ? `<button class="czb" data-sact="cx:edxy:${WXY[k]}">${ico('undo')}На место</button>` : ''}<span class="czd-note">или тяни мышью по холсту</span></div>`));
+      if (xy) st.push('своё место');
+    }
+    if (CZ_WSZ[k]) { const pth = CZ_WSZ[k], s = getP(pth); out.push(czG('Размер', `<div class="czr"><span>Масштаб</span>${czRngP(pth)}</div><div class="czrow"><button class="czb" data-czps="${pth}:-10">${ico('down')}Меньше</button><button class="czb" data-czps="${pth}:10">${ico('up')}Больше</button></div>`)); if (s !== 100) st.push(s + '%'); }
+    if (CZ_WVIS[k]) { const h = czPHidden(sc, k); out.push(czG('Видимость', `<div class="czrow"><button class="czb ${h ? 'on' : ''}" data-czpeye="${k}">${ico('eye')}${h ? 'Скрыт — показать' : 'Скрыть'}</button></div>`)); if (h) st.push('скрыт'); }
+    rest = rows.filter((r) => !drop.has(r.t));
+  } else if (sc === 'ly' && k === 'cur') {
+    out.push(czG('Размер', `<div class="czr"><span>Масштаб</span>${czRngP('ly.size')}</div><div class="czrow"><button class="czb" data-czps="ly.size:-10">${ico('down')}Меньше</button><button class="czb" data-czps="ly.size:10">${ico('up')}Больше</button></div>`));
+    rest = rows.filter((r) => r.t !== 'Размер');
+  }
+  if (sc === 'discord') out.push('<div class="czd-note blk">Discord сам раскладывает карточку — двигать её части нельзя, но можно менять, что в них показано.</div>');
+  if (rest.length) out.push(czG(sc === 'discord' ? 'Содержимое' : 'Оформление', `<div class="czg-rows">${rest.map(rowHtml).join('')}</div>`));
+  return { html: out.join(''), st: st.length ? 'Изменено: ' + st.join(', ') : 'Без изменений' };
+}
+function czPartPanel(sc) {
+  let reg; try { reg = ED[sc](); } catch (e) { console.error(e); return ''; }
+  if (sc === 'app') return `<div class="czd-tip">${ico('palette')}<div><b>Оформление всего окна</b><span>${CZ_PART_HOW.app}</span></div></div><div class="czrow"><button class="czb" data-sact="cx:cz.part:window">${ico('move')}Расстановка элементов → Окно Pulse</button></div>` + Object.values(reg).map((e) => `<div class="czd-sel">${czG(e.n, `<div class="czg-rows">${e.rows.map(rowHtml).join('')}</div>`)}</div>`).join('');
+  const k = edSel[sc], e = k && reg[k];
+  let keys = sc === 'widget' ? wChips() : Object.keys(reg);
+  if (sc === 'widget') { const sh = ctlShown(), i = keys.indexOf('ctl'); keys = [...keys.slice(0, i + 1), ...Object.keys(BTN_N).filter((b) => sh(b)).map((b) => '·' + b), ...keys.slice(i + 1)]; }
+  const layers = keys.map((x0) => { const sub = x0[0] === '·', x = sub ? x0.slice(1) : x0; if (!reg[x]) return ''; const h = czPHidden(sc, x);
+    return `<div class="czl ${x === k ? 'on' : ''} ${sub ? 'sub' : ''} ${h ? 'hid' : ''}"><button class="czl-n" data-edpick="${sc}:${x}">${esc(reg[x].n)}</button>${czPCanHide(sc, x) ? `<button class="czl-eye ${h ? 'off' : ''}" data-czpeye="${x}" title="${h ? 'Показать' : 'Скрыть'}">${ico('eye')}</button>` : ''}</div>`; }).join('');
+  let top;
+  if (!e) top = `<div class="czd-tip">${ico('tap')}<div><b>Кликни по элементу на холсте</b><span>${esc(CZ_PART_HOW[sc] || '')} — или выбери его в списке «Слои» ниже</span></div></div>`;
+  else {
+    const P = czPartSections(sc, k, e);
+    top = `<div class="czd-sel"><div class="czd-selh"><div><b>${esc(e.n)}</b><span>${P.st}</span></div>${sc === 'widget' && EL_PARENT[k] ? `<button class="ib sm" data-edpick="widget:${EL_PARENT[k]}" title="Выбрать весь блок «${esc(EL_N[EL_PARENT[k]])}»">${ico('up')}</button>` : ''}<button class="ib sm" data-edpick="${sc}:" title="Снять выбор (Esc)">${ico('x')}</button></div>${P.html}</div>`;
+  }
+  return top + `<div class="czd-sec"><div class="czd-h">Слои</div><div class="czd-layers">${layers}</div></div>`;
+}
+window.czPartPanel = czPartPanel;
+
+// ---------- отмена / повтор для частей (виджет — своя история из editor.js) ----------
+const CZ_PK = { wall: 'wall', discord: 'discord', ly: 'ly', viz: 'viz', app: 'ui' };
+const czPH = { sc: null, base: null, undo: [], redo: [], t: 0, busy: false };
+function czPHReset(sc) { clearTimeout(czPH.t); czPH.t = 0; czPH.sc = sc; czPH.undo = []; czPH.redo = []; czPH.base = CZ_PK[sc] ? JSON.stringify(S()[CZ_PK[sc]]) : null; }
+function czPHCommit() { czPH.t = 0; const key = CZ_PK[czPH.sc]; if (!key) return; const cur = JSON.stringify(S()[key]); if (cur === czPH.base) return; czPH.undo.push(czPH.base); if (czPH.undo.length > 100) czPH.undo.shift(); czPH.redo = []; czPH.base = cur; czFootSync(); }
+{ const base = settingChanged; settingChanged = function (p) { const r = base.apply(this, arguments); try { if (czE.on && czE.part && !czPH.busy && CZ_PK[czE.part] && String(p).startsWith(CZ_PK[czE.part] + '.')) { clearTimeout(czPH.t); czPH.t = setTimeout(czPHCommit, 350); } if (czE.on && czE.part === 'widget' && p === 'widget.size') edPanelsSoon(60); } catch {} return r; }; }
+function czPartUndo(dir) {
+  if (czE.part === 'widget') { wHistGo(dir); return czFootSync(); }
+  const key = CZ_PK[czE.part]; if (!key) return;
+  if (czPH.t) { clearTimeout(czPH.t); czPHCommit(); }
+  const from = dir < 0 ? czPH.undo : czPH.redo, to = dir < 0 ? czPH.redo : czPH.undo;
+  if (!from.length) return toast(dir < 0 ? 'Нечего отменять' : 'Нечего повторять', 'undo');
+  to.push(czPH.base); czPH.base = from.pop();
+  czPH.busy = true; lib.settings[key] = JSON.parse(czPH.base); try { settingChanged(key + '.history'); applySettings(); } catch (e) { console.error(e); } czPH.busy = false;
+  save(); edPanels(); czFootSync();
+}
+function czCanUndo() {
+  if (!czE.part) return [czE.hist.length, czE.fut.length];
+  if (czE.part === 'widget') return [wHist.undo.length, wHist.redo.length];
+  return [czPH.undo.length, czPH.redo.length];
+}
+function czFootSync() { const d = $('czDock'); if (!d) return; const c = czCanUndo(); const u = d.querySelector('[data-cz="undo"]'), r = d.querySelector('[data-cz="redo"]'); if (u) u.disabled = !c[0]; if (r) r.disabled = !c[1]; }
+{ const base = edHistBtns; edHistBtns = function () { base(); czFootSync(); }; }
+
+// ---------- клавиши в частях ----------
+function czPartKey(e) {
+  const sc = czE.part, k = e.key, ctrl = e.ctrlKey || e.metaKey;
+  if (ctrl && (e.code === 'KeyZ' || e.code === 'KeyY')) return czPartUndo(e.code === 'KeyY' || e.shiftKey ? 1 : -1);
+  if (k === 'Escape') return edSel[sc] ? edPick(sc, null) : czExit();
+  if (k === 'Enter') return czExit();
+  const s = edSel[sc]; if (!s) return;
+  const plus = k === '+' || k === '=', minus = k === '-';
+  if (sc === 'widget') { if (plus || minus) return czWScale(minus ? -5 : 5); if (k === 'Delete' || k === 'Backspace') return czPToggleHide(sc, s); return window.pvKey && window.pvKey(e); }
+  if (sc === 'wall') {
+    if ((plus || minus) && CZ_WSZ[s]) return czPSize(CZ_WSZ[s], minus ? -5 : 5);
+    if ((k === 'Delete' || k === 'Backspace') && CZ_WVIS[s]) return czPToggleHide(sc, s);
+    const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[k];
+    if (dir && WXY[s]) { const st = e.shiftKey ? 0.05 : 0.005, c = S().wall[WXY[s]] || czWallXY(s) || [0.5, 0.5], n = [Math.max(0.03, Math.min(0.97, c[0] + dir[0] * st)), Math.max(0.04, Math.min(0.94, c[1] + dir[1] * st))].map((v) => +v.toFixed(3)); setP('wall.' + WXY[s], n); settingChanged('wall.' + WXY[s]); save(); edPanelsSoon(120); }
+    return;
+  }
+  if (sc === 'ly' && s === 'cur' && (plus || minus)) return czPSize('ly.size', minus ? -5 : 5);
+  if ((k === 'Delete' || k === 'Backspace') && czPCanHide(sc, s)) { e.preventDefault(); return czPToggleHide(sc, s); }
+}
+// числа X / Y в панели частей
+document.addEventListener('input', (e) => {
+  if (!czE.on || !czE.part) return; const d = e.target.dataset || {};
+  if (d.czw) { const k = edSel.widget; if (!k) return; const v = Math.round(+e.target.value || 0); setFree(k, { [d.czw]: v }, true); /* число ввели руками — без ограничений перетаскивания */ }
+  if (d.czxy) { const k = edSel.wall; if (!k || !WXY[k]) return; const c = [...(S().wall[WXY[k]] || czWallXY(k) || [0.5, 0.5])]; c[d.czxy === 'x' ? 0 : 1] = Math.max(0.03, Math.min(0.97, (+e.target.value || 0) / 100)); setP('wall.' + WXY[k], c.map((v) => +(+v).toFixed(3))); settingChanged('wall.' + WXY[k]); save(); }
+});
+// колесо над выбранным элементом обоев / текста — размер (у виджета своё, в editor.js)
+document.addEventListener('wheel', (e) => {
+  if (!czE.on || !(czE.part === 'wall' || czE.part === 'ly') || !e.target.closest) return;
+  const el = e.target.closest('#czStage [data-ed]'); if (!el) return;
+  const sc = czE.part, k = el.dataset.ed, pth = sc === 'wall' ? CZ_WSZ[k] : k === 'cur' ? 'ly.size' : null; if (!pth) return;
+  e.preventDefault(); if (edSel[sc] !== k) edPick(sc, k);
+  const [mn, mx] = CZ_RANGE[pth], v = Math.max(mn, Math.min(mx, (+getP(pth) || 100) + (e.deltaY < 0 ? 5 : -5)));
+  setP(pth, v); settingChanged(pth); save(); document.querySelectorAll(`[data-rg="${pth}"]`).forEach((x) => (x.value = v)); document.querySelectorAll(`[data-rv="${pth}"]`).forEach((x) => (x.textContent = v + '%'));
+}, { passive: false });

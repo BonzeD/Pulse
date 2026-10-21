@@ -1,0 +1,117 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:680px;height:440px;overflow:hidden;background:#0e0d12;font-family:"Noto Sans",sans-serif;color:#f4f2f7;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+#root{position:relative;width:680px;height:440px;overflow:hidden;background:#0e0d12}
+.glow1{position:absolute;left:-160px;top:-220px;width:620px;height:520px;background:radial-gradient(closest-side,rgba(240,68,111,.30),rgba(240,68,111,.10) 55%,rgba(240,68,111,0));}
+.glow2{position:absolute;right:-180px;top:-160px;width:560px;height:440px;background:radial-gradient(closest-side,rgba(255,107,107,.14),rgba(255,107,107,0));}
+.glowc{position:absolute;left:140px;top:-200px;width:400px;height:420px;background:radial-gradient(closest-side,rgba(240,68,111,.30),rgba(240,68,111,0));}
+.grid{position:absolute;inset:0 0 auto 0;height:252px;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:linear-gradient(#000,transparent)}
+.logo{position:absolute;filter:drop-shadow(0 10px 28px rgba(240,68,111,.45))}
+.title{position:absolute;font-weight:800;letter-spacing:-.02em;line-height:1}
+.sub{position:absolute;color:#a7a3b3;font-size:14px;line-height:1.45}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:rgba(240,68,111,.16);color:#ff8a9b;border:1px solid rgba(240,68,111,.35);vertical-align:middle}
+.chips{position:absolute;display:flex;gap:8px;flex-wrap:wrap;width:380px}
+.chip{white-space:nowrap;font-size:11.5px;font-weight:600;color:#d7d3df;padding:5px 10px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:6px}
+.chip i{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#ff6b6b,#f0446f);box-shadow:0 0 8px #f0446f}
+.panel{position:absolute;left:0;right:0;top:252px;bottom:0;background:#121117;border-top:1px solid rgba(255,255,255,.06)}
+.lab{position:absolute;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:#7f7b8b}
+.field{position:absolute;border-radius:10px;background:#1b1a22;border:1px solid #2b2933}
+.btn{position:absolute;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14.5px;letter-spacing:.01em}
+.pri{background:linear-gradient(135deg,#ff6b6b,#f0446f);color:#fff;box-shadow:0 10px 26px -6px rgba(240,68,111,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.pri.h{background:linear-gradient(135deg,#ff8080,#ff5a80);box-shadow:0 10px 26px -6px rgba(240,68,111,.55),inset 0 1px 0 rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.18)}
+.sec{background:#22212a;border:1px solid #302e39;color:#e6e3ec}
+.sec.h{background:#2d2b36;border-color:#45424f;color:#fff}
+.tog{position:absolute;display:flex;align-items:center;gap:10px;font-size:13px;color:#d7d3df}
+.sw{width:34px;height:20px;border-radius:99px;background:#2a2933;position:relative;flex:none;border:1px solid #37353f}
+.sw:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#8d8a96;transition:none}
+.tog.on .sw{background:linear-gradient(135deg,#ff6b6b,#f0446f);border-color:transparent;}
+.tog.on .sw:after{left:16px;background:#fff}
+.tog.h{color:#fff}.tog.h .sw{border-color:#55525e}.tog.on.h .sw{filter:brightness(1.12)}
+.note{position:absolute;font-size:12px;color:#7f7b8b}
+.wave{position:absolute;display:flex;align-items:center;gap:12px}
+.wave b{display:block;width:14px;border-radius:7px;background:linear-gradient(180deg,#ff6b6b,#f0446f);box-shadow:0 0 18px rgba(240,68,111,.55)}
+.track{position:absolute;height:6px;border-radius:3px;background:#24232c}
+.ctr{text-align:center;left:0;right:0}
+.badge{position:absolute;width:28px;height:28px;border-radius:50%;background:#2ecc8a;border:3px solid #0e0d12;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(46,204,138,.6)}
+/* 1.0.0: кадры анимаций установщика */
+.pri.p{transform:scale(.95);filter:brightness(.9);box-shadow:0 4px 12px -4px rgba(240,68,111,.6),inset 0 2px 4px rgba(0,0,0,.25)}
+.sec.p{transform:scale(.95);background:#1b1a22;border-color:#55525e}
+.sw i{position:absolute;inset:-1px;border-radius:99px;background:linear-gradient(135deg,#ff6b6b,#f0446f)}
+.tog.k .sw{background:#2a2933}.tog.k .sw:after{display:none}
+.zone{position:absolute}
+.shn{position:absolute;overflow:hidden;pointer-events:none}
+.shn:after{content:"";position:absolute;top:-30%;bottom:-30%;width:40%;left:var(--sx);background:linear-gradient(100deg,transparent,rgba(255,255,255,.38),transparent);transform:skewX(-18deg)}
+.tip{position:absolute;left:96px;right:96px;font-size:12px;color:#8a8696;text-align:center;line-height:1.5}
+.tip b{color:#ff8a9b;font-weight:700}
+</style></head><body><div id="root"></div>
+<script>
+const P=new URLSearchParams(location.search), page=P.get('p'), V=P.get('v')||'1.0.0', SIZE=P.get('size')||'420';
+const st=JSON.parse(P.get('st')||'{}'); // {id:'h'|'on'|'off'|'p'|'k1..k3'...}
+// 1.0.0: wf — кадр эквалайзера (0..11), wx=1 — «громкий» (курсор над шапкой), lf — кадр блика на логотипе (0 = нет), bd — масштаб значка «готово»
+const WF=+(P.get('wf')||-1), WX=+(P.get('wx')||0), LF=+(P.get('lf')||0), BD=P.has('bd')?+P.get('bd'):1;
+const R=document.getElementById('root');
+const logo=(x,y,s)=>{const S=s*1.1,L=x-s*0.05,T=y-s*0.05,i=S*24/512,w=S*464/512;
+ return `<img class="logo" src="logo.svg" style="left:${L}px;top:${T}px;width:${S}px;height:${S}px">`+(LF>0?`<div class="shn" style="left:${L+i}px;top:${T+i}px;width:${w}px;height:${w}px;border-radius:${S*112/512}px;--sx:${(-60+LF*24)}%"></div>`:'')};
+const zone=(id,x,y,w,h)=>`<div class="zone" data-el="${id}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></div>`;
+const btn=(id,cls,x,y,w,h,t)=>`<div data-el="${id}" class="btn ${cls} ${st[id]==='h'||st[id]==='p'?'h':''} ${st[id]==='p'?'p':''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${t}</div>`;
+const tog=(id,x,y,w,h,t,def)=>{const km=/k(\d)/.exec(st[id]||'');if(km){const k=+km[1]/4;return `<div data-el="${id}" class="tog k h" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><span class="sw"><i style="opacity:${k}"></i><b style="position:absolute;z-index:2;top:2px;left:${2+14*k}px;width:${14+4*Math.sin(Math.PI*k)}px;height:14px;border-radius:7px;background:rgb(${141+114*k|0},${138+117*k|0},${150+105*k|0})"></b></span>${t}</div>`}const on=(st[id]||def)==='on'||(st[id+'_h']&&def==='on');return `<div data-el="${id}" class="tog ${ (st[id]?st[id].includes('on'):def==='on')?'on':''} ${st[id]&&st[id].includes('h')?'h':''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><span class="sw"></span>${t}</div>`};
+const WB=[60,120,84,150,96,52],WK=[1,2,1,1,2,1],WP=[0,1.1,2.3,.6,1.7,2.9];
+const wh=(h,i)=>{if(WF<0)return h;const v=Math.sin(2*Math.PI*WF/12*WK[i]+WP[i]);return WX?Math.min(176,h*(.92+.38*v)):h*(.72+.28*v)};
+const wave=(x,y,sc,op)=>`<div class="wave" style="left:${x}px;top:${y}px;height:150px;opacity:${WX?Math.min(1,op+.1):op};transform:scale(${sc});transform-origin:left center">${WB.map((h,i)=>`<b style="height:${wh(h,i).toFixed(1)}px${WX?';box-shadow:0 0 26px rgba(240,68,111,.8)':''}"></b>`).join('')}</div>`;
+let H='';
+if(page==='wel'||page==='upd'){
+ H+=`<div class="glow1"></div><div class="glow2"></div><div class="grid"></div>`;
+ H+=wave(456,52,1,.9)+zone('wave',428,12,204,232)+zone('logo',40,36,84,84);
+ H+=logo(48,44,68);
+ H+=`<div class="title" style="left:136px;top:50px;font-size:38px">Pulse <span class="pill" style="margin-left:6px;position:relative;top:-6px">v${V}</span></div>`;
+ H+=`<div class="sub" style="left:137px;top:94px;font-size:13px;color:#8f8b9b">Music in your rhythm</div>`;
+ H+=`<div class="sub" style="left:48px;top:134px;width:390px">YouTube Music, Apple Music and Spotify, with synced lyrics and immersive visuals.</div>`;
+ if(page==='wel') H+=`<div class="chips" style="left:48px;top:192px;width:440px;gap:6px">${['Three services','Synced lyrics','Offline downloads'].map(t=>`<span class="chip"><i></i>${t}</span>`).join('')}</div>`;
+ else H+=`<div class="chips" style="left:48px;top:192px;width:440px"><span class="chip" style="color:#9ff0c8;background:rgba(46,204,138,.08);border-color:rgba(46,204,138,.3)"><i style="background:#2ecc8a;box-shadow:0 0 8px #2ecc8a"></i>Update available — your settings and library stay safe</span></div>`;
+ H+=`<div class="panel"></div>`;
+ H+=`<div class="lab" style="left:48px;top:272px">INSTALL LOCATION</div>`;
+ H+=`<div class="field" data-el="field" style="left:48px;top:292px;width:468px;height:40px"></div>`;
+ H+=btn('browse','sec',528,292,104,40,'Browse');
+ H+=tog('t1',48,348,224,24,'Desktop shortcut','on');
+ H+=tog('t2',288,348,224,24,'Start menu shortcut','on');
+ H+=`<div class="note" style="left:48px;top:396px">≈ ${SIZE} MB · permissions depend on the selected folder</div>`;
+ H+=btn('go','pri',472,384,160,40,page==='upd'?'Update':'Install');
+}
+if(page==='prog'||page==='uprog'){
+ H+=`<div class="glowc"></div>`;
+ H+=logo(308,84,64);
+ H+=`<div class="title ctr" style="top:180px;font-size:26px">${page==='prog'?'Installing Pulse':'Removing Pulse'}</div>`;
+ H+=`<div class="sub ctr" style="top:220px;font-size:13px">${page==='prog'?'Version '+V+' · Setting up your music space':'This will only take a moment'}</div>`;
+ H+=`<div class="track" data-el="bar" style="left:140px;top:280px;width:400px"></div>`;
+}
+if(page==='fin'||page==='udone'){
+ H+=`<div class="glowc"></div>`;
+ H+=logo(304,72,72);
+ H+=zone('logo',296,64,108,108);
+ if(page==='fin') H+=`<div class="badge" style="left:358px;top:126px;transform:scale(${BD});opacity:${Math.min(1,BD*2.5)}"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+ H+=`<div class="title ctr" style="top:176px;font-size:30px">${page==='fin'?'All set!':'Pulse removed'}</div>`;
+ H+=`<div class="sub ctr" style="top:220px">${page==='fin'?'Pulse '+V+' is installed. Enjoy your music!':'Thanks for listening with Pulse.'}</div>`;
+ if(page==='fin'){H+=btn('run','pri',188,280,184,44,'Launch Pulse');H+=btn('close','sec',384,280,108,44,'Close');}
+ else H+=btn('close','sec',284,280,112,44,'Close');
+}
+if(page==='ucf'){
+ H+=`<div class="glow1" style="opacity:.6"></div><div class="grid"></div>`;
+ H+=wave(456,52,1,.35)+zone('wave',428,12,204,232)+zone('logo',40,36,84,84);
+ H+=logo(48,44,68);
+ H+=`<div class="title" style="left:136px;top:52px;font-size:32px">Uninstall Pulse?</div>`;
+ H+=`<div class="sub" style="left:137px;top:94px;font-size:13px;color:#8f8b9b">Version ${V}</div>`;
+ H+=`<div class="sub" style="left:48px;top:136px;width:380px">Pulse will be removed from this computer. Choose which data to keep.</div>`;
+ H+=`<div class="panel"></div>`;
+ H+=`<div class="lab" style="left:48px;top:272px">YOUR DATA</div>`;
+ H+=tog('u1',48,296,560,24,'Remove settings, library, sign-in data and cache','on');
+ H+=tog('u2',48,332,560,24,'Also remove downloaded tracks','off');
+ H+=`<div class="note" style="left:48px;top:396px">Downloaded tracks are kept by default</div>`;
+ H+=btn('cancel','sec',384,384,112,40,'Cancel');
+ H+=btn('go','pri',508,384,124,40,'Uninstall');
+}
+R.innerHTML=H;
+window.RECTS={};document.querySelectorAll('[data-el]').forEach(e=>{const r=e.getBoundingClientRect();RECTS[e.dataset.el]=[r.left,r.top,r.width,r.height]});
+</script></body></html>
+
+<style>/* 1.0.0: монохромный логотип без цветного ореола/блика. */.logo{filter:none}.shn{display:none}</style>

@@ -1,0 +1,21 @@
+/* Pointer lighting follows the cover, without replacing existing transforms. */
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ :is(.tr-card,.vcard,.ha,.lys-art,#artWrap > .art,#bArt,.viz-wrap,.pp-vis).pulse-pointer{box-shadow:inset 0 0 32px rgba(255,255,255,.06),0 0 0 1px rgba(255,255,255,.18)}
+ .lys-art.pulse-pointer{rotate:1 0 0 var(--pointer-rx);box-shadow:8px 16px 48px #0005,0 0 0 1px rgba(255,255,255,.22)}
+ button:not(:disabled):hover{filter:brightness(1.08)}
+ button:not(:disabled):active{filter:brightness(.95)}
+}
+button:focus-visible,select:focus-visible{outline:2px solid rgb(var(--a1,94,159,232));outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.pulse-pointer{rotate:none!important}}
+
+.pulse-pointer-light{position:absolute;inset:0;z-index:3;border-radius:inherit;pointer-events:none;background:radial-gradient(240px circle at var(--pointer-x) var(--pointer-y),rgba(255,255,255,.12),transparent 72%)}
+@media(prefers-reduced-motion:reduce),(hover:none){.pulse-pointer-light{display:none}}
+
+/* Catalog lighting belongs to the artwork, never the text/card perimeter.
+   Preserve artwork lift/shadow and clip the light to square or round covers. */
+.card .ca > .pulse-pointer-light{border-radius:inherit;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)}
+
+:is(.card .ca,.tr-card,.vcard,.ha,.lys-art,#artWrap > .art,#bArt,.viz-wrap,.pp-vis){transition:box-shadow 240ms ease,rotate 280ms ease}
+.pulse-pointer-light{opacity:0;transition:opacity 240ms ease}
+.lys-art{rotate:1 0 0 0deg}
+@media(prefers-reduced-motion:reduce){.pulse-pointer-light{transition:none}}

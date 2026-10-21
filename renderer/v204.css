@@ -1,0 +1,27 @@
+/* ===================== Pulse 2.0.4 ===================== */
+
+/* ---------- переключатель платформ: плашка и свечение — цветом обложки (а не фирменным цветом сервиса) ---------- */
+.cl-sw,.cl-sw[data-c=am],.cl-sw[data-c=sp]{--clc:rgb(var(--a1));--clc2:rgb(var(--a2))}
+.cl-ind{background:linear-gradient(180deg,color-mix(in srgb,var(--clc) 26%,rgba(255,255,255,.1)),color-mix(in srgb,var(--clc2) 14%,rgba(255,255,255,.05)));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--clc) 45%,transparent),inset 0 -2px 0 var(--clc),0 0 16px color-mix(in srgb,var(--clc) 38%,transparent),0 1px 6px rgba(0,0,0,.35);
+  transition:transform .42s cubic-bezier(.34,1.45,.5,1),box-shadow .6s,background .6s}
+.cl-sw button.on svg.i{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--clc) 70%,transparent))}
+
+/* ---------- караоке: свечение слабее и без «ломания» слова ---------- */
+/* мягкий ореол только у поющегося слова */
+#lyrics .ly-line.cur .w.hot{text-shadow:0 0 .05em rgba(var(--a1),.6),0 0 .16em rgba(var(--a1),.25)}
+/* во время заливки слова — без фильтра: drop-shadow на слове с background-clip:text в Chromium иногда рисовал слово
+   другим шрифтом и со сдвигом («Ты о|сталась») */
+#lyrics .ly-line.cur .w.hot.fl{filter:none!important;text-shadow:none!important}
+body[data-lyanim=glow] #lyrics .ly-line.cur .w.hot:not(.fl){text-shadow:0 0 .06em rgba(var(--a1),.75),0 0 .22em rgba(var(--a2),.35)}
+.lyrics.svc-col .ly-line.cur .w.hot:not(.fl){text-shadow:0 0 .06em color-mix(in srgb,var(--svc-bg) 60%,transparent),0 0 .18em color-mix(in srgb,var(--svc-bg) 30%,transparent)}
+.ly-lines .ly-line.cur .w{text-shadow:0 0 .06em rgba(var(--a1),.5),0 0 .16em rgba(var(--a1),.2)}
+.vis-line .w.on{text-shadow:0 0 .06em rgba(var(--a1),.6),0 0 .18em rgba(var(--a1),.25)}
+
+/* ---------- режим «Визуал» ---------- */
+/* обложка всегда круглая: настройка «Скругление» делала её скруглённым квадратом, он вращался, и кольцо визуала
+   то врезалось в углы, то отходило от них */
+.mode-visual .art,.mode-visual .art-glow{border-radius:50%!important}
+.mode-visual .art{will-change:transform}
+/* пульс цветного свечения окна — на отдельном слое, без перерисовки градиентов */
+#ambient::after{will-change:opacity}

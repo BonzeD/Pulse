@@ -1,0 +1,13 @@
+/* The native lyrics stage owns layout, auto-hide, transport and keyboard input. */
+.lys-scene{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.lys-scene-control{display:none}
+.lys[data-vis="immersion"] :is(.lys-bg,.lys-pt,.lys-wrap,.lys-prog,[data-lys="refl"],[data-lys="pt"]){display:none!important}
+.lys[data-vis="immersion"] .lys-scene-control{display:flex;align-items:center;gap:8px;font:inherit;color:inherit}
+.lys-scene-control select{font:inherit;color:inherit;background:var(--bg,#191919);border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:8px;min-height:44px;max-width:220px}
+.lys-scene-control select:focus-visible{outline:2px solid rgb(var(--a1,94,159,232));outline-offset:3px}
+.lys-scene-error{position:absolute;top:40%;left:50%;translate:-50% 0;max-width:540px;width:calc(100% - 48px);padding:24px;background:#202020;color:#fff;border:1px solid #555;border-radius:12px;font:16px/1.5 system-ui;text-align:center}
+.lys .lys-ui{max-width:calc(100vw - 32px);flex-wrap:wrap;justify-content:center}
+@media(max-width:900px){.lys[data-vis="immersion"] .lys-ui{width:calc(100% - 32px);gap:8px}.lys-scene-control{font-size:14px!important}.lys-scene-control select{max-width:180px}.lys .lys-seg{max-width:100%;flex-wrap:wrap}}
+
+.lys .lys-ui:focus-within{opacity:1;transform:none}
+.lys .lys-ui select:focus{outline:2px solid rgb(var(--a1,94,159,232));outline-offset:2px}

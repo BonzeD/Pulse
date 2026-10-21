@@ -1,0 +1,8 @@
+/* 1.0.0: visible canvas water belongs only to the reflected cover, never the original. */
+.lys-art-wrap{position:relative;width:100%;aspect-ratio:1;flex:0 0 auto}
+.lys-art-wrap .lys-art{height:100%;animation:none;-webkit-box-reflect:unset!important}
+.lys-cover-water{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;height:48%;pointer-events:none;overflow:visible;mask-image:none;-webkit-mask-image:none}
+.lys.refl .lys-cover-water{display:block}
+.lys-cover-mirror{display:block;width:100%;height:100%;transform:none;filter:none}
+.lys.refl .lys-cover{transform:translateY(-7vh)}
+.lys.mr-on .lys-cover-water{display:none}

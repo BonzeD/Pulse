@@ -1,0 +1,98 @@
+/* 2.0.7: панель плеера в режиме «Только текст» — плавающая «таблетка» по центру снизу (как в референсе).
+   Это тот же #bar (все id, классы и обработчики прежние), просто другой вид, пока на body есть класс .lys-bar.
+   Вне режима новые кнопки .lb-x скрыты, и обычная панель выглядит как раньше. */
+.lb-x{display:none!important}
+body:is(.lys-bar,.main-bar) .bar{
+  --lbH:76px;
+  position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:22px!important;
+  width:clamp(760px,72vw,1200px)!important;height:var(--lbH)!important;transform:translateX(-50%)!important;translate:none!important;scale:none!important;
+  z-index:59;display:flex!important;align-items:center;gap:6px;padding:14px 22px 4px 14px!important;
+  border-radius:24px;background:rgba(18,14,26,.52)!important;border:1px solid rgba(255,255,255,.11)!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  cursor:default;-webkit-app-region:no-drag;transition:opacity .3s,transform .3s;animation:lbIn .35s cubic-bezier(.2,.8,.25,1) both
+}
+@keyframes lbIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+body:is(.lys-bar,.main-bar) .bar-l,body:is(.lys-bar,.main-bar) .bar-c,body:is(.lys-bar,.main-bar) .bar-r{display:contents}
+body:is(.lys-bar,.main-bar) .bar .lb-x{display:grid!important}
+body:is(.lys-bar,.main-bar) .bar .lb-sp{display:block!important;flex:1 1 auto;min-width:8px}
+/* лишнее на виду прячем: «Не нравится» и «Скачать» — в меню трека (клик по названию), перемешивание — в очереди */
+body:is(.lys-bar,.main-bar) #btnDislike,body:is(.lys-bar,.main-bar) #btnDlCur,body:is(.lys-bar,.main-bar) #btnMore,body:is(.lys-bar,.main-bar) #btnShuffle,body:is(.lys-bar,.main-bar) #btnPP{display:none!important}
+
+/* полоса прогресса — тонкая линия внутри таблетки сверху */
+body:is(.lys-bar,.main-bar) .seek{left:24px;right:24px;top:2px;height:14px}
+body:is(.lys-bar,.main-bar) .seek::before,body:is(.lys-bar,.main-bar) .seek-fill,body:is(.lys-bar,.main-bar) .seek-buf{top:6px;height:2px;border-radius:2px}
+body:is(.lys-bar,.main-bar) .seek:hover::before,body:is(.lys-bar,.main-bar) .seek:hover .seek-fill,body:is(.lys-bar,.main-bar) .seek:hover .seek-buf{top:5px;height:4px}
+body:is(.lys-bar,.main-bar) .seek-fill{background:rgba(255,255,255,.92);box-shadow:0 0 8px rgba(255,255,255,.35)}
+body:is(.lys-bar,.main-bar) .seek::before{background:rgba(255,255,255,.14)}
+body:is(.lys-bar,.main-bar) .seek-buf{background:rgba(255,255,255,.2)}
+
+/* порядок как в референсе */
+body:is(.lys-bar,.main-bar) #bArt{order:1}body:is(.lys-bar,.main-bar) .b-meta{order:2}body:is(.lys-bar,.main-bar) #btnLybStyle{order:3}
+body:is(.lys-bar,.main-bar) #btnLike{order:4}body:is(.lys-bar,.main-bar) #btnLybAdd{order:5}body:is(.lys-bar,.main-bar) #btnRepeat{order:6}
+body:is(.lys-bar,.main-bar) #btnPrev{order:7}body:is(.lys-bar,.main-bar) #btnPlay{order:8}body:is(.lys-bar,.main-bar) #btnNext{order:9}body:is(.lys-bar,.main-bar) #btnLybQueue{order:10}
+body:is(.lys-bar,.main-bar) .lb-sp{order:11}body:is(.lys-bar,.main-bar) #btnLybLy{order:12}body:is(.lys-bar,.main-bar) .vol{order:13}body:is(.lys-bar,.main-bar) #btnDj{order:14}
+body:is(.lys-bar,.main-bar) #btnLybView{order:15}body:is(.lys-bar,.main-bar) #btnLybFs{order:16}body:is(.lys-bar,.main-bar) .bar .time{order:17}
+
+body:is(.lys-bar,.main-bar) .bar .b-art{width:42px;height:42px;border-radius:10px;margin:0 4px 0 0;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+body:is(.lys-bar,.main-bar) .bar .b-meta{flex:0 1 210px;min-width:130px;margin-right:4px;cursor:pointer}
+body:is(.lys-bar,.main-bar) .bar .b-title{font-size:13px;font-weight:800;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+body:is(.lys-bar,.main-bar) .bar .b-sub{font-size:11.5px;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+body:is(.lys-bar,.main-bar) .bar .ib{width:36px;height:36px;color:rgba(255,255,255,.72)}
+body:is(.lys-bar,.main-bar) .bar .ib svg.i{width:19px;height:19px}
+body:is(.lys-bar,.main-bar) .bar .ib:hover{color:#fff;background:rgba(255,255,255,.08)}
+body:is(.lys-bar,.main-bar) .bar .ib.on{color:#fff}
+body:is(.lys-bar,.main-bar) .bar .ib.on::after{bottom:1px;background:#fff}
+body:is(.lys-bar,.main-bar) #btnLike.liked{color:#ff6fa3!important}
+body:is(.lys-bar,.main-bar) #btnPlay{width:46px;height:46px;margin:0 4px;color:#fff;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.04)}
+body:is(.lys-bar,.main-bar) #btnPlay:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45)}
+body:is(.lys-bar,.main-bar) #btnPlay svg.i{width:24px;height:24px}
+body:is(.lys-bar,.main-bar) #btnLybQueue.on{color:#fff;background:rgba(255,255,255,.1)}
+body:is(.lys-bar,.main-bar) #btnLybView.on{color:#fff;background:rgba(255,255,255,.1)}
+
+/* чип стиля текста (на месте «标准» в референсе) */
+body:is(.lys-bar,.main-bar) .lb-chip{place-items:center;height:24px;padding:0 9px;margin:0 6px 0 2px;border-radius:7px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.82);font-size:11px;font-weight:700;white-space:nowrap;transition:background .15s}
+body:is(.lys-bar,.main-bar) .lb-chip:hover{background:rgba(255,255,255,.18);color:#fff}
+body:is(.lys-bar,.main-bar).spicy-on #btnLybStyle,body:is(.lys-bar,.main-bar).spicy-on #btnLybView{display:none!important}
+
+body:is(.lys-bar,.main-bar) .bar .vol:hover input,body:is(.lys-bar,.main-bar) .bar .vol input:focus{width:84px;margin-right:4px}
+body:is(.lys-bar,.main-bar) .bar .time{font-size:11.5px;color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:8px;min-width:76px;text-align:right}
+
+/* «Прятать сама»: панель уходит, когда мышь не двигается; при наведении — всегда видна */
+body:is(.lys-bar,.main-bar).lyb-auto:not(.lyb-awake) .bar:not(:hover):not(:focus-within){opacity:0;transform:translate(-50%,14px)!important;pointer-events:none}
+/* узкое окно: прячем второстепенное */
+@media (max-width:980px){body:is(.lys-bar,.main-bar) .bar{width:calc(100vw - 32px)!important}body:is(.lys-bar,.main-bar) #btnLybStyle,body:is(.lys-bar,.main-bar) #btnDj,body:is(.lys-bar,.main-bar) .bar .b-sub{display:none!important}body:is(.lys-bar,.main-bar) .bar .b-meta{flex-basis:140px}}
+
+/* очередь — панель слева (как в референсе) */
+.lyb-q{position:fixed;left:18px;top:18px;bottom:122px;width:310px;z-index:59;display:flex;flex-direction:column;border-radius:20px;
+  background:rgba(18,14,26,.62);border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(18px) saturate(1.4);
+  color:#fff;cursor:default;opacity:0;transform:translateX(-14px);pointer-events:none;transition:opacity .22s,transform .22s;-webkit-app-region:no-drag}
+.lyb-q.show{opacity:1;transform:none;pointer-events:auto}
+.lyb-q-h{display:flex;align-items:center;gap:6px;padding:14px 10px 10px 16px}
+.lyb-q-h b{font-size:14px;font-weight:800}.lyb-q-h small{display:block;font-size:11px;color:rgba(255,255,255,.5);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.lyb-q-h .grow{flex:1;min-width:0}
+.lyb-q-h .ib{width:32px;height:32px;color:rgba(255,255,255,.7)}.lyb-q-h .ib svg.i{width:17px;height:17px}.lyb-q-h .ib.on{color:#fff;background:rgba(255,255,255,.12)}
+.lyb-q-l{flex:1;overflow-y:auto;padding:0 8px 10px;scrollbar-width:thin}
+.lyb-q-r{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;cursor:pointer;transition:background .12s}
+.lyb-q-r:hover{background:rgba(255,255,255,.07)}
+.lyb-q-r.cur{background:rgba(255,255,255,.12)}
+.lyb-q-r i{width:36px;height:36px;border-radius:7px;background:rgba(255,255,255,.08) center/cover;flex-shrink:0}
+.lyb-q-r span{min-width:0;flex:1}.lyb-q-r b,.lyb-q-r em{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lyb-q-r b{font-size:12.5px;font-weight:700}.lyb-q-r em{font-style:normal;font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.lyb-q-r.cur b{color:#ff9cc4}
+.lyb-q-e{padding:30px 16px;text-align:center;color:rgba(255,255,255,.5);font-size:13px}
+
+/* закреплённые кнопки вида сцены (кнопка «Вид» на панели) */
+.lys.lyb-pin .lys-ui{opacity:1;transform:none}
+
+/* производительность: «Экономно» и без анимаций — без размытия фона и без появления */
+body.perf-eco:is(.lys-bar,.main-bar) .bar,body.perf-eco .lyb-q{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(16,12,22,.94)!important}
+body.no-anim:is(.lys-bar,.main-bar) .bar{animation:none;transition:none}body.no-anim .lyb-q{transition:none}
+body:is(.lys-bar,.main-bar) #btnLybView.on::after{display:none}
+/* тост — над панелью, а не под ней */
+body:is(.lys-bar,.main-bar) .toast{bottom:122px}
+/* 2.0.8: оптимизация «Только текст» — то, что целиком закрыто сценой, браузер не рисует и не пересчитывает
+   (content-visibility сохраняет состояние, поэтому выход из режима мгновенный, прокрутка страниц на месте) */
+body.lyonly .view,body.lyonly .side,body.lyonly .top{content-visibility:hidden;visibility:hidden}
+body.lyonly #ambient{visibility:hidden}
+body.lyonly #ambient *{animation-play-state:paused!important}

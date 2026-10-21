@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<script src="locales-en.js"></script><script src="locales-ja.js"></script><script src="locales-uk.js"></script><script src="i18n.js"></script><meta charset="UTF-8"><title>Pulse Widget</title><link rel="stylesheet" href="widget.css"></head>
+<body class="size-standard theme-glass">
+<div class="w" id="w">
+  <div class="drag-region" aria-hidden="true"></div>
+  <div class="bg" id="bg" data-ed="bg"></div><div class="tint"></div>
+  <div class="cover" id="cover" data-ed="cover"><div class="eq"><i></i><i></i><i></i><i></i></div></div>
+  <div class="info" data-ed="title" data-row="info">
+    <div class="t" id="t" data-ed="title">Pulse</div>
+    <div class="a" id="a" data-ed="artist">Ничего не играет</div>
+    <div class="ll" id="ll" data-ed="line"></div>
+  </div>
+  <div class="win">
+    <button id="size" title="Размер виджета"><svg viewBox="0 0 24 24"><path d="M4 14v6h6M20 10V4h-6M4 20l7-7M20 4l-7 7"/></svg></button>
+    <button id="edit" title="Редактор виджета"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg></button>
+    <button id="open" title="Открыть плеер"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M21 3l-8 8M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></button>
+    <button id="hide" title="Скрыть (Ctrl+Alt+W)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="lyr" id="lyr" data-ed="line" data-row="lyr"><div class="lp" id="lp"></div><div class="lc" id="lc"></div><div class="ln" id="ln"></div></div>
+  <div class="ctl" data-ed="ctl" data-row="ctl">
+    <button id="like" data-k="like" class="sm x" title="Нравится"><svg viewBox="0 0 24 24" id="likeI"><path d="M12 21s-7.5-4.6-9.5-9.3C1.2 8.4 3.3 5 6.8 5c2 0 3.5 1.1 5.2 3 1.7-1.9 3.2-3 5.2-3 3.5 0 5.6 3.4 4.3 6.7C19.5 16.4 12 21 12 21z"/></svg></button>
+    <button id="dislike" data-k="dislike" class="sm x" title="Не нравится"><svg viewBox="0 0 24 24"><path d="M17 3.5v10M21 12.2V5.3a1.8 1.8 0 0 0-1.8-1.8H8.4a2.6 2.6 0 0 0-2.5 1.9l-1.7 6.2A2.4 2.4 0 0 0 6.5 14.6H10l-.8 3.6a2.1 2.1 0 0 0 3.9 1.4L17 13.5h2.2A1.8 1.8 0 0 0 21 12.2z"/></svg></button>
+    <button id="shuffle" data-k="shuffle" class="sm x" title="Перемешать"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+    <button id="prev" data-k="prev" title="Предыдущий"><svg viewBox="0 0 24 24" class="f"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+    <button id="play" data-k="play" data-ed="play" class="play" title="Play / Pause"><svg viewBox="0 0 24 24" class="f" id="ico"><path d="M8 5v14l11-7z"/></svg></button>
+    <button id="next" data-k="next" title="Следующий"><svg viewBox="0 0 24 24" class="f"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    <button id="repeat" data-k="repeat" class="sm x" title="Повтор"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg><b id="one">1</b></button>
+    <div class="vol x" id="vol" data-k="vol"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7"/></svg><div class="vbar" id="vbar"><div class="vfill" id="vfill"></div></div></div>
+  </div>
+  <div class="prog" data-ed="prog" data-row="prog"><span class="tm" id="tc">0:00</span><div class="bar" id="bar"><div class="fill" id="fill"></div></div><span class="tm" id="td">0:00</span></div>
+</div>
+<script src="surface-motion.js"></script><script src="widget.js"></script>
+</body></html>

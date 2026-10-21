@@ -1,0 +1,22 @@
+{
+  "\"Установка Pulse ${VERSION}\"": "\"Pulse ${VERSION} Setup\"",
+  "\"Удаление Pulse\"": "\"Uninstall Pulse\"",
+  "\"Установщик Pulse\"": "\"Pulse Installer\"",
+  "\"${NSISDIR}\\Contrib\\Language files\\Russian.nlf\"": "\"${NSISDIR}\\Contrib\\Language files\\English.nlf\"",
+  "\"Установщик Pulse уже запущен.\"": "\"Pulse Setup is already running.\"",
+  "\"STR:Установка Pulse ${VERSION}\"": "\"STR:Pulse ${VERSION} Setup\"",
+  "\"Выбери папку для установки Pulse\"": "\"Choose a folder to install Pulse\"",
+  "\"Нет доступа на запись в:$\\r$\\n$InstallPath$\\r$\\n$\\r$\\nДля Program Files обычно нужны права администратора. Перезапустить установщик с запросом этих прав?$\\r$\\n$\\r$\\nБез повышения прав выбери $LOCALAPPDATA\\Programs\\Pulse или доступную папку на D:.\"": "\"Cannot write to:$\\r$\\n$InstallPath$\\r$\\n$\\r$\\nProgram Files usually requires administrator permission. Restart Setup and request permission?$\\r$\\n$\\r$\\nWithout elevation, choose $LOCALAPPDATA\\Programs\\Pulse or another writable folder.\"",
+  "\"Не удалось записать файлы в:$\\r$\\n$InstallPath$\\r$\\nПроверь права на папку, наличие диска и свободного места. Можно выбрать другую папку.\"": "\"Could not write files to:$\\r$\\n$InstallPath$\\r$\\nCheck folder permissions, the drive and available space. You can choose another folder.\"",
+  "\"Закрываем Pulse, если он открыт…\"": "\"Closing Pulse if it is running…\"",
+  "\"Копируем файлы…\"": "\"Copying files…\"",
+  "\"Создаём ярлыки…\"": "\"Creating shortcuts…\"",
+  "\"Готово\"": "\"Done\"",
+  "\"Установка не завершена: не удалось скопировать файлы в $INSTDIR. Проверь права на папку и свободное место.\"": "\"Setup could not finish: failed to copy files to $INSTDIR. Check folder permissions and available space.\"",
+  "\"STR:Pulse ${VERSION} установлен\"": "\"STR:Pulse ${VERSION} installed\"",
+  "\"STR:Удаление Pulse\"": "\"STR:Uninstall Pulse\"",
+  "\"Закрываем Pulse…\"": "\"Closing Pulse…\"",
+  "\"Удаляем файлы…\"": "\"Removing files…\"",
+  "\"Удаляем настройки и кэш…\"": "\"Removing settings and cache…\"",
+  "\"STR:Pulse удалён\"": "\"STR:Pulse removed\""
+}

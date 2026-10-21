@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<script src="locales-en.js"></script><script src="locales-ja.js"></script><script src="i18n.js"></script><meta charset="UTF-8"><title>Pulse Wallpaper</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;user-select:none;cursor:default}
+:root{--a1:255,45,149;--a2:139,61,255;--a3:0,229,255}
+#bg{position:absolute;inset:-6%;background:#0b0a12 center/cover;transition:background-image 1.2s,opacity 1s}
+#bg.blur{filter:blur(70px) saturate(1.8) brightness(.7)}
+#dim{position:absolute;inset:0;background:#000}
+#cv{position:absolute;inset:0;width:100%;height:100%;transform-origin:50% 45%}
+.card{position:absolute;display:flex;align-items:center;gap:22px;padding:18px 26px 18px 18px;border-radius:26px;background:rgba(10,8,18,.42);backdrop-filter:blur(26px) saturate(1.5);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px -20px rgba(0,0,0,.7);max-width:42vw;transition:opacity .6s}
+.card.tl{top:6%;left:4%}.card.tr{top:6%;right:4%}.card.bl{bottom:10%;left:4%}.card.br{bottom:10%;right:4%}.card.c{top:50%;left:50%;transform:translate(-50%,-50%)}
+.art{width:120px;height:120px;border-radius:18px;background:#1a1528 center/cover;flex-shrink:0;box-shadow:0 12px 30px -8px rgba(0,0,0,.7)}
+.meta{min-width:0}
+.t{font-size:28px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.a{font-size:17px;color:rgba(255,255,255,.7);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:13px;color:rgba(255,255,255,.65);font-variant-numeric:tabular-nums}
+.bar{flex:1;min-width:220px;height:5px;border-radius:5px;background:rgba(255,255,255,.15);overflow:hidden}
+.fill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,rgb(var(--a1)),rgb(var(--a2)),rgb(var(--a3)));box-shadow:0 0 12px rgb(var(--a1))}
+.ly{position:absolute;left:0;right:0;bottom:17%;text-align:center;font-size:clamp(22px,2.6vw,44px);font-weight:800;padding:0 10%;text-shadow:0 4px 30px rgba(0,0,0,.8),0 0 24px rgba(var(--a1),.6);transition:opacity .4s}
+.clock{position:absolute;top:5%;left:50%;transform:translateX(-50%);text-align:center;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+.clock b{display:block;font-size:clamp(48px,6vw,110px);font-weight:200;letter-spacing:.02em;line-height:1}
+.clock span{font-size:18px;color:rgba(255,255,255,.75);text-transform:capitalize}
+.hide{opacity:0!important;pointer-events:none}
+.card.tl~.clock,.card.tr~.clock{top:auto;bottom:6%}
+.clock.bot{top:auto;bottom:6%}.card.bl~.clock.bot,.card.br~.clock.bot{bottom:auto;top:5%}
+.ly{left:4%;right:4%;padding:0;overflow-wrap:anywhere}
+.ly.top{bottom:auto;top:24%}.ly.middle{bottom:auto;top:50%;transform:translateY(-50%)}
+.ctl{display:none;align-items:center;gap:14px;margin-top:14px}
+.card.ctl-on .ctl{display:flex}
+.ctl button{all:unset;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:#fff;background:rgba(255,255,255,.08);transition:background .15s,transform .12s}
+.ctl button svg{width:20px;height:20px;fill:currentColor}
+.ctl button.main{width:50px;height:50px;background:linear-gradient(135deg,rgb(var(--a1)),rgb(var(--a2)));box-shadow:0 6px 20px -6px rgb(var(--a1))}
+.ctl button.main svg{width:24px;height:24px}
+.hov{background:rgba(255,255,255,.22)!important;transform:scale(1.08)}
+.ctl button.main.hov{filter:brightness(1.15)}
+.press{transform:scale(.9)!important}
+.card.ctl-on .bar{height:8px;cursor:pointer}
+.card.ctl-on .bar.hov{height:10px;transform:none}
+
+/* 2.0: дизайн часов, карточки и строки текста */
+.clock{transition:opacity .4s}
+.clock .hm{display:block;font-size:clamp(48px,6vw,110px);font-weight:200;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.clock .hm small{font-size:.38em;font-weight:inherit;opacity:.65;margin-left:.12em;letter-spacing:0}
+.clock .hm sup{font-size:.28em;font-weight:600;opacity:.7;margin-left:.2em;vertical-align:.9em;letter-spacing:.05em}
+.clock .dt{display:block;margin-top:6px;font-size:18px;color:rgba(255,255,255,.75);text-transform:capitalize}
+.clock.cs-bold .hm{font-weight:800;letter-spacing:-.03em}
+.clock.cs-stack .hm{font-weight:800;line-height:.86;letter-spacing:-.03em}.clock.cs-stack .hm i{display:block;font-style:normal}.clock.cs-stack .hm i+i{opacity:.55}
+.clock.cs-mini{display:flex;align-items:baseline;gap:14px}.clock.cs-mini .hm{font-size:clamp(28px,2.6vw,48px);font-weight:500}.clock.cs-mini .dt{margin:0;font-size:16px}
+.clock.cs-neon .hm{font-weight:300;color:rgb(var(--a1));text-shadow:0 0 8px rgba(var(--a1),.9),0 0 30px rgba(var(--a1),.7),0 0 70px rgba(var(--a2),.6)}
+.clock.cs-analog svg{display:block;width:clamp(120px,11vw,210px);height:auto;aspect-ratio:1;margin:0 auto;filter:drop-shadow(0 6px 24px rgba(0,0,0,.5))}
+.clock.pl-glass,.clock.pl-dark,.clock.pl-accent{padding:18px 30px;border-radius:24px;border:1px solid rgba(255,255,255,.1)}
+.clock.pl-glass{backdrop-filter:blur(26px) saturate(1.5)}
+.card.st-solid{backdrop-filter:none}
+.card.st-minimal{background:none!important;backdrop-filter:none;border-color:transparent;box-shadow:none;text-shadow:0 2px 16px rgba(0,0,0,.7)}
+.card.st-minimal .art{box-shadow:0 18px 40px -10px rgba(0,0,0,.8)}
+.card.st-accent{border-color:rgba(var(--a1),.45)}
+.card.as-square .art{border-radius:6px}.card.as-circle .art{border-radius:50%}
+.ctl button.like.on{color:rgb(var(--a1))}
+.ctl .sp{width:6px}
+.ly span{display:inline;padding:.08em .5em;border-radius:.45em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.ly.plate span{background:rgba(8,6,14,.45);backdrop-filter:blur(18px)}
+.ly.noglow{text-shadow:0 3px 18px rgba(0,0,0,.75)}
+</style></head>
+<body>
+<div id="bg"></div><div id="dim"></div><canvas id="cv"></canvas>
+<div class="card bl hide" id="card"><div class="art" id="art"></div><div class="meta"><div class="t" id="t"></div><div class="a" id="a"></div><div class="prog" id="prog"><span id="tc">0:00</span><div class="bar" id="bar" data-act="seek"><div class="fill" id="fill"></div></div><span id="td">0:00</span></div>
+<div class="ctl" id="ctl"><button data-act="prev"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button><button class="main" data-act="toggle" id="bPlay"><svg viewBox="0 0 24 24" id="icoPlay"><path d="M8 5v14l11-7z"/></svg></button><button data-act="next"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button><i class="sp"></i><button data-act="like" class="like" id="bLike"><svg viewBox="0 0 24 24" id="icoLike"></svg></button></div></div></div>
+<div class="clock hide" id="clock"></div>
+<div class="ly hide" id="ly"></div>
+<script src="viz.js"></script>
+<script src="wallstyle.js"></script>
+<script src="wallpaper.js"></script>
+</body></html>

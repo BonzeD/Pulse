@@ -1,0 +1,33 @@
+// 2.0.11: замер нагрузки по сценариям: node perf.js "<имя>=<js>@@..."  → время стилей/раскладки/скриптов/отрисовки за 4 с
+const { chromium } = require('playwright');
+(async () => {
+  const sc = process.argv[2].split('@@').map((s) => { const i = s.indexOf('='); return [s.slice(0, i), s.slice(i + 1)]; });
+  const b = await chromium.launch({ executablePath: require('child_process').execSync('which chromium').toString().trim(), args: ['--no-sandbox', '--allow-file-access-from-files', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const errs = []; p.on('pageerror', (e) => errs.push(String(e).slice(0, 200)));
+  await p.addInitScript(() => { const mk = () => new Proxy(function () {}, { get: (t, k) => k === 'then' ? undefined : k === Symbol.toPrimitive ? () => '' : mk(), apply: () => Promise.resolve(null) }); window.pulse = mk(); });
+  await p.goto('file:///data/pulse/renderer/index.html'); await p.waitForTimeout(1500);
+  await p.evaluate(() => {
+    document.querySelectorAll('#splash').forEach((e) => e.remove()); document.body.classList.remove('sp-intro');
+    const art = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><defs><linearGradient id="g"><stop offset="0" stop-color="#6a3cff"/><stop offset="1" stop-color="#ff4fa8"/></linearGradient></defs><rect width="300" height="300" fill="url(#g)"/></svg>');
+    const tr = (i) => ({ id: 'id' + i, title: 'Track ' + i, artists: [{ name: 'A' }], author: 'A', art, dur: 200 });
+    lib.queue = { name: 'Q', tracks: Array.from({ length: 40 }, (_, i) => tr(i)), idx: 0 }; try { updateNow(); } catch (e) {}
+    lyState.id = 'id0'; lyState.lines = Array.from({ length: 60 }, (_, k) => ({ t: k * 3, text: 'line number ' + k + ' with some words here', words: ('line number ' + k + ' with some words here').split(' ').map((s, j) => ({ t: k * 3 + j * .4, s })) })); lyState.kind = 'synced';
+    try { showLines(lyState.lines); } catch (e) {}
+    basePal = [[255, 45, 149], [139, 61, 255], [0, 229, 255]];
+    // имитация игры: время идёт, playing = true
+    window.__t0 = performance.now(); E.time = () => (performance.now() - window.__t0) / 1000; E.dur = () => 200; playing = true;
+  });
+  const cdp = await p.context().newCDPSession(p); await cdp.send('Performance.enable');
+  const M = async () => { const r = (await cdp.send('Performance.getMetrics')).metrics; const o = {}; r.forEach((m) => (o[m.name] = m.value)); return o; };
+  for (const [name, js] of sc) {
+    await p.evaluate(js); await p.waitForTimeout(800);
+    await p.evaluate(() => { window.__fr = []; let l = performance.now(); const f = (n) => { window.__fr.push(n - l); l = n; if (window.__fr.length < 100000) window.__raf = requestAnimationFrame(f); }; window.__raf = requestAnimationFrame(f); });
+    const a = await M(); await p.waitForTimeout(4000); const z = await M();
+    const fr = await p.evaluate(() => { cancelAnimationFrame(window.__raf); return window.__fr; });
+    const d = (k) => ((z[k] - a[k]) * 1000).toFixed(0);
+    const long = fr.filter((x) => x > 25).length;
+    console.log(`${name.padEnd(14)} frames ${fr.length} long>25ms ${long} | style ${d('RecalcStyleDuration')}ms (${z.RecalcStyleCount - a.RecalcStyleCount}x) layout ${d('LayoutDuration')}ms (${z.LayoutCount - a.LayoutCount}x) script ${d('ScriptDuration')}ms task ${d('TaskDuration')}ms nodes ${z.Nodes}`);
+  }
+  console.log(errs.slice(0, 5).join('\n')); await b.close(); process.exit(0);
+})().catch((e) => { console.error(e); process.exit(1); });
