@@ -1,12 +1,12 @@
 node_modules/
 dist/
 release-proof/
-build/installer-ui/out/
-native/**/bin/
-native/**/obj/
-resources/media-bridge/*
-!resources/media-bridge/.gitkeep
-tests/artifacts/
+app/build/installer-ui/out/
+app/native/**/bin/
+app/native/**/obj/
+app/resources/media-bridge/*
+!app/resources/media-bridge/.gitkeep
+app/tests/artifacts/
 .env
 .env.*
 *.log
@@ -16,4 +16,4 @@ Thumbs.db
 audit-evidence/
 
 # Generated installer owned-file list (rebuilt by make-setup.sh)
-build/uninstall-files.nsh
+app/build/uninstall-files.nsh

@@ -1,115 +1,35 @@
 {
-  "name": "pulse-player",
+  "name": "pulse-repository",
+  "private": true,
   "productName": "Pulse",
   "version": "1.0.0",
   "description": "Pulse — неоновый плеер-клиент для YouTube Music, Apple Music и Spotify",
-  "main": "main.js",
   "author": "werxapee & Daswi",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "start": "electron .",
-    "dist": "npm run build:media && electron-builder --win portable --x64 && sh build/make-setup.sh",
-    "test": "node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs",
-    "test:ui": "node tests/ui.cjs",
-    "test:audio": "node tests/audio-signal.cjs",
-    "postinstall": "node node_modules/electron/install.js",
-    "test:electron": "PULSE_SAFE_GPU=1 xvfb-run -a -s '-screen 0 1366x768x24' electron --no-sandbox --disable-gpu --disable-dev-shm-usage tests/electron-app",
-    "build:media": "sh build/build-media-bridge.sh",
-    "test:ui-fixes": "node tests/ui-fixes.cjs",
-    "test:hotfix": "node tests/hotfix-ui.cjs",
-    "test:fade-bar": "node tests/fade-bar-ui.cjs",
-    "test:local": "node tests/local-library-ui.cjs",
-    "build:graphics": "node build/build-graphics.cjs",
-    "test:experience": "node tests/experience-ui.cjs",
-    "test:widget-clicks": "node tests/widget-clicks.cjs",
-    "test:file-video": "node tests/file-video-ui.cjs",
-    "test:glass": "node tests/glass-ui.cjs",
-    "test:glass-editor": "node tests/glass-editor-ui.cjs",
-    "test:final-ui": "node tests/final-ui-smoke.cjs",
-    "test:final-effects": "node tests/final-effects.cjs",
-    "test:kinetic-motion": "node tests/kinetic-motion-ui.cjs",
-    "test:settings-art": "node tests/settings-art-ui.cjs"
-  },
-  "build": {
-    "appId": "com.scada.pulse",
-    "productName": "Pulse",
-    "files": [
-      "account.js",
-      "build/icon.png",
-      "main.js",
-      "offline.js",
-      "preload.js",
-      "renderer/**",
-      "lyrics.js",
-      "ytlist.js",
-      "ytm.js",
-      "services.js",
-      "login-preload.js",
-      "discord.js",
-      "wallpaper-host.js",
-      "LICENSE",
-      "NOTICE.md",
-      "visualizer-tap.js",
-      "native-locale.js",
-      "core-safety.js",
-      "media-session.js",
-      "local-library.js",
-      "media-tools.js",
-      "ytd-runtime.js",
-      "spicy-project.js",
-      "image-cache.js",
-      "discord-safety.js",
-      "native-dialogs.js"
-    ],
-    "afterPack": "./build/afterPack.js",
-    "win": {
-      "target": [
-        "portable"
-      ],
-      "signAndEditExecutable": false,
-      "icon": "build/icon.ico"
-    },
-    "extraResources": [
-      {
-        "from": "PLUGINS.md",
-        "to": "PLUGINS.md"
-      },
-      {
-        "from": "resources/yt-dlp",
-        "to": "yt-dlp"
-      },
-      {
-        "from": "resources/media-bridge",
-        "to": "media-bridge",
-        "filter": [
-          "*.exe",
-          "*.txt"
-        ]
-      },
-      {
-        "from": "resources/media-tools",
-        "to": "media-tools",
-        "filter": [
-          "*.exe",
-          "*.txt",
-          "*.json"
-        ]
-      }
-    ],
-    "portable": {
-      "artifactName": "Pulse-${version}-portable.exe"
-    },
-    "compression": "normal"
-  },
-  "devDependencies": {
-    "electron": "44.8.0",
-    "electron-builder": "^26.15.3",
-    "esbuild": "0.25.10",
-    "playwright": "^1.64.1",
-    "resedit": "^2.0.3",
-    "three": "0.180.0"
-  },
-  "dependencies": {
-    "music-metadata": "11.16.1"
+    "start": "npm --prefix app run start",
+    "dist": "npm --prefix app run dist",
+    "test": "npm --prefix app test && node scripts/check-structure.cjs",
+    "test:ui": "npm --prefix app run test:ui",
+    "test:audio": "npm --prefix app run test:audio",
+    "test:electron": "npm --prefix app run test:electron",
+    "build:media": "npm --prefix app run build:media",
+    "test:ui-fixes": "npm --prefix app run test:ui-fixes",
+    "test:hotfix": "npm --prefix app run test:hotfix",
+    "test:fade-bar": "npm --prefix app run test:fade-bar",
+    "test:local": "npm --prefix app run test:local",
+    "build:graphics": "npm --prefix app run build:graphics",
+    "test:experience": "npm --prefix app run test:experience",
+    "test:widget-clicks": "npm --prefix app run test:widget-clicks",
+    "test:file-video": "npm --prefix app run test:file-video",
+    "test:glass": "npm --prefix app run test:glass",
+    "test:glass-editor": "npm --prefix app run test:glass-editor",
+    "test:final-ui": "npm --prefix app run test:final-ui",
+    "test:final-effects": "npm --prefix app run test:final-effects",
+    "test:kinetic-motion": "npm --prefix app run test:kinetic-motion",
+    "test:settings-art": "npm --prefix app run test:settings-art",
+    "postinstall": "npm --prefix app ci",
+    "test:structure": "node scripts/check-structure.cjs",
+    "source": "python3 app/build/source-archive.py"
   }
 }
