@@ -1,0 +1,3 @@
+// Exact inverses for explicitly requested 1.0.1 edits, not changed historical hashes.
+const crypto=require('node:crypto'),assert=require('node:assert/strict'),manifest=require('./lyric-studio-approved.json');
+module.exports=(p,s)=>{s=require('./lyric-silence-original.cjs')(p,s);const m=manifest[p];if(!m)return s;assert.equal(crypto.createHash('sha256').update(s).digest('hex'),m.sha256,p+' lyric editor edit changed; review required');const lines=s.toString().match(/[^\n]*\n|[^\n]+$/g)||[];for(const e of [...m.patches].reverse())lines.splice(e.from,e.to-e.from,...e.original);const out=lines.join('');assert.equal(crypto.createHash('sha256').update(out).digest('hex'),m.originalSha256);return out;};

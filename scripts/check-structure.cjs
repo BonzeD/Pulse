@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const root=path.resolve(__dirname,'..'),app=path.join(root,'app');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 const pkg=JSON.parse(read('package.json')),actual=JSON.parse(read('app/package.json'));
-assert.equal(pkg.version,'1.0.0');assert.equal(actual.version,pkg.version);assert.equal(pkg.private,true);
+assert.match(pkg.version,/^\d+\.\d+\.\d+$/);assert.equal(actual.version,pkg.version);assert.equal(pkg.private,true);
 assert.equal(actual.main,'main.js');assert.ok(fs.existsSync(path.join(app,actual.main)));
 assert.equal(pkg.scripts.postinstall,'npm --prefix app ci');assert.equal(pkg.scripts.start,'npm --prefix app run start');
 assert.equal(JSON.parse(read('package-lock.json')).version,pkg.version);

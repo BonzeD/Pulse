@@ -2,7 +2,7 @@
 // 2.0.4: «Моя волна» — бесконечный личный поток, как у Яндекс Музыки.
 // Учится на лайках, дизлайках, пропусках и дослушанных треках. Профиль хранится только на этом компьютере (lib.wave).
 // Рекомендации — из сервиса текущего клиента (YouTube Music / Apple Music / Spotify), звук — как обычно. Без интернета — из скачанного.
-const WV = { busy: false, again: false, tok: 0, loading: false, cv: null, cx: null, vis: false, io: null, ro: null, w: 0, h: 0, chk: 0, last: 0, ph: 0, lvl: 0, sess: null, sq: new Map() };
+const WV = { busy: false, again: false, tok: 0, rev: 0, loading: false, cv: null, cx: null, vis: false, io: null, ro: null, w: 0, h: 0, chk: 0, last: 0, ph: 0, lvl: 0, sess: null, sq: new Map() };
 const wS = () => S().wave;
 const W_MOOD = [['any', 'Любое'], ['up', 'Бодрое'], ['calm', 'Спокойное'], ['fun', 'Весёлое'], ['sad', 'Грустное'], ['focus', 'Для фокуса']];
 const W_CHAR = [['fav', 'Любимое'], ['new', 'Незнакомое'], ['pop', 'Популярное']];
@@ -15,7 +15,18 @@ const W_MQ = {
   focus: { any: 'музыка для концентрации', ru: 'музыка для концентрации', foreign: 'focus music study', inst: 'lofi beats to study' }
 };
 const W_LQ = { ru: 'русские хиты', foreign: 'top hits', inst: 'instrumental music' };
-const W_CYR = /[а-яё]/i, W_INST = /instrumental|инструментал|lo-?fi|ambient|эмбиент|piano|пианино|beats|soundtrack|\bost\b|score|chill ?hop|classical|классик|symphon|sonata|без слов|meditation|медитац/i;
+const W_CYR = /[а-яё]/i;
+// Genres, artists and search provenance cannot prove that a recording has no voice.
+const W_INST = /(?:\binstrumental\b|инструментальн|[иі]нструментал(?![а-яёіїє])|без\s+(?:слов|вокала)|\bno\s+vocals?\b|\bvocal[- ]?free\b|インスト(?:ゥルメンタル)?|純音楽|純音樂)/i;
+const W_VOCAL = /(?:\b(?:with\s+vocals?|vocal\s+(?:mix|version)|lyrics?|acappella|a\s+cappella)\b|со\s+словами|с\s+вокалом)/i;
+function wInstrumental(t) {
+  const cached=lib.lyrics?.[t.id];
+  // Known lyrics take priority over a title, genre, or stale search flag.
+  if ([cached?.user,cached?.synced,cached?.plain,t.synced,t.plain,t.lyrics].some(x=>typeof x==='string'&&x.trim())) return false;
+  const title=String(t.title||'');
+  if(W_VOCAL.test(title))return false;
+  return t.instrumental===true||cached?.instrumental===true||W_INST.test(title);
+}
 TAB_RESET.wave = ['wave'];
 
 // ---------- профиль ----------
@@ -166,11 +177,11 @@ async function wPool(seed) {
     if (s.char === 'new') jobs.push(wSearch((s.lang === 'foreign' ? 'new music ' : 'новинки музыки ') + new Date().getFullYear(), { _new: 1, _why: 'Что-то новое для тебя' }));
   }
   if (s.mood !== 'any' && W_MQ[s.mood]) jobs.push(wSearch(W_MQ[s.mood][s.lang] || W_MQ[s.mood].any, { _m: 1, _ru: s.lang === 'ru' ? 1 : 0, _inst: s.lang === 'inst' || s.mood === 'focus' ? 1 : 0, _why: `Настроение: ${W_MOOD.find((x) => x[0] === s.mood)[1].toLowerCase()}` }));
-  if (s.lang !== 'any' && !seed) jobs.push(wSearch(W_LQ[s.lang], { _ru: s.lang === 'ru' ? 1 : 0, _inst: s.lang === 'inst' ? 1 : 0, _why: `Язык: ${W_LANG.find((x) => x[0] === s.lang)[1].toLowerCase()}` }));
+  if (s.lang !== 'any' && (!seed || s.lang === 'inst')) jobs.push(wSearch(W_LQ[s.lang], { _ru: s.lang === 'ru' ? 1 : 0, _inst: s.lang === 'inst' ? 1 : 0, _why: `Язык: ${W_LANG.find((x) => x[0] === s.lang)[1].toLowerCase()}` }));
   const all = (await Promise.all(jobs.map((p) => new Promise(resolve=>{const timer=setTimeout(()=>resolve([]),12000);Promise.resolve(p).then(v=>{clearTimeout(timer);resolve(v);},()=>{clearTimeout(timer);resolve([]);});})))).flat();
   return all.filter((t) => t && t.id && (seed || likeSvc(t.id) === cl));
 }
-const wLang = (t, l) => { const txt = `${t.title} ${t.author}`, inst = !!t._inst || W_INST.test(txt); return l === 'ru' ? !!t._ru || W_CYR.test(txt) : l === 'foreign' ? !W_CYR.test(txt) && !t._ru : l === 'inst' ? inst : true; };
+const wLang = (t, l) => { const txt = `${t.title} ${t.author}`; return l === 'ru' ? !!t._ru || W_CYR.test(txt) : l === 'foreign' ? !W_CYR.test(txt) && !t._ru : l === 'inst' ? wInstrumental(t) : true; };
 function wPlays(p) { const m = String(p || '').replace(',', '.').match(/([\d.]+)\s*(млрд|b|млн|m|тыс|k)?/i); if (!m) return 0; const u = (m[2] || '').toLowerCase(); return +m[1] * (/млрд|b/.test(u) ? 1e9 : /млн|m/.test(u) ? 1e6 : /тыс|k/.test(u) ? 1e3 : 1); }
 // выбор: без повторов за 200 треков, не больше 2 треков одного исполнителя на 10, дизлайки и «нелюбимые» исполнители — мимо
 // Same recording can arrive under multiple service IDs/album editions.
@@ -205,7 +216,9 @@ function wPick(pool, n, o) {
   return out.map(t=>{const x={...t,wv:1};delete x.auto;delete x._seed;return x;});
 }
 async function wBatch(n, seed) {
+  const rev=WV.rev,settings=JSON.stringify([wS().lang,wS().mood,wS().char]);
   const pool = await wPool(seed), off0 = !online();
+  if(rev!==WV.rev||settings!==JSON.stringify([wS().lang,wS().mood,wS().char]))return [];
   const cap = seed && (seed.kind === 'artist' || seed.kind === 'album') ? 99 : seed && seed.kind === 'playlist' ? 3 : 2;
   return wPick(pool, n, { offline: off0, cap });
 }
@@ -219,7 +232,7 @@ async function startWave(seed) {
   try { batch = await wBatch(10, seed); } catch (e) { console.error(e); }
   if (tok !== WV.tok) return;
   WV.loading = false;
-  if (seed && seed.kind === 'track' && seed.t) batch = [{ ...seed.t, wv: 1, _why: 'С этого трека начинается волна', _whyId: null }, ...batch.filter((x) => x.id !== seed.t.id)];
+  if (seed && seed.kind === 'track' && seed.t && wLang(seed.t,wS().lang)) batch = [{ ...seed.t, wv: 1, _why: 'С этого трека начинается волна', _whyId: null }, ...batch.filter((x) => x.id !== seed.t.id)];
   if (!batch.length) { heroRefresh(true); return toast(online() ? 'Не удалось собрать волну — попробуй другое настроение' : 'Мало скачанных треков для волны', 'alert'); }
   setQueue(batch, 0, seed ? `Волна по: ${seed.name}` : 'Моя волна', { r: 'wave' });
   lib.queue.wave = { seed: seed ? { ...seed, tracks: (seed.tracks || []).slice(0, 60) } : null, at: Date.now() };
@@ -241,6 +254,8 @@ async function waveExtend(playAfter, force) {
 }
 // смена настроения / характера / языка: текущий трек доигрывает, дальше — уже новая волна
 function waveRebuild() {
+  // Invalidate in-flight starts/refills before a new choice can change the queue.
+  ++WV.rev;++WV.tok;WV.loading=false;
   const q = lib.queue; if (!q.wave) return;
   q.tracks.splice(q.idx + 1); renderQueue(); save();
   toast('Волна перестроится после этого трека', 'wave2');

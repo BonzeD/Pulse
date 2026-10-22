@@ -39,7 +39,7 @@ function renderClSw() {
 }
 async function clInit() {
   renderClSw();
-  try { await pulse.svc.setClient(CL(), { amSf: S().app.amSf || 'auto' }); } catch {}
+  try { await pulse.svc.setClient(CL(), { amSf: S().app.amSf || 'auto', language: S().app.language }); } catch {}
   if (online()) svcRefresh();
 }
 async function svcRefresh() {
@@ -56,7 +56,7 @@ async function setClient(c) {
   renderClSw(); // анимация переключения — сразу, не дожидаясь главного процесса
   // 2.0.4: «прыжок» страницы (cl-anim) убран — снятие класса через 0,6 с перезапускало анимацию появления, и страница моргала второй раз
   if (route().r !== 'settings' && typeof pageLeave === 'function') pageLeave(); // 2.0.4: старая Главная начинает таять сразу по клику
-  await pulse.svc.setClient(c, { amSf: S().app.amSf || 'auto' }).catch(() => {});
+  await pulse.svc.setClient(c, { amSf: S().app.amSf || 'auto', language: S().app.language }).catch(() => {});
   // с новой Главной: стек навигации прежнего клиента больше не нужен
   if (route().r !== 'settings') { navS.stack = [{ r: 'home' }]; navS.pos = 0; renderRoute(); }
   renderSide(); { const sl = $('sideList'); if (sl) { sl.classList.remove('sl-in'); void sl.offsetWidth; sl.classList.add('sl-in'); } } // 2.0.4: список плейлистов сменяется плавно
@@ -151,7 +151,7 @@ function lySrcRows() {
 }
 function clChanged(path) {
   if (path === 'app.client') { setClient(S().app.client); return true; }
-  if (path === 'app.amSf') { pulse.svc.setClient(CL(), { amSf: S().app.amSf }).then(() => { cache.clear(); }); return true; }
+  if (path === 'app.amSf') { pulse.svc.setClient(CL(), { amSf: S().app.amSf, language: S().app.language }).then(() => { cache.clear(); }); return true; }
   if (path === 'ly.src' || path === 'ly.bgVox') {
     if (path === 'ly.bgVox') for (const id in lib.lyrics) { const L = lib.lyrics[id]; if (L && L.provider === 'am' && !L.user) L.recheck = true; }
     updVizLySrc(); const t = curTrack(); if (t) loadLyricsFor(t); return true;
@@ -218,5 +218,5 @@ updVizLySrc();
 
 // 2.0.3: аккаунты Apple Music / Spotify запоминаются в их собственном менеджере аккаунтов (extras.js), аватарка — по открытому сервису
 const accSnapAt = {};
-{ const base = svcRefresh; svcRefresh = async function (...a) { const r = await base.apply(this, a); for (const s of ['am', 'sp']) if (svcSt[s].user && pulse.accounts && (!accmS[s].active || performance.now() - (accSnapAt[s] || 0) > 600e3) && (accSnapAt[s] = performance.now())) pulse.accounts.snapshot(s).then((x) => { accSet(s, x); renderAccBtn(); }).catch(() => {}); renderAccBtn(); if (svcSt.am.user || svcSt.sp.user) flushLikes(); for (const s of ['am', 'sp']) if (svcSt[s].user) likePullT(s); return r; }; }
+{ const base = svcRefresh; svcRefresh = async function (...a) { const r = await base.apply(this, a); for (const s of ['am', 'sp']) if (svcSt[s].user && pulse.accounts && (!accSnapAt[s] || !accmS[s].active || performance.now() - accSnapAt[s] > 600e3) && (accSnapAt[s] = performance.now())) pulse.accounts.snapshot(s).then((x) => { accSet(s, x); renderAccBtn(); }).catch(() => {}); renderAccBtn(); if (svcSt.am.user || svcSt.sp.user) flushLikes(); for (const s of ['am', 'sp']) if (svcSt[s].user) likePullT(s); return r; }; }
 { const base = setClient; setClient = async function (...a) { const p = base.apply(this, a); renderAccBtn(); accPopClose(); return p; }; }

@@ -1,0 +1,462 @@
+{
+  "account.js": {
+    "sha256": "e3f2fc0e4e89583c8b2e2bb141e6f7edb7f8c80458785223115221e9e2d169dd",
+    "originalSha256": "79b021f1e89206ecb95e3117917874a8257ea8708a205d42aa3ff1ba9fa62836",
+    "patches": [
+      {
+        "from": 1,
+        "to": 2,
+        "original": []
+      },
+      {
+        "from": 407,
+        "to": 408,
+        "original": [
+          "  const h = { 'Content-Type': 'application/json', 'User-Agent': UA, Origin: ORIGIN, Referer: ORIGIN + '/', 'X-Origin': ORIGIN, 'X-Goog-AuthUser': '0', 'Accept-Language': 'ru-RU,ru;q=0.9' };\n"
+        ]
+      },
+      {
+        "from": 414,
+        "to": 415,
+        "original": [
+          "  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', headers: await headers(), body: JSON.stringify({ context: CTX, ...body }) });\n"
+        ]
+      }
+    ]
+  },
+  "services.js": {
+    "sha256": "cfdafcd71a1b0260312fdfeceb0a59dc4b720c068dddf88f4a8d2ec8785b8e24",
+    "originalSha256": "8aec2d54c92978ebc041cf136dfd2774021920b15c3b46722cb214655b8a41ab",
+    "patches": [
+      {
+        "from": 1,
+        "to": 2,
+        "original": []
+      },
+      {
+        "from": 26,
+        "to": 27,
+        "original": [
+          "    return await f(url, { ...(s ? { credentials: 'include' } : {}), ...opt, headers: { 'User-Agent': UA, 'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8', ...(opt.headers || {}) }, signal: ac.signal });\n"
+        ]
+      },
+      {
+        "from": 159,
+        "to": 160,
+        "original": [
+          "const spHeaders = (tok) => ({ Authorization: 'Bearer ' + tok.access, ...(tok.client ? { 'client-token': tok.client } : {}), 'app-platform': 'WebPlayer', Origin: 'https://open.spotify.com', Referer: 'https://open.spotify.com/', Accept: 'application/json' });\n"
+        ]
+      },
+      {
+        "from": 356,
+        "to": 357,
+        "original": [
+          "    const a = (await spGql('getAlbum', { uri: 'spotify:album:' + id, locale: '', offset: 0, limit: 300 })).albumUnion;\n"
+        ]
+      },
+      {
+        "from": 368,
+        "to": 369,
+        "original": [
+          "    const a = (await spGql('queryArtistOverview', { uri: 'spotify:artist:' + id, locale: '', preReleaseV2: false })).artistUnion;\n"
+        ]
+      },
+      {
+        "from": 497,
+        "to": 504,
+        "original": [
+          "  const url = /^https:/.test(pathq) ? pathq : 'https://amp-api.music.apple.com' + pathq;\n",
+          "  const r = await get(url, { method, headers: h, body: body ? JSON.stringify(body) : undefined }, user ? AM_PART : null);\n"
+        ]
+      },
+      {
+        "from": 966,
+        "to": 977,
+        "original": []
+      },
+      {
+        "from": 980,
+        "to": 981,
+        "original": [
+          "  return { sp: { user: sp, name: spName }, am: { user: am, sf: am ? await amSf().catch(() => null) : null } };\n"
+        ]
+      },
+      {
+        "from": 1013,
+        "to": 1014,
+        "original": [
+          "  const sf = await amSf().catch(() => null);\n",
+          "  return { name: 'Apple ID' + (sf ? ' · ' + String(sf).toUpperCase() : ''), photo: null };\n"
+        ]
+      },
+      {
+        "from": 1025,
+        "to": 1026,
+        "original": [
+          "  const d = sAccRead(s); if (!(await sUser(s))) return sPub(d);\n"
+        ]
+      },
+      {
+        "from": 1027,
+        "to": 1029,
+        "original": [
+          "  const info = await sInfo(s).catch(() => null); if (!info) return sPub(d);\n"
+        ]
+      },
+      {
+        "from": 1031,
+        "to": 1032,
+        "original": [
+          "  a.id = id; a.cookies = cs; a.used = Date.now(); if (!a.custom) a.name = info.name; if (info.photo) a.photo = info.photo;\n"
+        ]
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "851b4a7cb7a27c0aa368d2b0c11d310e848493828f968820f440c2ab22f70b64",
+    "originalSha256": "fe07668454824edd9cb79d2ac171e43d7417146919350527d10270e20b1ee22f",
+    "patches": [
+      {
+        "from": 6,
+        "to": 7,
+        "original": []
+      },
+      {
+        "from": 367,
+        "to": 368,
+        "original": [
+          "ipcHandle('store:get', () => readStore().library || null);\n"
+        ]
+      },
+      {
+        "from": 471,
+        "to": 472,
+        "original": [
+          "ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); return client; });\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "971381652e96312d8619dc9fdf565f355f450d90abb563168cfd696c6217a614",
+    "originalSha256": "97ccf0250d91ea9815f0863992f0f4a233235e6fca8e1b21c3603a8616c02434",
+    "patches": [
+      {
+        "from": 615,
+        "to": 616,
+        "original": [
+          "  if (it.kind === 'mood') return `<div class=\"card mood\" data-c=\"${key}\" data-i=\"${i}\" style=\"--c:${esc(it.color || '#888')}\"><div class=\"ca\">${esc(it.kind === 'local' && (it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div></div>`;\n"
+        ]
+      },
+      {
+        "from": 620,
+        "to": 621,
+        "original": [
+          "  return `<div ${it.kind==='playlist'&&it.browseId?`data-playlist-art=\"${esc(it.browseId)}\"`:\"\"} class=\"card ${round ? 'round' : ''} ${vid ? 'vid' : ''}\" data-c=\"${key}\" data-i=\"${i}\"><div class=\"ca\">${img}${it.kind === 'artist' ? '' : `<button class=\"cplay\" data-cp title=\"Слушать\">${ico('play')}</button>`}</div><div class=\"ct\">${esc(it.kind === 'local' && (it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div><div class=\"cs\">${it.kind === 'local' ? `<span data-i18n-ui>${esc(sub)}</span>` : esc(uiOwnedText(sub))}</div></div>`;\n"
+        ]
+      },
+      {
+        "from": 684,
+        "to": 691,
+        "original": []
+      },
+      {
+        "from": 692,
+        "to": 693,
+        "original": []
+      },
+      {
+        "from": 717,
+        "to": 718,
+        "original": [
+          "  const key = CL() + '|' + JSON.stringify({ ...r, scroll: 0 }), same = key === lastPageKey; lastPageKey = key;\n"
+        ]
+      },
+      {
+        "from": 736,
+        "to": 737,
+        "original": [
+          "const ytm = async (fn, ...a) => { if (!online()) throw new Error('offline'); const r = await pulse.ytm[fn](...a); if (!r || r.error) throw new Error(r ? r.error : 'нет ответа'); return r; };\n"
+        ]
+      },
+      {
+        "from": 924,
+        "to": 925,
+        "original": [
+          "  let h = `<a class=\"sl media-local-link\" data-local=\"__local\"><div class=\"n\">${ico('music')} Локальные треки</div><div class=\"s\">${tr(window.MediaLibrary?.tracks().length||0)} · на устройстве</div></a>`;\n"
+        ]
+      },
+      {
+        "from": 1621,
+        "to": 1622,
+        "original": []
+      },
+      {
+        "from": 1708,
+        "to": 1709,
+        "original": []
+      },
+      {
+        "from": 1713,
+        "to": 1714,
+        "original": [
+          "    const a = fmt(c), b = fmt(d); if ($('tCur').textContent !== a) $('tCur').textContent = a; if ($('tDur').textContent !== b) $('tDur').textContent = b;\n"
+        ]
+      },
+      {
+        "from": 1845,
+        "to": 1846,
+        "original": [
+          "seekEl.addEventListener('mousemove', (e) => { const tip = $('seekTip'), f = seekAt(e.clientX); tip.textContent = fmt(f * E.dur()); tip.style.left = f * 100 + '%'; });\n"
+        ]
+      },
+      {
+        "from": 2027,
+        "to": 2028,
+        "original": [
+          "  b.dataset.art = L.artShape; b.classList.toggle('perf-eco', s.perf.mode === 'eco'); b.classList.toggle('show-fps', !!s.perf.showFps); b.classList.toggle('no-gpu', s.perf.gpu === false); if (Viz.setGpu) Viz.setGpu(s.perf.gpu !== false); // 2.0.6\n"
+        ]
+      },
+      {
+        "from": 2187,
+        "to": 2188,
+        "original": [
+          "      R('Графика на видеокарте', (() => { const n = typeof PulseGPU !== 'undefined' && PulseGPU.supported() ? (PulseGPU.gpuName() || 'WebGL2') : 'недоступно на этом ПК'; return '3D-визуалы, свечение, пылинки, отражение и размытие в «Только текст» считает видеокарта · ' + n; })(), tg('perf.gpu'), 'видеокарта gpu webgl ускорение'), // 2.0.6\n"
+        ]
+      },
+      {
+        "from": 2319,
+        "to": 2320,
+        "original": [
+          "  if (path === 'app.language') { PulseI18n.setLanguage(S().app.language); rerenderSettings(); if (typeof mrSync === 'function') mrSync(); save(); return; }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/clients.js": {
+    "sha256": "386a17a504fc84d6bb8fb86bc403bcc0a50164bc247f24f54948d51861027d93",
+    "originalSha256": "a28e37cd077a2b4bca6a23eae9f99e765e9e6bae9b6b9e77f608e6d2ec176e74",
+    "patches": [
+      {
+        "from": 41,
+        "to": 42,
+        "original": [
+          "  try { await pulse.svc.setClient(CL(), { amSf: S().app.amSf || 'auto' }); } catch {}\n"
+        ]
+      },
+      {
+        "from": 58,
+        "to": 59,
+        "original": [
+          "  await pulse.svc.setClient(c, { amSf: S().app.amSf || 'auto' }).catch(() => {});\n"
+        ]
+      },
+      {
+        "from": 153,
+        "to": 154,
+        "original": [
+          "  if (path === 'app.amSf') { pulse.svc.setClient(CL(), { amSf: S().app.amSf }).then(() => { cache.clear(); }); return true; }\n"
+        ]
+      },
+      {
+        "from": 220,
+        "to": 221,
+        "original": [
+          "{ const base = svcRefresh; svcRefresh = async function (...a) { const r = await base.apply(this, a); for (const s of ['am', 'sp']) if (svcSt[s].user && pulse.accounts && (!accmS[s].active || performance.now() - (accSnapAt[s] || 0) > 600e3) && (accSnapAt[s] = performance.now())) pulse.accounts.snapshot(s).then((x) => { accSet(s, x); renderAccBtn(); }).catch(() => {}); renderAccBtn(); if (svcSt.am.user || svcSt.sp.user) flushLikes(); for (const s of ['am', 'sp']) if (svcSt[s].user) likePullT(s); return r; }; }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/lystage.js": {
+    "sha256": "c9ca6e94a7e4a375e50d2addbfc8e3468570384cfc40d8889341b1a0d01c49b6",
+    "originalSha256": "fff97e5a73d4c6057036c8bb51f7717373411b51cf38bc019b8360cdaab5bdf1",
+    "patches": [
+      {
+        "from": 297,
+        "to": 300,
+        "original": [
+          "  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }\n",
+          "  // 2.0.6: пылинки рисует видеокарта (один вызов на все частицы); canvas 2D — только если WebGL2 недоступен\n",
+          "  if (cv._gpu === undefined) cv._gpu = S().perf.gpu !== false && typeof PulseGPU !== 'undefined' ? PulseGPU.create(cv) : null;\n",
+          "  const R = cv._gpu && cv._gpu.ok() && cv._gpu.begin(W, H, dpr) ? cv._gpu : null;\n",
+          "  const g = R ? null : cv.getContext('2d'); if (!R && !g) return; if (g) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/viz.js": {
+    "sha256": "f084b0ce203ecdab2fbe19a647883be5f3a259389a4dd9a44b7a912ad30d7d0f",
+    "originalSha256": "55e2884acede531cabec197425302eb9f779fd891e605764e702db8577a506d8",
+    "patches": [
+      {
+        "from": 669,
+        "to": 670,
+        "original": [
+          "  return { init, destroy, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };\n"
+        ]
+      }
+    ]
+  },
+  "renderer/immersion.js": {
+    "sha256": "3bceaf09c2684d11cee8a2d3c18ca37e73b1e48dddf13a6012c8b2de9923be42",
+    "originalSha256": "738361920358fd9d4ad2b33d9c06f4d1b42560b9d8584aa14a46177d66a553b7",
+    "patches": [
+      {
+        "from": 33,
+        "to": 34,
+        "original": []
+      },
+      {
+        "from": 56,
+        "to": 64,
+        "original": []
+      },
+      {
+        "from": 106,
+        "to": 107,
+        "original": [
+          "  return {open, close, attach, detach, configure, active, stats:() => ({active:active(), world, quality, eco, reduced, contextLost, draws:frames, travel, ambient, raf:!!raf, renderer:scene?.stats?.() || null})};\n"
+        ]
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "3b6fd99db8250c93ddeed62f5e51f4ed46c0e86ce856724d8ba9aeef6d728ae3",
+    "originalSha256": "5b9174af2e4d26953ff8661f5075266b1685c555b83de95cdb1069b76ae64ca6",
+    "patches": [
+      {
+        "from": 36,
+        "to": 37,
+        "original": []
+      },
+      {
+        "from": 314,
+        "to": 315,
+        "original": []
+      },
+      {
+        "from": 323,
+        "to": 324,
+        "original": []
+      }
+    ]
+  },
+  "renderer/i18n.js": {
+    "sha256": "620804270be1076994896541ccea8d92ab7355ad636dab6388000ff3f974ad5e",
+    "originalSha256": "ade9da6702eba2c088d7d17c3a9c5d44167b9e4f7ffeddb4309f1890601f6271",
+    "patches": [
+      {
+        "from": 9,
+        "to": 18,
+        "original": [
+          " function canonical(s){return reverse.get(s)||s;}\n"
+        ]
+      },
+      {
+        "from": 20,
+        "to": 21,
+        "original": [
+          " function rebuildPatterns(){patterns=Object.keys(D).filter(k=>/\\{\\d+\\}/.test(k)).sort((a,b)=>b.replace(/\\{\\d+\\}/g,'').length-a.replace(/\\{\\d+\\}/g,'').length).map(k=>{const ids=[],parts=k.split(/(\\{\\d+\\})/);const re=parts.map(x=>{if(/^\\{\\d+\\}$/.test(x)){ids.push(x.slice(1,-1));return '(.+?)';}return x.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&');}).join('');return {key:k,ids,re:new RegExp('^'+re+'$')};});}\n"
+        ]
+      }
+    ]
+  },
+  "renderer/locales-en.js": {
+    "sha256": "6241f15504ea61ed57adc35f8aeeb74f106d14cfbf78896a741bcff2c1eb26e1",
+    "originalSha256": "e0bda23004a64be37c0ddfba3bef2af08ae0201f13efa583ed7eec5605dfef68",
+    "patches": [
+      {
+        "from": 1883,
+        "to": 1959,
+        "original": []
+      }
+    ]
+  },
+  "renderer/locales-ja.js": {
+    "sha256": "040b9a7ee1afb47dbdbf35922989c08e3087edcf6d9f33f2318d648483a6c123",
+    "originalSha256": "1a0f8898a32e2375e68059887c061b07e6d353929b5bef1e8b7a526953e7a135",
+    "patches": [
+      {
+        "from": 2128,
+        "to": 2204,
+        "original": []
+      }
+    ]
+  },
+  "renderer/locales-uk.js": {
+    "sha256": "e0f7bca370374dd188f15a2ea11ed0db22d974cc88a939b8487967a848cb9c04",
+    "originalSha256": "a6d25b12ebeda31f72adec6516ecc38f96df6ecad2c1bb55b1721639511147c6",
+    "patches": [
+      {
+        "from": 2130,
+        "to": 2206,
+        "original": []
+      }
+    ]
+  },
+  "renderer/api.js": {
+    "sha256": "fe6c9c83e2e418f01e8b841af8652c5027b02de61a7cbb387c894e4d24f4a2c9",
+    "originalSha256": "8e7b9b606446da16ac47394b52635aacf8b5e09ecffea8006b1d897791b93312",
+    "patches": [
+      {
+        "from": 14,
+        "to": 15,
+        "original": [
+          "  version: '1.0.0',\n"
+        ]
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "8710d2e8b28f078936619035ac4cc4b13042f07b5998290a0d1e544d54ba9ea8",
+    "originalSha256": "b08ae7bdf95c307ce970fd7797d157f0ab896a770ca249409533a5f630963922",
+    "patches": [
+      {
+        "from": 27,
+        "to": 28,
+        "original": [
+          "    version: '1.0.0',\n"
+        ]
+      }
+    ]
+  },
+  "build/installer.nsi": {
+    "sha256": "776a8d898eb844be5c3b449727072a4f053150a7f88593116847d4775493f361",
+    "originalSha256": "4f773f47641a9732fd55981547d980551cd2bfa35e4d673927bd22faecfd4a37",
+    "patches": [
+      {
+        "from": 8,
+        "to": 9,
+        "original": [
+          "  !define VERSION \"1.0.0\"\n"
+        ]
+      }
+    ]
+  },
+  "build/installer-ui/gen.js": {
+    "sha256": "ff8f641f36692aede9db314ecdaab7ac6477bd6f301bfddb56d5987ca8040b0d",
+    "originalSha256": "c78d1eedafed8210f47a1ca048e28a192eee226111136624c1d43a0fb1e51987",
+    "patches": [
+      {
+        "from": 3,
+        "to": 4,
+        "original": [
+          "const V=process.argv[2]||'1.0.0', SIZE=process.argv[3]||'420';\n"
+        ]
+      }
+    ]
+  },
+  "build/installer-ui/design.html": {
+    "sha256": "eb706da5c0c383d453bf8ad0cec2335ce1a630bb6965b422cf53bd588a4281c0",
+    "originalSha256": "7bd8834a8c53b85e3cd15894bfa1b666693b4460e2d0d2308275115b28489652",
+    "patches": [
+      {
+        "from": 48,
+        "to": 49,
+        "original": [
+          "const P=new URLSearchParams(location.search), page=P.get('p'), V=P.get('v')||'1.0.0', SIZE=P.get('size')||'420';\n"
+        ]
+      }
+    ]
+  }
+}

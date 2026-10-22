@@ -613,12 +613,12 @@ function markRows() {
   });
 }
 function card(it, key, i) {
-  if (it.kind === 'mood') return `<div class="card mood" data-c="${key}" data-i="${i}" style="--c:${esc(it.color || '#888')}"><div class="ca">${esc(it.kind === 'local' && (it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div></div>`;
+  if (it.kind === 'mood') return `<div class="card mood" data-c="${key}" data-i="${i}" style="--c:${esc(it.color || '#888')}"><div class="ca">${esc(it.kind === 'local' && (it.id === '__local' || it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div></div>`;
   const round = it.round || it.kind === 'artist', vid = it.kind === 'song' && it.video;
   const sub = it.kind === 'song' ? [it.author, it.plays].filter(Boolean).join(' • ') : it.sub || '';
   const noArt = !it.icon && it.kind !== 'song' && it.kind !== 'local' && !it.art;
   const img = it.icon ? `<div class="ca-ico">${ico(it.icon)}</div>` : noArt ? `<div class="ca-ico ph">${ico(it.kind === 'artist' ? 'user' : it.kind === 'album' ? 'disc' : 'queue')}</div>` : `<img loading="lazy" src="${esc(it.kind === 'song' && vid ? pimg(`https://i.ytimg.com/vi/${it.id}/mqdefault.jpg`) : /^(\/|https?:)/.test(it.art || '') && it.kind === 'local' ? pimg(it.art) : artOf(it, 300))}" ${IMG_ERR}/>`;
-  return `<div ${it.kind==='playlist'&&it.browseId?`data-playlist-art="${esc(it.browseId)}"`:""} class="card ${round ? 'round' : ''} ${vid ? 'vid' : ''}" data-c="${key}" data-i="${i}"><div class="ca">${img}${it.kind === 'artist' ? '' : `<button class="cplay" data-cp title="Слушать">${ico('play')}</button>`}</div><div class="ct">${esc(it.kind === 'local' && (it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div><div class="cs">${it.kind === 'local' ? `<span data-i18n-ui>${esc(sub)}</span>` : esc(uiOwnedText(sub))}</div></div>`;
+  return `<div ${it.kind==='playlist'&&it.browseId?`data-playlist-art="${esc(it.browseId)}"`:""} class="card ${round ? 'round' : ''} ${vid ? 'vid' : ''}" data-c="${key}" data-i="${i}"><div class="ca">${img}${it.kind === 'artist' ? '' : `<button class="cplay" data-cp title="Слушать">${ico('play')}</button>`}</div><div class="ct">${esc(it.kind === 'local' && (it.id === '__local' || it.id === '__off' || it.id === MINE) ? translateUiText(it.title) : it.title)}</div><div class="cs">${it.kind === 'local' ? `<span data-i18n-ui>${esc(sub)}</span>` : esc(uiOwnedText(sub))}</div></div>`;
 }
 function cards(items, o = {}) {
   const key = reg({ items });
@@ -682,7 +682,15 @@ function setPage(html, restore, same) {
   $('view').scrollTop = same ? y : restore ? route().scroll || 0 : 0;
   PX.emit('page', route());
 }
+let catalogLanguageSync = Promise.resolve();
+async function syncCatalogLanguage() {
+  const language = S().app.language;
+  const pending = catalogLanguageSync.then(() => pulse.svc.setClient(CL(), { amSf: S().app.amSf || 'auto', language })).catch(e => { console.warn('Catalog language sync', e); });
+  catalogLanguageSync = pending;
+  await pending;
+}
 async function cached(key, fn, force) {
+  key = S().app.language + '|' + key;
   if (CL() !== 'yt') key = CL() + '|' + key; // 2.0.2: у каждого клиента свои страницы
   const c = cache.get(key);
   if (c && !force && Date.now() - c.at < 10 * 60e3) return c.v;
@@ -707,7 +715,7 @@ async function renderRoute(force, restore) {
   updNav();
   document.querySelectorAll('.nv').forEach((n) => n.classList.toggle('on', n.dataset.go === r.r));
   renderSideOn();
-  const key = CL() + '|' + JSON.stringify({ ...r, scroll: 0 }), same = key === lastPageKey; lastPageKey = key;
+  const key = S().app.language + '|' + CL() + '|' + JSON.stringify({ ...r, scroll: 0 }), same = key === lastPageKey; lastPageKey = key;
   const P = PAGES[r.r] || PAGES.home;
   let sync;
   try { sync = P.sync && P.sync(r); } catch (e) { console.error('Page render', r.r, e); sync = errHtml(e && e.message); }
@@ -726,7 +734,7 @@ function errHtml(msg) {
   if (!online()) return emptyHtml('offline', 'Нет интернета', '<div>Пока сети нет, слушай скачанное</div>', `<br><button class="btn w" data-go="downloads">${ico('offline')}Скачанное</button>`);
   return emptyHtml('alert', 'Не удалось загрузить', `<div>${esc(msg || 'YouTube Music не ответил')}</div>`, `<br><button class="btn" data-act="reload">${ico('refresh')}Повторить</button>`);
 }
-const ytm = async (fn, ...a) => { if (!online()) throw new Error('offline'); const r = await pulse.ytm[fn](...a); if (!r || r.error) throw new Error(r ? r.error : 'нет ответа'); return r; };
+const ytm = async (fn, ...a) => { await catalogLanguageSync; if (!online()) throw new Error('offline'); const r = await pulse.ytm[fn](...a); if (!r || r.error) throw new Error(r ? r.error : 'нет ответа'); return r; };
 
 const PAGES = {
   home: {
@@ -914,7 +922,7 @@ async function refreshLocal(id) {
 
 // ---------- боковая панель и аккаунт ----------
 function renderSide() {
-  let h = `<a class="sl media-local-link" data-local="__local"><div class="n">${ico('music')} Локальные треки</div><div class="s">${tr(window.MediaLibrary?.tracks().length||0)} · на устройстве</div></a>`;
+  let h = `<a class="sl media-local-link" data-local="__local"><div class="n">${ico('music')} ${esc(translateUiText('Локальные треки'))}</div><div class="s">${tr(window.MediaLibrary?.tracks().length||0)} · на устройстве</div></a>`;
   if (CL() !== 'yt') h += clSideLists(); // 2.0.2: плейлисты Apple Music / Spotify
   else (accLists || []).forEach((p) => { const b = p.browseId || 'VL' + p.listId, c = lib.ytc && lib.ytc[b], nOff = c ? c.tracks.filter((t) => off[t.id]).length : 0; h += `<a class="sl ${!online() && !c ? 'dim' : ''}" data-b="${esc(b)}"><div class="n">${esc(p.name)}</div><div class="s">${esc(p.sub || 'Плейлист')}${nOff ? ` · ${nOff} офлайн` : ''}</div></a>`; });
   lib.playlists.filter((p) => p.id !== MINE).forEach((p) => { h += `<a class="sl" data-local="${esc(p.id)}"><div class="n">${esc(p.name)}</div><div class="s">${esc(p.author || tr(p.tracks.length))} · на устройстве</div></a>`; });
@@ -1178,16 +1186,19 @@ function parseLRC(lrc, raw) {
   if (raw) return out.filter((l) => l.text).map((l) => ({ t: l.t, text: l.text }));
   const nextT = (i) => (out[i + 1] ? out[i + 1].t : null); // 2.0.4-fix: пустая строка LRC = конец пения; раньше слова растягивались на весь проигрыш
   out.forEach((L, i) => { if (L.text && !L.words) { L.words = estWords(L, nextT(i)); L.est = true; } });
+  const ending = window.PulseLyricModel?.readEnding(lrc);
+  if(ending){const line=out.find(l=>Math.abs(l.t-ending.t)<.005&&!l.text);if(line){line.endCredits=true;line.text=ending.text;line.words=[];}}
   return withGaps(out);
 }
 // паузы (проигрыши) между строками — точки «…»; пустые строки LRC — тоже паузы
-function withGaps(lines) {
+function withGaps(lines, duration = typeof E !== 'undefined' ? E.dur() || 86400 : 86400) {
   const src = lines.filter((l) => l.gap || l.text || l.words), res = [];
   const endOf = (L) => L.end || (L.words && L.words.length ? (L.words[L.words.length - 1].e ?? L.words[L.words.length - 1].t + 1.2) : L.t + 3);
   for (let i = 0; i < lines.length; i++) {
     const L = lines[i];
+    if (L.endCredits) { res.push(L); continue; }
     if (L.gap) { res.push(L); continue; }
-    if (!L.text) { const nx = lines.slice(i + 1).find((x) => x.text); if (nx && nx.t - L.t > 4) res.push({ t: L.t, gap: nx.t - L.t }); continue; }
+    if (!L.text) { const end = lines[i + 1]?.t ?? duration; if (end > L.t) res.push({ t: L.t, gap: end - L.t }); continue; }
     if (L.words && L.words.length) L.end = Math.max(L.t + 0.3, endOf(L));
     res.push(L);
     const nx = lines[i + 1];
@@ -1234,7 +1245,9 @@ const wtxt = (s) => (/\s$/.test(s) ? s : s + ' ');
 function showLines(lines, kind) {
   if (kind) lyState.kind = kind;
   lyState.lines = lines;
-  $('lyScroll').innerHTML = `<div class="ly-inner" id="lyInner">${lines.map((l, i) => l.gap
+  $('lyScroll').innerHTML = `<div class="ly-inner" id="lyInner">${lines.map((l, i) => l.endCredits
+    ? `<div class="ly-line ly-credits" data-l="${i}"><small>Конец текста</small><span data-i18n-skip>${esc(l.text || '')}</span></div>`
+    : l.gap
     ? `<div class="ly-gap" data-l="${i}"><i></i><i></i><i></i></div>`
     : `<div class="ly-line${lyDuet(l) ? ' v2' : ''}" data-l="${i}" style="--e:${(l.energy ?? 0.6).toFixed(2)}">${lyWordsHtml(l.words && l.words.length ? l.words : [{ t: l.t, s: l.text }])}</div>`).join('')}</div>`;
   if (beatState.an && S().ly.snap !== false) refineWords(lines, beatState.an);
@@ -1310,7 +1323,7 @@ let lyLast = null;
 function sendLyrics() {
   if (!pulse.sendLyrics) return;
   const ln = lyState.lines; if (ln === lyLast && ln) return; lyLast = ln; const k = stretchK();
-  const lyo = ln ? { id: lyState.id, lines: ln.map((l) => (l.gap ? { t: l.t * k, gap: l.gap * k } : { t: l.t * k, text: l.text || (l.words || []).map((w) => w.s).join(' ').trim(), words: l.words ? l.words.map((w) => ({ t: w.t * k, e: w.e != null ? w.e * k : undefined, s: wtxt(w.s) })) : null })) } : { id: lyState.id, lines: [] };
+  const lyo = ln ? { id: lyState.id, lines: ln.map((l) => (l.gap ? { t: l.t * k, gap: l.gap * k } : { ...(l.endCredits ? {endCredits:true} : {}), t: l.t * k, text: l.text || (l.words || []).map((w) => w.s).join(' ').trim(), words: l.words ? l.words.map((w) => ({ t: w.t * k, e: w.e != null ? w.e * k : undefined, s: wtxt(w.s) })) : null })) } : { id: lyState.id, lines: [] };
   pulse.sendLyrics(lyo); if (window.pvWidgetLy) window.pvWidgetLy(lyo);
   PX.emit('lyrics', ln);
 }
@@ -1544,6 +1557,7 @@ function vizMenu(x, y) {
 function setViz(id) { lib.vizStyle = id; updateButtons(); save(); rerenderSettings(); }
 function cycleViz(d = 1) { const S = Viz.STYLES, i = S.findIndex((x) => x.id === lib.vizStyle); setViz(S[(i + d + S.length) % S.length].id); }
 Viz.onChange(() => { updateButtons(); rerenderSettings(); });
+const mainFramePacer = PulseFramePacer.create();
 let lastFrame = 0, lastBeatV = '', ppEl = $('pp'), beatArt = $('artWrap'), beatLine = null; ppEl.style.setProperty('--beat', '0');
 // кольцевой буфер кадров анализатора: показываем спектр с той же задержкой, с какой его слышно
 const fRing = Array.from({ length: 24 }, () => ({ t: 0, f: null, w: null })); let fRi = 0;
@@ -1574,7 +1588,7 @@ function setWinHidden(v) {
   document.body.classList.toggle('win-hidden', v);
   if (typeof mrSync === 'function') try { mrSync(); } catch (e) {}
   if (!v && typeof lys !== 'undefined' && lys.on && !lys.raf) lys.raf = requestAnimationFrame(lysLoop);
-  if (!v) lastFrame = 0;
+  if (!v) { lastFrame = 0; mainFramePacer.reset(); }
 }
 let winFocused = document.hasFocus(); window.addEventListener('focus', () => (winFocused = true)); window.addEventListener('blur', () => (winFocused = false));
 let ppOpenNow = document.body.classList.contains('pp-open'), lyOnlyNow = false, mrOnNow = false;
@@ -1607,8 +1621,10 @@ function liteTick(now) {
 }
 function frame(now) {
   requestAnimationFrame(frame);
-  const visualExperiment = typeof VisualExperiment !== 'undefined' && VisualExperiment.sync();
-  if (hiddenNow) { liteS.last = 0; return; }
+  // Direct GPU draw runs first in this same RAF, before service/DOM writes.
+  const visualExperiment = typeof VisualExperiment !== 'undefined' && VisualExperiment.sync(now);
+  if (hiddenNow) { liteS.last = 0; mainFramePacer.reset(); return; }
+  if (PulseTimecode.precise && playing) PulseTimecode.tick(now);
   if (window.PulseImmersion?.active()) {
     if (now - lastFrame < 33) return; lastFrame = now;
     if (playing && typeof djTick === 'function') djTick(E.time());
@@ -1624,23 +1640,23 @@ function frame(now) {
   }
   liteTick(now);
   const V = S().viz;
-  // при 60 FPS допускаем дрожание кадра в 2 мс, иначе на 144-Гц мониторах рисовали бы лишние кадры
+  // Preserve the target phase instead of discarding fractional frame time.
   const P = S().perf, open0 = ppOpenNow;
-  // лимит кадров из настроек (0 — без ограничения, по частоте монитора); 2 мс запаса на дрожание кадра
-  let minDt = P.mode === 'eco' ? 32 : P.fps > 0 ? 1000 / P.fps - 2 : 0;
+  // 0 means display cadence. Existing quality/FPS settings are not rewritten.
+  let minDt = P.mode === 'eco' ? 1000 / 30 : P.fps > 0 ? 1000 / P.fps : 0;
   // в фоне (окно не в фокусе / плеер свёрнут) хватает 30 FPS; без музыки и без визуала на экране — 4 кадра в секунду
   if (P.bgSlow !== false && P.mode !== 'high' && (!open0 || !winFocused)) minDt = Math.max(minDt, 32);
   if (!playing && !open0 && !dragging && !liveVisualOnScreen()) minDt = Math.max(minDt, 250);
   // 2.0.8: Mineradio живёт во фрейме на том же потоке — Pulse уступает ему кадр: 10 обновлений в секунду хватает тексту, биту и диджею
   if (mrOnNow) minDt = Math.max(minDt, 100);
-  if (visualExperiment) minDt = Math.max(minDt, 33); // service/DOM updates at ~30Hz; rendering has its own cadence
+  if (visualExperiment) minDt = Math.max(minDt, 33); // spectrum/extensions at ~30Hz; direct visuals and lyric motion keep their cadence
   fpsTick(now); // 2.0.4: счётчик показывает настоящую плавность окна, а не то, как часто перерисовывается визуал
-  if (now - lastFrame < minDt) return;
+  if (!mainFramePacer.due(now, minDt)) return;
   // 1.9.6: затухание бита по реальному времени кадра — раньше на 144 Гц бит гас в 2,4 раза быстрее, чем на 60 Гц, и эффекты «не попадали в темп»
   const dtF = Math.max(0.25, Math.min(6, (now - (lastFrame || now)) / (1000 / 60))) || 1; lastFrame = now;
   let f = null, wv = null;
   const open = ppOpenNow && !lyOnlyNow; // 2.0.8: в «Только текст» плеер закрыт сценой — визуал плеера не рисуем
-  const mode0 = open ? (lib.mode === 'video' && engine === 'audio' && !window.PulseFileVideo?.visible() ? 'cover' : lib.mode) : null, ar = mode0 === 'visual' ? artRect() : null; // 2.0.4: до записи стилей
+  const mode0 = open ? (lib.mode === 'video' && engine === 'audio' && !window.PulseFileVideo?.visible() ? 'cover' : lib.mode) : null, ar = !visualExperiment && mode0 === 'visual' ? artRect() : null; // 2.0.4: до записи стилей
   const vLag = (V.lag || 0), ht = heard(vLag);
   const fr = readSpectrum(now, outLat() * 1000 + vLag);
   if (fr) {
@@ -1695,11 +1711,12 @@ function stageCenter() {
 }
 window.addEventListener('resize', () => (scC = null));
 
+PulseTimecode.mount({currentNode:$('tCur'), durationNode:$('tDur'), current:()=>E.time(), duration:()=>E.dur(), legacy:fmt});
 setInterval(() => {
   const d = E.dur(), c = E.time();
   if (!hiddenNow) {
     if (!dragging) $('seekFill').style.width = d ? (c / d) * 100 + '%' : '0';
-    const a = fmt(c), b = fmt(d); if ($('tCur').textContent !== a) $('tCur').textContent = a; if ($('tDur').textContent !== b) $('tDur').textContent = b;
+    PulseTimecode.update(c, d);
   }
   if (!playing && lyState.lines && !hiddenNow) lyricsFrame(heard(S().ly.lag || 0));
   if ('mediaSession' in navigator && d && navigator.mediaSession.setPositionState) try { navigator.mediaSession.setPositionState({ duration: d, position: Math.min(c, d), playbackRate: 1 }); } catch {}
@@ -1831,7 +1848,7 @@ $('vol').addEventListener('input', (e) => setVolume(+e.target.value));
 $('vol').addEventListener('wheel', (e) => setVolume(lib.volume + (e.deltaY < 0 ? 5 : -5)));
 const seekEl = $('seek'); const seekAt = (x) => { const r = seekEl.getBoundingClientRect(); return Math.max(0, Math.min(1, (x - r.left) / r.width)); };
 seekEl.addEventListener('mousedown', (e) => { dragging = true; document.body.classList.add('seeking'); $('seekFill').style.width = seekAt(e.clientX) * 100 + '%'; });
-seekEl.addEventListener('mousemove', (e) => { const tip = $('seekTip'), f = seekAt(e.clientX); tip.textContent = fmt(f * E.dur()); tip.style.left = f * 100 + '%'; });
+seekEl.addEventListener('mousemove', (e) => { const tip = $('seekTip'), f = seekAt(e.clientX); tip.textContent = PulseTimecode.display(f * E.dur()); tip.style.left = f * 100 + '%'; });
 window.addEventListener('mousemove', (e) => { if (dragging) $('seekFill').style.width = seekAt(e.clientX) * 100 + '%'; });
 window.addEventListener('mouseup', (e) => { if (dragging) { dragging = false; document.body.classList.remove('seeking'); seekFrac(seekAt(e.clientX)); } if (e.button === 3) { e.preventDefault(); back(); } if (e.button === 4) { e.preventDefault(); fwd(); } });
 $('btnMin').onclick = () => pulse.win('min'); $('btnMax').onclick = () => pulse.win('max');
@@ -2013,7 +2030,7 @@ function applySettings() {
   b.classList.toggle('no-dj', !(s.dj && s.dj.on)); b.classList.toggle('ly-fill', Y.fill !== false); b.classList.toggle('compact', !!L.compact); b.classList.toggle('no-amb', !L.ambient);
   b.classList.toggle('ly-center', Y.align === 'center'); b.classList.toggle('ly-lines', Y.mode === 'lines'); b.classList.toggle('no-glow', !Y.glow);
   b.classList.toggle('no-lyblur', !Y.blur); b.classList.toggle('no-visline', !Y.visLine); b.classList.add('no-coverbars');
-  b.dataset.art = L.artShape; b.classList.toggle('perf-eco', s.perf.mode === 'eco'); b.classList.toggle('show-fps', !!s.perf.showFps); b.classList.toggle('no-gpu', s.perf.gpu === false); if (Viz.setGpu) Viz.setGpu(s.perf.gpu !== false); // 2.0.6
+  b.dataset.art = L.artShape; b.classList.toggle('perf-eco', s.perf.mode === 'eco'); b.classList.toggle('show-fps', !!s.perf.showFps); b.classList.toggle('no-gpu', s.perf.gpu === false); if (Viz.setGpu) Viz.setGpu(s.perf.gpu !== false); window.PulseImmersion?.setGpu(s.perf.gpu !== false); // 2.0.6
   // 2.0.10: «Чёткость визуала» и «Края визуала» тоже были закомментированы с 2.0.6 — вернул
   if (Viz.setDpr) Viz.setDpr(+s.perf.dpr || 1.5); delete s.viz.edge; delete b.dataset.vizEdge; scC = null;
   r.setProperty('--lyS', (Y.size / 100).toFixed(2)); r.setProperty('--ambBlur', L.blurAmt + 'px'); r.setProperty('--ambB', (L.ambBright / 100).toFixed(2)); { const sg = L.blurAmt + '|' + L.ambBright; if (sg !== preBlurSig) { preBlurSig = sg; if (typeof preBlurCover === 'function') preBlurCover(); } } // 2.0.3
@@ -2173,7 +2190,7 @@ function builtinTabs() {
       R('Экономить в фоне', 'Окно не в фокусе или плеер свёрнут — 30 FPS. Без музыки и визуала на экране — почти ноль нагрузки', tg('perf.bgSlow'), 'фон экономия'),
       R('Авто-облегчение', 'Только в режиме «Авто»: если окно стало рисоваться медленнее ~33 FPS, Pulse сам уберёт размытие под панелями и свечение обложки. Видно почти не будет, а плавность вернётся', tg('perf.autoLite'), 'облегчение лаги просадки fps авто'), // 2.0.11
       R('Показывать FPS', 'Маленький счётчик в углу — настоящая плавность окна', tg('perf.showFps'), 'fps счётчик'),
-      R('Графика на видеокарте', (() => { const n = typeof PulseGPU !== 'undefined' && PulseGPU.supported() ? (PulseGPU.gpuName() || 'WebGL2') : 'недоступно на этом ПК'; return '3D-визуалы, свечение, пылинки, отражение и размытие в «Только текст» считает видеокарта · ' + n; })(), tg('perf.gpu'), 'видеокарта gpu webgl ускорение'), // 2.0.6
+      R('Графика на видеокарте', (() => { const n = typeof PulseGPU !== 'undefined' && PulseGPU.supported() ? (PulseGPU.gpuName() || 'WebGL2') : 'недоступно на этом ПК'; return 'WebGL для поддерживаемых визуалов и частиц. Не отключает аппаратное ускорение всего приложения · ' + n; })(), tg('perf.gpu'), 'видеокарта gpu webgl ускорение'), // 2.0.6
       R('Задержка звука', 'Низкая — визуал и караоке точнее совпадают с тем, что слышно. Если звук трещит — выбери «Обычная» (после перезапуска)', seg('perf.latency', [['interactive', 'Низкая'], ['balanced', 'Средняя'], ['playback', 'Обычная']]), 'задержка латентность треск'),
       grp('Резервная копия и сброс'),
       R('Настройки в файл', 'Сохрани всё оформление и перенеси на другой компьютер', `<button class="btn sm" data-sact="export">${ico('save')}Экспорт</button><button class="btn sm" data-sact="import">${ico('file')}Импорт</button>`, 'экспорт импорт'),
@@ -2305,7 +2322,7 @@ function rerenderSettings() { clearTimeout(defRT);
   if(window.PulseSettingsMotion)PulseSettingsMotion.render(root,cur,commit);else commit();
 }
 function settingChanged(path) {
-  if (path === 'app.language') { PulseI18n.setLanguage(S().app.language); rerenderSettings(); if (typeof mrSync === 'function') mrSync(); save(); return; }
+  if (path === 'app.language') { PulseI18n.setLanguage(S().app.language); cache.clear(); syncCatalogLanguage(); rerenderSettings(); if (typeof mrSync === 'function') mrSync(); save(); return; }
   // 2.0.9: переключатель «Построчно / Импровизация» — перерисовать текст во всех видах
   if (path === 'ly.lineFx') { if (lyState.lines) showLines(lyState.lines); if (typeof SP !== 'undefined') SP.srcLines = null; if (typeof lys !== 'undefined' && lys.on) lyState.cur = -2; save(); return; }
   if (typeof clChanged === 'function' && clChanged(path)) { save(); return; } // 2.0.2: клиент и источник текста

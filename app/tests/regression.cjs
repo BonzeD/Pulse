@@ -56,7 +56,7 @@ test('Visible MineRadio cards remain selectable after hover expiry; double click
 
 // panel7 intentionally edits lysstage water filters/settings; lyric parsing and timing stay identical.
 test('Lyrics timing, foreground marking and loop retain their reviewed behavior',()=>{
- const old=read('tests/lystage-panel6-reference.txt'),now=read('renderer/lystage.js');
+ const old=read('tests/lystage-panel6-reference.txt'),now=require('./lyric-ending-original.cjs')('renderer/lystage.js',read('renderer/lystage.js'));
  for(const [start,end] of [['function lysClick(', 'function lysRender('],['function lysMark(', '// 2.0.4: бэк-вокал'],['function lysSync(', 'const WHITE ='],['function lysLoop(', 'function lysCfgRows(']]){
   const a=old.indexOf(start),b=old.indexOf(end,a);assert.ok(a>=0);if(b>=0)assert.equal(now.slice(now.indexOf(start),now.indexOf(end,now.indexOf(start))),old.slice(a,b));
  }

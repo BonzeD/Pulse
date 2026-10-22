@@ -68,6 +68,7 @@ function renderFix() {
     const val = fixDrafts.has(t.id) ? fixDrafts.get(t.id) : L.user ? L.user : L.synced || L.ws ? currentLRC(true) : plainOf(L);
     body = `<div class="fx-sec"><b>${ico('edit')}Свой текст</b><span>Вставь обычный текст — Pulse сам расставит его по голосу и ритму. Или LRC со временем <code>[01:23.45]строка</code> — тогда тайминги возьмутся как есть.</span>
       <textarea class="field fx-ta" id="fxText" spellcheck="false" placeholder="Текст песни…">${esc(val)}</textarea>
+      <div class="fx-row"><button class="btn sm" data-fx="studio">${ico('edit')}Открыть редактор</button></div>
       <div class="fx-row"><button class="btn sm acc" data-fx="savetext">${ico('check')}Сохранить</button><button class="btn sm" data-fx="copylrc">${ico('link')}Копировать LRC</button>${L.user ? `<button class="btn sm" data-fx="dropuser">${ico('trash')}Убрать свою синхронизацию</button>` : ''}</div></div>`;
   } else if (tab === 'find') {
     const q = fix.q ?? lyQueryOf(t);
@@ -164,6 +165,7 @@ $('lyFix').addEventListener('click', (e) => {
   if (a === 'undo') return tapUndo();
   if (a === 'tapsave') return tapSave();
   if (a === 'tapcancel') { fix.tap = null; return renderFix(); }
+  if (a === 'studio') return window.openLyricStudioFromFix?.();
   if (a === 'savetext') {
     const txt = $('fxText').value.replace(/\r/g, '').trim(); if (!txt) return toast('Текст пустой');
     const drop = ['ws', 'auto', 'none', 'instrumental', 'wsFail', 'mismatch', 'recheck'];

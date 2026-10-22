@@ -148,6 +148,7 @@ function lysBlockHtml(lines, i, vis, Y) {
   const L = lines[i];
   if (!lines.length) return '<div class="lys-blk lys-none-b"><div class="lys-none">♪</div></div>';
   if (!L || L.gap) return `<div class="lys-blk lys-gap"><i></i><i></i><i></i></div>`;
+  if (L.endCredits) return `<div class="lys-blk lys-credits"><small>Конец текста</small><p data-i18n-skip>${esc(L.text||'')}</p></div>`;
   const words = L.words && L.words.length ? L.words : [{ t: L.t, s: L.text || '' }];
   if (vis === 'classic') {
     const prev = lines.slice(0, i).reverse().find((x) => !x.gap), next = lines.slice(i + 1).find((x) => !x.gap);
@@ -163,7 +164,7 @@ function lysBlockHtml(lines, i, vis, Y) {
 // уже спетые слова заново «влетали» из размытия, а старая копия таяла поверх: двоение и каша)
 function lysKey(lines, i, vis) {
   const L = lines[i]; if (!lines.length) return vis + '|none'; if (!L || L.gap) return vis + '|gap|' + i;
-  return vis + '|' + (L.text || (L.words || []).map((q) => q.s).join(' '));
+  return vis + '|' + (L.endCredits?'credits|':'') + (L.text || (L.words || []).map((q) => q.s).join(' '));
 }
 function lysPutBlock(m, h, key, vis, w, fit) {
   const old = m.querySelectorAll('.lys-blk:not(.out)'); old.forEach((o) => { o.classList.add('out'); setTimeout(() => o.remove(), 500); });
@@ -295,11 +296,9 @@ function lysLoop(now) {
   lysWaterFrame(Y, bass, now);
   const cv = $('lysPt'); if (!cv || Y.kParticles === false) return;
   const W = innerWidth, H = innerHeight, dpr = Math.min(1.5, devicePixelRatio || 1);
-  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-  // 2.0.6: пылинки рисует видеокарта (один вызов на все частицы); canvas 2D — только если WebGL2 недоступен
-  if (cv._gpu === undefined) cv._gpu = S().perf.gpu !== false && typeof PulseGPU !== 'undefined' ? PulseGPU.create(cv) : null;
-  const R = cv._gpu && cv._gpu.ok() && cv._gpu.begin(W, H, dpr) ? cv._gpu : null;
-  const g = R ? null : cv.getContext('2d'); if (!R && !g) return; if (g) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); }
+  const frame = PulseParticleCanvas.frame(cv, S().perf.gpu !== false, W, H, dpr);
+  const R = frame.renderer, g = frame.context;
+  if (!R && !g) return; if (g) { g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H); }
   // 2.0.3: цвет акцента читаем раз в секунду (раньше getComputedStyle — каждый кадр); виды частиц и плотность — в настройках
   if (!lys.colAt || now - lys.colAt > 1000) { lys.colAt = now; lys.col = getComputedStyle(document.documentElement).getPropertyValue('--a1').trim() || '255,255,255'; }
   const col = lys.col, type = Y.kPtType || 'dust', N = Math.round(90 * Math.max(0.2, Math.min(2.5, (+Y.kPtDens || 100) / 100)));

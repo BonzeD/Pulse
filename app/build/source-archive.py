@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Reproducible source bundle; retain embedded Python's mandatory base_library.zip."""
 from pathlib import Path
-import sys, zipfile, hashlib, os
+import sys, zipfile, hashlib, os, json
 root=Path(__file__).resolve().parents[2]
-out=Path(sys.argv[1]).resolve() if len(sys.argv)>1 else root.parent/'Pulse-1.0.0-source-organized.zip'
+version=json.loads((root/'app/package.json').read_text())['version']
+prefix='Pulse-'+version
+out=Path(sys.argv[1]).resolve() if len(sys.argv)>1 else root.parent/(prefix+'-source.zip')
 skip_dirs={'node_modules','dist','.git','artifacts','release-proof','bin','obj','__pycache__'}
 files=[]
 for base, dirs, names in os.walk(root):
@@ -24,12 +26,12 @@ out.parent.mkdir(parents=True,exist_ok=True)
 manifest=[]
 with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
     for p,rel in files:
-        data=p.read_bytes(); archive=str(Path('Pulse-1.0.0')/rel)
+        data=p.read_bytes(); archive=str(Path(prefix)/rel)
         z.writestr(archive,data);manifest.append(hashlib.sha256(data).hexdigest()+'  '+str(rel))
-    z.writestr('Pulse-1.0.0/docs/manifests/SOURCE-MANIFEST-organized-SHA256.txt','\n'.join(manifest)+'\n')
+    z.writestr(prefix+'/docs/manifests/SOURCE-MANIFEST-organized-SHA256.txt','\n'.join(manifest)+'\n')
 with zipfile.ZipFile(out) as z:
     assert len(z.namelist())==len(set(z.namelist())), 'Duplicate archive entries'
     assert z.testzip() is None
     for p,rel in files:
-        assert z.read(str(Path('Pulse-1.0.0')/rel))==p.read_bytes(),str(rel)
+        assert z.read(str(Path(prefix)/rel))==p.read_bytes(),str(rel)
 print(f'Verified {len(files)} source files; all nested runtime ZIPs retained; {out.stat().st_size} bytes')

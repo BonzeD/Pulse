@@ -1,7 +1,7 @@
 // Рендерит экраны установщика (design.html) во всех масштабах DPI → out/raw/*.png + rects.json
 // 1.0.0: + кадры анимаций (эквалайзер, блик логотипа, нажатие кнопок, ход переключателей, значок «готово»)
 const {chromium}=require('playwright');const fs=require('fs');const path=require('path');
-const V=process.argv[2]||'1.0.0', SIZE=process.argv[3]||'420';
+const V=process.argv[2]||require('../../package.json').version, SIZE=process.argv[3]||'420';
 const SCALES=[100,125,150,175,200];
 const exe=[process.env.CHROMIUM,'/usr/local/bin/chromium','/usr/bin/chromium','/usr/bin/chromium-browser'].find(p=>p&&fs.existsSync(p));
 // каждая работа: имя → {st, q}; q — доп. параметры кадра

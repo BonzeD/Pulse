@@ -25,7 +25,7 @@
 
   // ---------- API для фрейма ----------
   window.PulseMR = {
-    version: '1.0.0',
+    version: '1.0.1',
     time: () => { const k = stretchK() || 1; return Math.max(0, (heard(S().ly.lag || 0) - offset()) / k); },
     dur: () => E.dur() || 0,
     playing: () => !!playing,

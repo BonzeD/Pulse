@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const safety = require('./core-safety');
+const catalogLocale = require('./catalog-locale');
 const nativeDialogs=require('./native-dialogs').create(require('electron').dialog,()=>readStore().library?.settings?.app?.language||'en');
 const spicyProject = require('./spicy-project');
 const { createMediaBridge } = require('./media-session');
@@ -364,7 +365,7 @@ ipcHandle('clipboard:write', (_e, text) => {
   if(typeof text!=='string'||!text.trim()||Buffer.byteLength(text,'utf8')>1024*1024)return {error:'Некорректный текст для копирования'};
   try { clipboard.writeText(text); return {ok:true}; } catch { return {error:'Системный буфер обмена недоступен'}; }
 });
-ipcHandle('store:get', () => readStore().library || null);
+ipcHandle('store:get', () => { const library = readStore().library || null; catalogLocale.set(library?.settings?.app?.language); return library; });
 function saveLibrary(lib) { if (resetting || !lib || typeof lib !== 'object' || Array.isArray(lib)) return false; const s = readStore(); s.library = lib; safety.atomicJSON(storeFile(), s, true); return true; }
 ipcOn('store:set', (_e, lib) => { try { saveLibrary(lib); } catch(e) { console.error('library save', e); } });
 ipcOn('store:flush', (e, lib) => { try { e.returnValue = saveLibrary(lib); } catch { e.returnValue = false; } });
@@ -468,7 +469,7 @@ ipcHandle('ytm:lyrics', safe((_e, id) => ytm.ytLyrics(id)));
 ipcHandle('ytm:like', safe((_e, id, on) => (svc.isSvc(id) ? svc.like(id, on) : ytm.like(id, on))));
 ipcHandle('ytm:dislike', safe((_e, id, on) => (svc.isSvc(id) ? svc.dislike(id, on) : ytm.dislike(id, on)))); // 2.0.4: «Не нравится»
 // 2.0.2: клиенты Apple Music / Spotify
-ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); return client; });
+ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); if (o && 'language' in o) catalogLocale.set(o.language); return client; });
 ipcHandle('svc:login', safe((_e, s) => svc.login(win, s)));
 ipcHandle('svc:logout', safe((_e, s) => svc.logout(s)));
 ipcHandle('svc:status', safe(() => svc.status()));

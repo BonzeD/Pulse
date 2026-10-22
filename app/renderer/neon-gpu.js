@@ -54,7 +54,11 @@ void main(){
     const tr=g.directTransform||{k:1,sx:0,sy:0},k=tr.k||1;
     const x=v=>g.cx+(v-g.cx)*k+(tr.sx||0),y=v=>g.cy+(v-g.cy)*k+(tr.sy||0);
     const shadow=g.col(g.bar*.3).map(v=>v/255);let n=0;
-    function put(ax,ay,bx,by,r,type,blur,color,alpha,hw=0){const a=[x(ax),y(ay),x(bx),y(by),r*k,type,blur,hw*k,color[0]/255,color[1]/255,color[2]/255,alpha,...shadow];out.set(a,n++*15);}
+    function put(ax,ay,bx,by,r,type,blur,color,alpha,hw=0){let j=n++*15;
+      out[j++]=x(ax);out[j++]=y(ay);out[j++]=x(bx);out[j++]=y(by);
+      out[j++]=r*k;out[j++]=type;out[j++]=blur;out[j++]=hw*k;
+      out[j++]=color[0]/255;out[j++]=color[1]/255;out[j++]=color[2]/255;out[j++]=alpha;
+      out[j++]=shadow[0];out[j++]=shadow[1];out[j]=shadow[2];}
     for(let i=0;i<N;i++){
       const m=i<N/2?i/(N/2):(N-i)/(N/2),v=Math.pow(g.band(m*.85),1.3),pk=g.peaks[Math.floor(m*.85*(g.NB-1))];
       const a=i/N*TAU-Math.PI/2,c=Math.cos(a),s=Math.sin(a),r0=R+10,len=4+v*R*.9*(1+g.beat*.25);

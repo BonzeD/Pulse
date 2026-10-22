@@ -13,11 +13,12 @@ const makeViz = (opts = {}) => {
   const SY = { prevKick: 0, env: 0, flash: 0, sx: 0, sy: 0, slow: 0.15, fast: 0, drop: 0, lastHit: 0 };
   let LW = 1, GLOW = 1, DENS = 1, HUE = 0, REACT = 0.6, BASSK = 1, COVER = null;
   const TAU = Math.PI * 2;
+  const motionPreference = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   let ro = null;
   // 2.0.6: свой WebGL-холст для 3D-стилей; кадр с него копируется в основной холст (копия GPU → GPU)
   let G = null, gcv = null, gpuOff = false, directShown = false;
   const renderStats = { path:'idle', samples:[], copies:0, direct:0, draws:0 };
-  function hideDirect() { if (gcv) gcv.hidden = true; if (cv && directShown) cv.style.visibility = blankCv ? 'hidden' : ''; directShown = false; }
+  function hideDirect() { if (gcv && !gcv.hidden) gcv.hidden = true; if (cv && directShown) cv.style.visibility = blankCv ? 'hidden' : ''; directShown = false; }
   function canDirect(fx = {}) { return opts.gpu !== false && !gpuOff && (!G || G.ok()) && typeof PulseGPU !== 'undefined' && !(fx.trails > 0) && !(fx.flash > 0) && (!fx.mirror || fx.mirror === 'off'); }
   function stats() { const now = performance.now(), recent = renderStats.samples.filter(x => now-x.t < 1000); return { path:renderStats.path, frames:renderStats.draws, copies:renderStats.copies, directFrames:renderStats.direct, fps:recent.length>1?(recent.length-1)*1000/(recent.at(-1).t-recent[0].t):0, submitMs:recent.length?recent.reduce((a,b)=>a+b.cpu,0)/recent.length:0 }; }
   function noteRender(path, start) { const now = performance.now(); renderStats.path=path; renderStats.draws++; renderStats.samples.push({t:now,cpu:now-start}); if(renderStats.samples.length>240)renderStats.samples.shift(); }
@@ -37,7 +38,9 @@ const makeViz = (opts = {}) => {
     const d = lowQ ? 1 : Math.min(opts.maxDpr || 1.5, devicePixelRatio || 1), r = cv.getBoundingClientRect();
     const main = cv.id === 'viz' && cv.parentElement.id === 'stage', st = main ? cv.parentElement.getBoundingClientRect() : r;
     W = st.width; H = st.height; OX = main ? st.left - r.left : 0; OY = main ? st.top - r.top : 0; DPR = d;
-    cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d));
+    const pw = Math.max(1, Math.round(r.width * d)), ph = Math.max(1, Math.round(r.height * d));
+    if (cv.width !== pw) cv.width = pw;
+    if (cv.height !== ph) cv.height = ph;
     ctx.setTransform(d, 0, 0, d, OX * d, OY * d);
   }
   const rgba = (p, a) => `rgba(${p[0] | 0},${p[1] | 0},${p[2] | 0},${Math.max(0, Math.min(1, a))})`;
@@ -60,13 +63,22 @@ const makeViz = (opts = {}) => {
   function glow(c, b) { if (lowQ || GLOW <= 0) return; ctx.shadowColor = c; ctx.shadowBlur = b * GLOW; }
   const noGlow = () => { ctx.shadowBlur = 0; };
 
+  const bandLo = new Uint32Array(NB), bandHi = new Uint32Array(NB);
+  let bandLength = 0, bandRate = 0;
   function fillBands(freq, playing, g, dt) {
     const fk = Math.max(0.25, Math.min(4, (dt || 1 / 60) * 60));
     if (freq) {
-      const N = freq.length, hz = SR / 2 / N;
+      const N = freq.length;
+      if (N !== bandLength || SR !== bandRate) {
+        const hz = SR / 2 / N; bandLength = N; bandRate = SR;
+        for (let i = 0; i < NB; i++) {
+          const f0 = 32 * Math.pow(14000 / 32, i / NB), f1 = 32 * Math.pow(14000 / 32, (i + 1) / NB);
+          bandLo[i] = Math.max(1, Math.floor(f0 / hz));
+          bandHi[i] = Math.max(bandLo[i] + 1, Math.ceil(f1 / hz));
+        }
+      }
       for (let i = 0; i < NB; i++) {
-        const f0 = 32 * Math.pow(14000 / 32, i / NB), f1 = 32 * Math.pow(14000 / 32, (i + 1) / NB);
-        const a = Math.max(1, Math.floor(f0 / hz)), b = Math.max(a + 1, Math.ceil(f1 / hz));
+        const a = bandLo[i], b = bandHi[i];
         let m = 0; for (let k = a; k < b && k < N; k++) m = Math.max(m, freq[k]);
         const v = Math.min(1.15, Math.pow(m / 255, 1.6) * (0.75 + i / 110) * SENS * (i < 8 ? BASSK : 1));
         // атака/спад зависят от «отзывчивости»: чем выше, тем резче полосы попадают в удары
@@ -107,7 +119,7 @@ const makeViz = (opts = {}) => {
     const pulse = T.conf ? Math.exp(-phase * 6) * T.conf : 0;
     const beat = o.playing ? Math.max(o.beat || 0, pulse * 0.85) : (o.beat || 0) * 0.5;
     const g0 = { bpm, beat };
-    const noMotion = document.body?.classList.contains('no-anim') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const noMotion = document.body?.classList.contains('no-anim') || motionPreference.matches;
     const FX = noMotion ? {...(o.fx||{}),zoom:0,shake:0,flash:0,trails:0,hue:0} : o.fx || {};
     LW = (FX.thick ?? 100) / 100; GLOW = (FX.glow ?? 100) / 100; DENS = (FX.density ?? 100) / 100; BASSK = (FX.bass ?? 100) / 100; COVER = o.cover || null;
     HUE = (HUE + dt * ((FX.hue || 0) / 100) * 0.06 * (bpm / 120)) % 1;
@@ -131,9 +143,13 @@ const makeViz = (opts = {}) => {
     // 2.0.11: в «Обложке» без полос и в «Видео» холст пустой — раньше его всё равно стирали каждый кадр, и браузер
     // каждый кадр заново отправлял на видеокарту полноэкранный прозрачный слой (на слабой графике −60…70% FPS)
     if (o.mode === 'video' || (o.mode === 'cover' && o.noBars)) { hideDirect(); if (!blankCv) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); blankCv = true; cv.style.visibility = 'hidden'; } return; }
-    if (blankCv) { blankCv = false; cv.style.visibility = ''; } // 2.0.11: пустой холст ещё и прячем — браузер не смешивает его с экраном
+    const S = o.mode === 'visual' ? REG.find((x) => x.id === o.style) || (EXT && EXT().find((x) => x.id === o.style)) || REG[0] : null;
+    const gpuRenderer = S && S.gl && !S.glFail && (S.id !== 'radial' || o.direct === true) ? gpuFor() : null;
+    const gpuReady = gpuRenderer && gpuRenderer.begin(W, H, DPR);
+    const direct = !!(gpuReady && o.direct === true && (S.id === 'coverfield' || S.id === 'radial') && canDirect(FX));
+    if (!direct && blankCv) { blankCv = false; cv.style.visibility = ''; }
     if (trails > 0) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = `rgba(0,0,0,${(1 - trails) * 0.9 + 0.05})`; ctx.fillRect(0, 0, cv.width, cv.height); ctx.restore(); }
-    else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); }
+    else if (!direct || !blankCv) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); if (direct) blankCv = true; }
     if (o.mode === 'video') return;
     const a = o.artRect && { ...o.artRect, x: o.artRect.x - OX, y: o.artRect.y - OY }, C = o.center && { x: o.center.x - OX, y: o.center.y - OY }, cx = a ? a.x : C ? C.x : W / 2, cy = a ? a.y : C ? C.y : H * 0.45, R = a ? a.r : Math.min(W, H) * 0.16;
     const pointer = window.PulsePointer?.position();
@@ -145,7 +161,7 @@ const makeViz = (opts = {}) => {
       level, energy, drop: SY.drop, hit: SY.env, bass: bass(), mid: mid(), high: high(), band, mix, col, rgba, rr, smoothClosed, glow, noGlow, ease, TAU, opts: o.opts || {}, intensity: o.intensity || 1, cover: !!a
     };
     if (o.mode === 'cover') { if (!o.noBars) coverBars(g); return; }
-    const S = REG.find((x) => x.id === o.style) || (EXT && EXT().find((x) => x.id === o.style)) || REG[0]; if (!S) return;
+    if (!S) return;
     g.state = state[S.id] || (state[S.id] = {});
     if (S.id === 'wave' || S.id === 'scope') g.wave = stableWave(o.wave, g.state, dt);
     g.lw = LW; g.dens = DENS; g.coverImg = COVER;
@@ -163,16 +179,15 @@ const makeViz = (opts = {}) => {
         ctx.translate(cx + sx, cy + sy); ctx.scale(k, k); ctx.translate(-cx, -cy);
       }
       // 2.0.6: 3D-стили — на видеокарте; если WebGL недоступен или стиль упал на GPU — обычный canvas
-      const R = S.gl && !S.glFail && (S.id !== 'radial' || o.direct === true) ? gpuFor() : null;
-      if (R && R.begin(W, H, DPR)) { try {
-        const direct = o.direct === true && (S.id === 'coverfield' || S.id === 'radial') && canDirect(FX);
+      const R = gpuRenderer;
+      if (gpuReady) { try {
         g.direct = direct; g.neonGlow = lowQ ? 0 : GLOW; S.gl(g, R);
         if (direct) {
           if (gcv.parentElement !== cv.parentElement) { gcv.id = 'vizDirect'; cv.after(gcv); }
-          gcv.hidden = false; cv.style.visibility = 'hidden'; directShown = true;
+          if (!directShown) { gcv.hidden = false; cv.style.visibility = 'hidden'; directShown = true; }
           renderPath = 'WebGL direct'; renderStats.direct++;
         } else { hideDirect(); ctx.drawImage(gcv, 0, 0, W, H); renderPath = 'WebGL copied'; renderStats.copies++; }
-      } catch (e) { hideDirect(); console.warn('viz gpu', S.id, e); S.glFail = true; S.draw(g); } }
+      } catch (e) { hideDirect(); blankCv = false; cv.style.visibility = ''; console.warn('viz gpu', S.id, e); S.glFail = true; S.draw(g); } }
       else { hideDirect(); if(S.id==='coverfield')ctx.filter=`hue-rotate(${HUE*360}deg)`; S.draw(g); }
     } catch (e) { console.error('viz', S.id, e); } finally { ctx.restore(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     const mir = FX.mirror || 'off';
@@ -652,6 +667,6 @@ const makeViz = (opts = {}) => {
       img.onerror = () => res(null); img.src = src;
     });
   }
-  return { init, destroy, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };
+  return { init, destroy, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => opts.gpu !== false && !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };
 };
 const Viz = makeViz();

@@ -1,0 +1,39 @@
+{
+  "renderer/index.html": {
+    "sha256": "c2362189519bbb50f0f135e6c8213ceeb2c5bd9c330bec78ac81e448b51c75d9",
+    "originalSha256": "3b6fd99db8250c93ddeed62f5e51f4ed46c0e86ce856724d8ba9aeef6d728ae3",
+    "patches": [
+      {
+        "from": 7,
+        "to": 8,
+        "original": []
+      },
+      {
+        "from": 38,
+        "to": 39,
+        "original": []
+      },
+      {
+        "from": 321,
+        "to": 325,
+        "original": []
+      }
+    ]
+  },
+  "renderer/lyfix.js": {
+    "sha256": "cc368bee2746997370f8d85e78d70d7f9d265302db1b3a79e50d4736a374a184",
+    "originalSha256": "2e098c19ed1edab44bfc388b7947233fc29e9e0a6093916278f8aaa2cb1b9401",
+    "patches": [
+      {
+        "from": 70,
+        "to": 71,
+        "original": []
+      },
+      {
+        "from": 167,
+        "to": 168,
+        "original": []
+      }
+    ]
+  }
+}

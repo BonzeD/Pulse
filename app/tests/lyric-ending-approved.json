@@ -1,0 +1,50 @@
+{
+  "renderer/app.js": {
+    "sha256": "2274e4441eb506363ba3a9b5250712eab9cd70873b5c6c3969dbad1d46192331",
+    "originalSha256": "10c33d40699ae0630d0f78fb935379a069dc738e31922434e2fc827b96fd0ae5",
+    "patches": [
+      {
+        "from": 1188,
+        "to": 1190,
+        "original": []
+      },
+      {
+        "from": 1198,
+        "to": 1199,
+        "original": []
+      },
+      {
+        "from": 1247,
+        "to": 1250,
+        "original": [
+          "  $('lyScroll').innerHTML = `<div class=\"ly-inner\" id=\"lyInner\">${lines.map((l, i) => l.gap\n"
+        ]
+      },
+      {
+        "from": 1325,
+        "to": 1326,
+        "original": [
+          "  const lyo = ln ? { id: lyState.id, lines: ln.map((l) => (l.gap ? { t: l.t * k, gap: l.gap * k } : { t: l.t * k, text: l.text || (l.words || []).map((w) => w.s).join(' ').trim(), words: l.words ? l.words.map((w) => ({ t: w.t * k, e: w.e != null ? w.e * k : undefined, s: wtxt(w.s) })) : null })) } : { id: lyState.id, lines: [] };\n"
+        ]
+      }
+    ]
+  },
+  "renderer/lystage.js": {
+    "sha256": "1f4276cdbb8a5522f93ad965a9a7e01dfcf144f933c56f6bcf5aeca9954305e6",
+    "originalSha256": "c9ca6e94a7e4a375e50d2addbfc8e3468570384cfc40d8889341b1a0d01c49b6",
+    "patches": [
+      {
+        "from": 150,
+        "to": 151,
+        "original": []
+      },
+      {
+        "from": 166,
+        "to": 167,
+        "original": [
+          "  return vis + '|' + (L.text || (L.words || []).map((q) => q.s).join(' '));\n"
+        ]
+      }
+    ]
+  }
+}

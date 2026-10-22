@@ -1,0 +1,37 @@
+{
+  "version": "1.0.1",
+  "unit": {
+    "tests": 341,
+    "pass": 341,
+    "fail": 0,
+    "skipped": 0
+  },
+  "newEditorUnitTests": 17,
+  "uiChecks": {
+    "lyricStudioUI": "pass",
+    "timecodeRegression": "pass",
+    "release101Regression": "pass",
+    "finalUIRegression": "pass"
+  },
+  "visualPerformanceRegression": "pass",
+  "actualAudioTest": {
+    "source": "generated 30s PCM WAV, HTTP Range",
+    "engine": "real HTMLMediaElement + Web Audio in Chromium",
+    "rate": 0.5,
+    "nonzeroAnalyserPCM": true,
+    "arrowReleaseRestoresPriorRate": true,
+    "mouseHoldRateTest": 0.75,
+    "backwardMode": "forward-playing short slices at progressively earlier positions"
+  },
+  "editorViewsInspected": [
+    "desktop",
+    "mobile",
+    "Japanese",
+    "word controls",
+    "invalid LRC",
+    "empty"
+  ],
+  "windowsRuntimeTested": false,
+  "realServiceAccountsTested": false,
+  "published": false
+}

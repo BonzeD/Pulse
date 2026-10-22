@@ -1,4 +1,5 @@
 const { atomicJSON } = require('./core-safety');
+const catalogLocale = require('./catalog-locale');
 'use strict';
 // 2.0.2: Pulse как клиент Apple Music и Spotify (каталог, поиск, медиатека, «Нравится»)
 // и тексты песен прямо из Apple Music / Spotify / YouTube Music — с таймингами слов, бэк-вокалом и дуэтами.
@@ -23,7 +24,7 @@ async function get(url, opt = {}, partition) {
   const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), opt.timeout || 15000);
   try {
     const s = partition && ses(partition); const f = s && typeof s.fetch === 'function' ? s.fetch.bind(s) : fetch;
-    return await f(url, { ...(s ? { credentials: 'include' } : {}), ...opt, headers: { 'User-Agent': UA, 'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8', ...(opt.headers || {}) }, signal: ac.signal });
+    return await f(url, { ...(s ? { credentials: 'include' } : {}), ...opt, headers: { 'User-Agent': UA, 'Accept-Language': catalogLocale.current().accept, ...(opt.headers || {}) }, signal: ac.signal });
   } finally { clearTimeout(tm); }
 }
 
@@ -156,7 +157,7 @@ async function trackMeta(id) {
 // токен веб-плеера: open.spotify.com в скрытом окне (с сессией входа, если она есть) — берём заголовок Authorization
 let spTok = null, spTokP = null;
 function spTokDrop() { spTok = null; try { if (db().spTok) { delete db().spTok; saveSoon(); } } catch {} } // 2.0.4: вход/выход/смена аккаунта — забываем и сохранённый токен
-const spHeaders = (tok) => ({ Authorization: 'Bearer ' + tok.access, ...(tok.client ? { 'client-token': tok.client } : {}), 'app-platform': 'WebPlayer', Origin: 'https://open.spotify.com', Referer: 'https://open.spotify.com/', Accept: 'application/json' });
+const spHeaders = (tok) => ({ Authorization: 'Bearer ' + tok.access, ...(tok.client ? { 'client-token': tok.client } : {}), 'app-platform': 'WebPlayer', Origin: 'https://open.spotify.com', Referer: 'https://open.spotify.com/', Accept: 'application/json', 'Accept-Language': catalogLocale.current().accept });
 async function spLoggedIn() { const s = ses(SP_PART); if (!s) return false; try { return (await s.cookies.get({ name: 'sp_dc' })).some((c) => c.value); } catch { return false; } }
 async function spToken(force) {
   if (!force && spTok && spTok.exp > Date.now() + 60e3) return spTok;
@@ -353,7 +354,7 @@ async function spPlaylistTracks(id, cap = 1000) {
 async function spBrowse(bid) {
   const [, kind, id] = bid.split(':');
   if (kind === 'album') {
-    const a = (await spGql('getAlbum', { uri: 'spotify:album:' + id, locale: '', offset: 0, limit: 300 })).albumUnion;
+    const a = (await spGql('getAlbum', { uri: 'spotify:album:' + id, locale: catalogLocale.current().language, offset: 0, limit: 300 })).albumUnion;
     if (!a || a.__typename !== 'Album') throw new Error('Альбом не найден в Spotify');
     const art = gImg(a.coverArt, 300), ctx = { art, album: a.name, albumId: a.uri };
     const tracks = (((a.tracksV2 || {}).items) || []).map((x) => gSong(x.track, ctx)).filter(Boolean);
@@ -365,7 +366,7 @@ async function spBrowse(bid) {
     return { type: 'playlist', browseId: bid, header: { title: p.name, sub: [((p.ownerV2 || {}).data || {}).name, p.followers ? `${(+p.followers).toLocaleString('ru-RU')} подписчиков` : ''].filter(Boolean).join(' • '), desc: String(p.description || '').replace(/<[^>]+>/g, ''), art: img ? gImg(img, 640) : tracks[0] && tracks[0].art }, tracks, shelves: [] };
   }
   if (kind === 'artist') {
-    const a = (await spGql('queryArtistOverview', { uri: 'spotify:artist:' + id, locale: '', preReleaseV2: false })).artistUnion;
+    const a = (await spGql('queryArtistOverview', { uri: 'spotify:artist:' + id, locale: catalogLocale.current().language, preReleaseV2: false })).artistUnion;
     if (!a || a.__typename !== 'Artist') throw new Error('Исполнитель не найден в Spotify');
     const dg = a.discography || {}, shelves = [];
     const top = (((dg.topTracks || {}).items) || []).map((x) => gSong(x.track, { author: (a.profile || {}).name })).filter(Boolean); if (top.length) shelves.push({ title: 'Популярные треки', items: top, list: true });
@@ -494,8 +495,13 @@ async function amApi(pathq, { user = false, retry = true, method = 'GET', body }
   const h = { Authorization: 'Bearer ' + dev, Origin: 'https://music.apple.com', Referer: 'https://music.apple.com/', Accept: 'application/json' };
   if (user) { const mut = await amUserToken(); if (!mut) { const e = new Error('Войди в Apple Music (Настройки → Клиент)'); e.status = 401; throw e; } h['Media-User-Token'] = mut; }
   if (body) h['Content-Type'] = 'application/json';
-  const url = /^https:/.test(pathq) ? pathq : 'https://amp-api.music.apple.com' + pathq;
-  const r = await get(url, { method, headers: h, body: body ? JSON.stringify(body) : undefined }, user ? AM_PART : null);
+  let url = /^https:/.test(pathq) ? pathq : 'https://amp-api.music.apple.com' + pathq;
+  const originalURL = url;
+  if (method === 'GET') url = catalogLocale.appleURL(url);
+  let r = await get(url, { method, headers: h, body: body ? JSON.stringify(body) : undefined }, user ? AM_PART : null);
+  // Some storefronts do not offer the selected UI language. Keep the market,
+  // retry the original URL once; known UI shelf titles are localized in renderer.
+  if (r.status === 400 && url !== originalURL) r = await get(originalURL, { method, headers: h }, user ? AM_PART : null);
   if (r.status === 401 && retry && !user) { amDev = null; await amDevToken(true); return amApi(pathq, { user, retry: false, method, body }); }
   if (r.status === 404) return null;
   if (!r.ok && r.status !== 202 && r.status !== 204) { const e = new Error(`Apple Music ${r.status}`); e.status = r.status; throw e; }
@@ -958,10 +964,21 @@ async function logout(svc) {
   if (svc === 'sp') spTokDrop(); else amSfUser = null;
   return true;
 }
+let amProfileCache = null;
+async function amProfile() {
+  const token = await amUserToken(); if (!token) return null;
+  const key = require('crypto').createHash('sha256').update(token).digest('hex');
+  if (amProfileCache?.key === key && amProfileCache.until > Date.now()) return amProfileCache.value;
+  const value = await amApi('/v1/me/social/profile', { user: true }).then(require('./apple-profile').parseOwnProfile).catch(() => null);
+  // An account switch while loading must never attach the old/new profile to another account.
+  if (await amUserToken() !== token) return null;
+  amProfileCache = {key, value, until: Date.now() + (value ? 600e3 : 60e3)};
+  return value;
+}
 async function status() {
   const [sp, am] = await Promise.all([spLoggedIn(), amUserToken().then(Boolean)]);
   let spName = null; if (sp) { const m = await spMe(); spName = m && m.name; if (!spName) { try { const j = await spApi('/me', { user: true }); spName = j && (j.display_name || j.id); } catch {} } }
-  return { sp: { user: sp, name: spName }, am: { user: am, sf: am ? await amSf().catch(() => null) : null } };
+  return { sp: { user: sp, name: spName }, am: { user: am, name: am ? (await amProfile())?.name || null : null, sf: am ? await amSf().catch(() => null) : null } };
 }
 // ======================= 2.0.3: менеджер аккаунтов Apple Music / Spotify =======================
 // У каждого сервиса — свой список аккаунтов (отдельно от YouTube Music): userData/accounts-sp.json и accounts-am.json.
@@ -994,8 +1011,7 @@ async function sInfo(s) {
     let photo = null; try { const j = await spApi('/me', { user: true, retry: false }); photo = j && spImg(j.images, 64); } catch {}
     return { name: name || 'Аккаунт Spotify', photo };
   }
-  const sf = await amSf().catch(() => null);
-  return { name: 'Apple ID' + (sf ? ' · ' + String(sf).toUpperCase() : ''), photo: null };
+  return await amProfile() || { name: 'Apple Music', photo: null, fallback: true };
 }
 async function sApply(s, cs) {
   const S = ses(sPart(s));
@@ -1007,12 +1023,13 @@ async function sApply(s, cs) {
   }
 }
 async function accSnapshot(s) {
-  const d = sAccRead(s); if (!(await sUser(s))) return sPub(d);
+  let d = sAccRead(s); if (!(await sUser(s))) return sPub(d);
   const cs = await sCookies(s), id = sIdOf(s, cs); if (!id) return sPub(d);
-  const info = await sInfo(s).catch(() => null); if (!info) return sPub(d);
+  const info = await sInfo(s).catch(() => null); if (!info || id !== sIdOf(s, await sCookies(s))) return sPub(sAccRead(s));
+  d = sAccRead(s);
   let a = d.list.find((x) => x.id === id) || d.list.find((x) => x.id === d.active && !x.cookies?.length);
   if (!a) { a = { id, added: Date.now() }; d.list.push(a); }
-  a.id = id; a.cookies = cs; a.used = Date.now(); if (!a.custom) a.name = info.name; if (info.photo) a.photo = info.photo;
+  a.id = id; a.cookies = cs; a.used = Date.now(); if (!a.custom && (!info.fallback || !a.name || /^Apple ID(?: · [A-Z]{2})?$/.test(a.name))) a.name = info.name; if (info.photo) a.photo = info.photo;
   d.list = d.list.filter((x) => x === a || x.id !== id); d.active = id; sAccWrite(s, d); return sPub(d);
 }
 async function accSwitch(s, id) {

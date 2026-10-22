@@ -1,0 +1,4 @@
+/* Preserve the existing layout; make only the displayed timecode interactive. */
+#bar .time[data-precise-time]{pointer-events:auto;cursor:pointer;user-select:none;-webkit-app-region:no-drag;border-radius:4px}
+#bar .time[data-precise-time]:focus-visible{outline:2px solid rgb(var(--a1));outline-offset:4px}
+#bar .time[data-precise-time]:hover{color:var(--txt)}

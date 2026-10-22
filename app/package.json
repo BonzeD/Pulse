@@ -1,15 +1,15 @@
 {
   "name": "pulse-player",
   "productName": "Pulse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pulse — неоновый плеер-клиент для YouTube Music, Apple Music и Spotify",
   "main": "main.js",
   "author": "werxapee & Daswi",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "electron .",
-    "dist": "npm run build:media && electron-builder --win portable --x64 && sh build/make-setup.sh",
-    "test": "node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs",
+    "dist": "npm run build:media && electron-builder --win portable --x64 --publish never && sh build/make-setup.sh",
+    "test": "node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs",
     "test:ui": "node tests/ui.cjs",
     "test:audio": "node tests/audio-signal.cjs",
     "postinstall": "node node_modules/electron/install.js",
@@ -28,7 +28,11 @@
     "test:final-ui": "node tests/final-ui-smoke.cjs",
     "test:final-effects": "node tests/final-effects.cjs",
     "test:kinetic-motion": "node tests/kinetic-motion-ui.cjs",
-    "test:settings-art": "node tests/settings-art-ui.cjs"
+    "test:settings-art": "node tests/settings-art-ui.cjs",
+    "test:visual-performance": "node tests/visual-performance.cjs",
+    "test:release-101": "node tests/release-101-ui.cjs",
+    "test:timecode": "node tests/timecode-ui.cjs",
+    "test:lyric-studio": "node tests/lyric-studio-ui.cjs"
   },
   "build": {
     "appId": "com.scada.pulse",
@@ -59,7 +63,9 @@
       "spicy-project.js",
       "image-cache.js",
       "discord-safety.js",
-      "native-dialogs.js"
+      "native-dialogs.js",
+      "catalog-locale.js",
+      "apple-profile.js"
     ],
     "afterPack": "./build/afterPack.js",
     "win": {

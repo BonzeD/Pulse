@@ -1,4 +1,5 @@
 const { atomicJSON } = require('./core-safety');
+const catalogLocale = require('./catalog-locale');
 // Аккаунт Google / YouTube Music: вход, библиотека, cookies для yt-dlp
 const { BrowserWindow, BaseWindow, WebContentsView, ipcMain, session, app, dialog } = require('electron');
 const crypto = require('crypto'); const fs = require('fs'); const path = require('path');
@@ -404,14 +405,14 @@ async function headers() {
   const cs = await ytCookies(); const yc = cs.filter((c) => /youtube\.com/.test(c.domain));
   const sap = (yc.find((c) => c.name === 'SAPISID') || yc.find((c) => c.name === '__Secure-3PAPISID') || {}).value;
   const ts = Math.floor(Date.now() / 1000);
-  const h = { 'Content-Type': 'application/json', 'User-Agent': UA, Origin: ORIGIN, Referer: ORIGIN + '/', 'X-Origin': ORIGIN, 'X-Goog-AuthUser': '0', 'Accept-Language': 'ru-RU,ru;q=0.9' };
+  const h = { 'Content-Type': 'application/json', 'User-Agent': UA, Origin: ORIGIN, Referer: ORIGIN + '/', 'X-Origin': ORIGIN, 'X-Goog-AuthUser': '0', 'Accept-Language': catalogLocale.current().accept };
   if (yc.length) h.Cookie = yc.map((c) => `${c.name}=${c.value}`).join('; ');
   if (sap) h.Authorization = `SAPISIDHASH ${ts}_${crypto.createHash('sha1').update(`${ts} ${sap} ${ORIGIN}`).digest('hex')}`;
   return h;
 }
 const CTX = { client: { clientName: 'WEB_REMIX', clientVersion: '1.20250101.01.00', hl: 'ru', gl: 'RU' } };
 async function api(endpoint, body, query = '') {
-  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', headers: await headers(), body: JSON.stringify({ context: CTX, ...body }) });
+  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', headers: await headers(), body: JSON.stringify({ ...body, context: { ...(body?.context || CTX), client: { ...(body?.context?.client || CTX.client), hl: catalogLocale.current().language } } }) });
   if (!r.ok) throw new Error(`YouTube Music API ${r.status}`);
   return r.json();
 }

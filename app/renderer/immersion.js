@@ -31,6 +31,7 @@ window.PulseImmersion = (() => {
   }
   function tick(now) {
     raf = 0;
+    if (S().perf.gpu === false) { setGpu(false); return; }
     if (!active() || hidden() || contextLost || !scene || error) { last = 0; return; }
     raf = requestAnimationFrame(tick);
     reduced = motion();
@@ -53,6 +54,14 @@ window.PulseImmersion = (() => {
     } catch (e) { console.error('Pulse scene', e); showError('Не удалось отрисовать сцену. Выбери другой режим выше — музыка продолжает играть.'); return; }
     slow = performance.now() - start > 25 ? slow + 1 : Math.max(0, slow - 1);
     if (quality === 'auto' && slow > 60) eco = true;
+  }
+  let gpuAllowed = true;
+  function setGpu(enabled) {
+    if (gpuAllowed === enabled) return;
+    gpuAllowed = enabled;
+    if (!active()) return;
+    if (!enabled) { stop(); scene?.destroy(); scene = null; showError('Включи графику на видеокарте в настройках или выбери другой режим выше.'); }
+    else { const st = stage; detach(); attach(st); }
   }
   function start() {
     if (!active() || hidden() || contextLost || error) return;
@@ -95,5 +104,5 @@ window.PulseImmersion = (() => {
   document.addEventListener('visibilitychange', () => { if (hidden()) stop(); else start(); });
   // Electron can hide/minimize without changing document.visibilityState.
   setInterval(() => { if (hidden()) stop(); else if (active() && !raf) start(); }, 600);
-  return {open, close, attach, detach, configure, active, stats:() => ({active:active(), world, quality, eco, reduced, contextLost, draws:frames, travel, ambient, raf:!!raf, renderer:scene?.stats?.() || null})};
+  return {open, close, attach, detach, configure, setGpu, active, stats:() => ({active:active(), world, quality, eco, reduced, contextLost, draws:frames, travel, ambient, raf:!!raf, renderer:scene?.stats?.() || null})};
 })();

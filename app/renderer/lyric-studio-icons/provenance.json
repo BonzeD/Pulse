@@ -1,0 +1,27 @@
+{
+  "source": "https://github.com/lucide-icons/lucide",
+  "commit": "20aef31db93fe4d9f398dbb15b120d99c48eef95",
+  "icons": [
+    "undo-2",
+    "redo-2",
+    "save",
+    "check",
+    "plus",
+    "play",
+    "pause",
+    "rewind",
+    "fast-forward",
+    "locate-fixed",
+    "zoom-out",
+    "zoom-in",
+    "trash",
+    "text-cursor-input",
+    "whole-word",
+    "list-start",
+    "audio-lines",
+    "copy",
+    "ellipsis",
+    "flag"
+  ],
+  "license": "ISC; Feather-derived icons MIT (see LICENSE)"
+}

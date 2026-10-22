@@ -1,0 +1,22 @@
+{
+  "renderer/app.js": {
+    "sha256": "10c33d40699ae0630d0f78fb935379a069dc738e31922434e2fc827b96fd0ae5",
+    "originalSha256": "971381652e96312d8619dc9fdf565f355f450d90abb563168cfd696c6217a614",
+    "patches": [
+      {
+        "from": 1191,
+        "to": 1192,
+        "original": [
+          "function withGaps(lines) {\n"
+        ]
+      },
+      {
+        "from": 1197,
+        "to": 1198,
+        "original": [
+          "    if (!L.text) { const nx = lines.slice(i + 1).find((x) => x.text); if (nx && nx.t - L.t > 4) res.push({ t: L.t, gap: nx.t - L.t }); continue; }\n"
+        ]
+      }
+    ]
+  }
+}

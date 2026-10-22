@@ -1,0 +1,208 @@
+{
+  "renderer/app.js": {
+    "sha256": "97ccf0250d91ea9815f0863992f0f4a233235e6fca8e1b21c3603a8616c02434",
+    "originalSha256": "e567da7f2a885850242c6d15497637a41582d230bf29b6ae5d9108376073306d",
+    "patches": [
+      {
+        "from": 1546,
+        "to": 1547,
+        "original": []
+      },
+      {
+        "from": 1577,
+        "to": 1578,
+        "original": [
+          "  if (!v) lastFrame = 0;\n"
+        ]
+      },
+      {
+        "from": 1610,
+        "to": 1613,
+        "original": [
+          "  const visualExperiment = typeof VisualExperiment !== 'undefined' && VisualExperiment.sync();\n",
+          "  if (hiddenNow) { liteS.last = 0; return; }\n"
+        ]
+      },
+      {
+        "from": 1628,
+        "to": 1629,
+        "original": [
+          "  // при 60 FPS допускаем дрожание кадра в 2 мс, иначе на 144-Гц мониторах рисовали бы лишние кадры\n"
+        ]
+      },
+      {
+        "from": 1630,
+        "to": 1632,
+        "original": [
+          "  // лимит кадров из настроек (0 — без ограничения, по частоте монитора); 2 мс запаса на дрожание кадра\n",
+          "  let minDt = P.mode === 'eco' ? 32 : P.fps > 0 ? 1000 / P.fps - 2 : 0;\n"
+        ]
+      },
+      {
+        "from": 1637,
+        "to": 1638,
+        "original": [
+          "  if (visualExperiment) minDt = Math.max(minDt, 33); // service/DOM updates at ~30Hz; rendering has its own cadence\n"
+        ]
+      },
+      {
+        "from": 1639,
+        "to": 1640,
+        "original": [
+          "  if (now - lastFrame < minDt) return;\n"
+        ]
+      },
+      {
+        "from": 1644,
+        "to": 1645,
+        "original": [
+          "  const mode0 = open ? (lib.mode === 'video' && engine === 'audio' && !window.PulseFileVideo?.visible() ? 'cover' : lib.mode) : null, ar = mode0 === 'visual' ? artRect() : null; // 2.0.4: до записи стилей\n"
+        ]
+      }
+    ]
+  },
+  "renderer/viz.js": {
+    "sha256": "55e2884acede531cabec197425302eb9f779fd891e605764e702db8577a506d8",
+    "originalSha256": "58b4a90ce3031ad983dcf713b4ae06ce7b6a5dedda5b9e9c28daea280d43f39e",
+    "patches": [
+      {
+        "from": 15,
+        "to": 16,
+        "original": []
+      },
+      {
+        "from": 20,
+        "to": 21,
+        "original": [
+          "  function hideDirect() { if (gcv) gcv.hidden = true; if (cv && directShown) cv.style.visibility = blankCv ? 'hidden' : ''; directShown = false; }\n"
+        ]
+      },
+      {
+        "from": 40,
+        "to": 43,
+        "original": [
+          "    cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d));\n"
+        ]
+      },
+      {
+        "from": 65,
+        "to": 67,
+        "original": []
+      },
+      {
+        "from": 70,
+        "to": 79,
+        "original": [
+          "      const N = freq.length, hz = SR / 2 / N;\n"
+        ]
+      },
+      {
+        "from": 80,
+        "to": 81,
+        "original": [
+          "        const f0 = 32 * Math.pow(14000 / 32, i / NB), f1 = 32 * Math.pow(14000 / 32, (i + 1) / NB);\n",
+          "        const a = Math.max(1, Math.floor(f0 / hz)), b = Math.max(a + 1, Math.ceil(f1 / hz));\n"
+        ]
+      },
+      {
+        "from": 121,
+        "to": 122,
+        "original": [
+          "    const noMotion = document.body?.classList.contains('no-anim') || matchMedia('(prefers-reduced-motion: reduce)').matches;\n"
+        ]
+      },
+      {
+        "from": 145,
+        "to": 150,
+        "original": [
+          "    if (blankCv) { blankCv = false; cv.style.visibility = ''; } // 2.0.11: пустой холст ещё и прячем — браузер не смешивает его с экраном\n"
+        ]
+      },
+      {
+        "from": 151,
+        "to": 152,
+        "original": [
+          "    else { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); }\n"
+        ]
+      },
+      {
+        "from": 163,
+        "to": 164,
+        "original": [
+          "    const S = REG.find((x) => x.id === o.style) || (EXT && EXT().find((x) => x.id === o.style)) || REG[0]; if (!S) return;\n"
+        ]
+      },
+      {
+        "from": 181,
+        "to": 183,
+        "original": [
+          "      const R = S.gl && !S.glFail && (S.id !== 'radial' || o.direct === true) ? gpuFor() : null;\n",
+          "      if (R && R.begin(W, H, DPR)) { try {\n",
+          "        const direct = o.direct === true && (S.id === 'coverfield' || S.id === 'radial') && canDirect(FX);\n"
+        ]
+      },
+      {
+        "from": 186,
+        "to": 187,
+        "original": [
+          "          gcv.hidden = false; cv.style.visibility = 'hidden'; directShown = true;\n"
+        ]
+      },
+      {
+        "from": 189,
+        "to": 190,
+        "original": [
+          "      } catch (e) { hideDirect(); console.warn('viz gpu', S.id, e); S.glFail = true; S.draw(g); } }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/visual-experiment.js": {
+    "sha256": "78dca2b70941c431b4a43e93aa726262994bb47a4d8863993f7c3dc85aafbe48",
+    "originalSha256": "9808a1d91084ff0354a4c1474694e4261a5f2cdfd9f5171e285d33757986e1d1",
+    "patches": [
+      {
+        "from": 2,
+        "to": 4,
+        "original": [
+          "  let raf=0,last=0,active=false,localBeat=0,prevBass=0;\n"
+        ]
+      },
+      {
+        "from": 5,
+        "to": 16,
+        "original": [
+          "  function sync(){const on=eligible();if(on&&!active){active=true;last=0;localBeat=0;prevBass=0;raf=requestAnimationFrame(tick);}else if(!on&&active){active=false;cancelAnimationFrame(raf);raf=0;Viz.hideDirect();}return on;}\n",
+          "  function tick(now){raf=0;if(!eligible()){active=false;Viz.hideDirect();return;}raf=requestAnimationFrame(tick);\n",
+          "    const P=S().perf,V=S().viz;let gap=P.mode==='eco'?32:P.fps>0?Math.max(0,1000/P.fps-2):0;\n",
+          "    if(P.bgSlow!==false&&P.mode!=='high'&&!winFocused)gap=Math.max(gap,32);\n",
+          "    if(now-last<gap)return;const dt=Math.min(.1,last?(now-last)/1000:1/60);last=now;\n"
+        ]
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "5b9174af2e4d26953ff8661f5075266b1685c555b83de95cdb1069b76ae64ca6",
+    "originalSha256": "ea55116835da41e703627e0b537483b7ab63a957de35b1f77d5a62fdceac001f",
+    "patches": [
+      {
+        "from": 313,
+        "to": 314,
+        "original": []
+      }
+    ]
+  },
+  "renderer/neon-gpu.js": {
+    "sha256": "18ddda4eb9583e01a1f51daec5cacd19440f88c969c5f976f594a181e9f9ff0c",
+    "originalSha256": "1f04383e9cb779a4d2aafec3134bae54dd043928b10ae839dee93e40e39430ad",
+    "patches": [
+      {
+        "from": 56,
+        "to": 61,
+        "original": [
+          "    function put(ax,ay,bx,by,r,type,blur,color,alpha,hw=0){const a=[x(ax),y(ay),x(bx),y(by),r*k,type,blur,hw*k,color[0]/255,color[1]/255,color[2]/255,alpha,...shadow];out.set(a,n++*15);}\n"
+        ]
+      }
+    ]
+  }
+}
