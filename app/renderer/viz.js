@@ -15,6 +15,18 @@ const makeViz = (opts = {}) => {
   const TAU = Math.PI * 2;
   const motionPreference = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   let ro = null;
+  // Reuse one full-resolution layer: blur the composed image once, not every primitive.
+  // Explicit per-path glow presets keep their original drawing path.
+  const groupedGlowStyles = new Set(['ring','bars','particles','warp','hex','fire','stars','vinyl','rays']);
+  let glowCanvas = null, glowContext = null, bloomCanvas = null, bloomContext = null;
+  function beginGlowLayer() {
+    if (!glowCanvas) { glowCanvas = document.createElement('canvas'); glowContext = glowCanvas.getContext('2d', { alpha:true }); }
+    if (glowCanvas.width !== cv.width) glowCanvas.width = cv.width;
+    if (glowCanvas.height !== cv.height) glowCanvas.height = cv.height;
+    glowContext.setTransform(1,0,0,1,0,0); glowContext.clearRect(0,0,glowCanvas.width,glowCanvas.height);
+    glowContext.setTransform(DPR,0,0,DPR,OX*DPR,OY*DPR);
+    return glowContext;
+  }
   // 2.0.6: свой WebGL-холст для 3D-стилей; кадр с него копируется в основной холст (копия GPU → GPU)
   let G = null, gcv = null, gpuOff = false, directShown = false;
   const renderStats = { path:'idle', samples:[], copies:0, direct:0, draws:0 };
@@ -28,8 +40,20 @@ const makeViz = (opts = {}) => {
     if (!G) { gcv = document.createElement('canvas'); G = PulseGPU.create(gcv); if (!G) { gpuOff = true; return null; } }
     return G.ok() ? G : null;
   }
-  function init(c) { if (ro) try { ro.disconnect(); } catch {} cv = c; ctx = c.getContext('2d', { alpha: true, desynchronized: true }); resize(); ro = new ResizeObserver(resize); ro.observe(c.parentElement); }
-  function destroy() { hideDirect(); if(gcv&&gcv.parentNode)gcv.remove(); if (ro) try { ro.disconnect(); } catch {} ro = null; cv = null; ctx = null; W = 0; }
+  function init(c) { if(cv&&cv!==c)destroy(); if (ro) try { ro.disconnect(); } catch {} cv = c; ctx = c.getContext('2d', { alpha: true, desynchronized: true }); blankCv=false;lastNow=performance.now(); resize(); ro = new ResizeObserver(resize); ro.observe(c.parentElement); }
+  function destroy() {
+    hideDirect();if(gcv&&gcv.parentNode)gcv.remove();
+    try{gcv?.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
+    G=null;gcv=null;gpuOff=false;
+    if(ro)try{ro.disconnect();}catch{}ro=null;
+    for(const layer of [glowCanvas,bloomCanvas,...Object.values(state).map(s=>s.c)])if(layer){layer.width=1;layer.height=1;}
+    for(const key of Object.keys(state))delete state[key];
+    if(cv)cv.style.visibility='';
+    cv=null;ctx=null;glowCanvas=glowContext=bloomCanvas=bloomContext=null;W=H=0;blankCv=false;
+    bands.fill(0);peaks.fill(0);level=0;synth=0;cost=0;autoLow=false;flips=0;goodSince=0;
+    Object.assign(SY,{prevKick:0,env:0,flash:0,sx:0,sy:0,slow:.15,fast:0,drop:0,lastHit:0});
+    renderStats.path='idle';renderStats.samples.length=0;renderStats.copies=renderStats.direct=renderStats.draws=0;
+  }
   let blankCv = false; // 2.0.11: холст уже чистый — не стираем повторно
   let lowQ = false, autoLow = false, cost = 0, goodSince = 0, flips = 0;
   // The overscan bitmap is NOT the musical viewport. Keep every preset in stage coordinates.
@@ -68,6 +92,8 @@ const makeViz = (opts = {}) => {
   function fillBands(freq, playing, g, dt) {
     const fk = Math.max(0.25, Math.min(4, (dt || 1 / 60) * 60));
     if (freq) {
+      const attack=.55+REACT*.45,release=.1+REACT*.3;
+      const ka=attack>=1?1:1-Math.pow(1-attack,fk),kr=1-Math.pow(1-release,fk);
       const N = freq.length;
       if (N !== bandLength || SR !== bandRate) {
         const hz = SR / 2 / N; bandLength = N; bandRate = SR;
@@ -83,15 +109,15 @@ const makeViz = (opts = {}) => {
         const v = Math.min(1.15, Math.pow(m / 255, 1.6) * (0.75 + i / 110) * SENS * (i < 8 ? BASSK : 1));
         // атака/спад зависят от «отзывчивости»: чем выше, тем резче полосы попадают в удары
         // 1.9.6: коэффициенты пересчитываются по времени кадра — на 144 Гц полосы больше не «дрожат», на 30 FPS не запаздывают
-        const kk = v > bands[i] ? 0.55 + REACT * 0.45 : 0.1 + REACT * 0.3;
-        bands[i] += (v - bands[i]) * (kk >= 1 ? 1 : 1 - Math.pow(1 - kk, fk));
+        bands[i] += (v - bands[i]) * (v > bands[i] ? ka : kr);
       }
     } else {
       // нет доступа к звуку (встроенный YouTube): «синтетический» спектр, но строго в темп
       synth += dt * (g.bpm || 100) / 60;
+      const k=.12+REACT*.68,alpha=1-Math.pow(1-k,fk);
       for (let i = 0; i < NB; i++) {
         const base = (1 - i / 75) * (0.16 + 0.1 * Math.sin(synth * 1.7 + i * 0.35) + 0.06 * Math.sin(synth * 0.6 - i * 0.12)) + g.beat * 0.55 * Math.pow(1 - i / NB, 2);
-        const v = playing ? Math.max(0, base * SENS * (i<8?BASSK:1)) : 0.02;const k=.12+REACT*.68;bands[i]+=(v-bands[i])*(1-Math.pow(1-k,fk));
+        const v = playing ? Math.max(0, base * SENS * (i<8?BASSK:1)) : 0.02;bands[i]+=(v-bands[i])*alpha;
       }
     }
     let s = 0; for (let i = 0; i < NB; i++) { peaks[i] = Math.max(bands[i], peaks[i] - 0.6 * dt); s += bands[i]; }
@@ -111,7 +137,7 @@ const makeViz = (opts = {}) => {
   }
 
   function draw(o) {
-    if (!ctx) return; if (!W) resize(); if (!W) return;
+    if (!ctx) return; if (!W||!H) resize(); if (!(W>0&&H>0&&Number.isFinite(W)&&Number.isFinite(H))) return;
     const now = performance.now(), dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
     SENS = o.sens || 1; if (o.sr) SR = o.sr;
     const Q = o.quality || 'auto', want = Q === 'eco' ? true : Q === 'high' ? false : autoLow; if (want !== lowQ) { lowQ = want; resize(); }
@@ -152,6 +178,9 @@ const makeViz = (opts = {}) => {
     else if (!direct || !blankCv) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); if (direct) blankCv = true; }
     if (o.mode === 'video') return;
     const a = o.artRect && { ...o.artRect, x: o.artRect.x - OX, y: o.artRect.y - OY }, C = o.center && { x: o.center.x - OX, y: o.center.y - OY }, cx = a ? a.x : C ? C.x : W / 2, cy = a ? a.y : C ? C.y : H * 0.45, R = a ? a.r : Math.min(W, H) * 0.16;
+    const outputContext = ctx;
+    const groupedGlow = !gpuReady && S && groupedGlowStyles.has(S.id) && !lowQ && GLOW > 0;
+    if (groupedGlow) ctx = beginGlowLayer();
     const pointer = window.PulsePointer?.position();
     const pointerX = pointer ? pointer.x * Math.min(8, W * .008) : 0;
     const pointerY = pointer ? pointer.y * Math.min(5, H * .008) : 0;
@@ -169,7 +198,7 @@ const makeViz = (opts = {}) => {
     const zoom = (FX.zoom ?? 30) / 100, shake = (FX.shake || 0) / 100;
     try {
       ctx.save();
-      ctx.shadowColor=mix(0.15,0.65);ctx.shadowBlur=lowQ?0:GLOW*8;
+      ctx.shadowColor=mix(0.15,0.65);ctx.shadowBlur=lowQ||groupedGlow?0:GLOW*8;
       if (zoom > 0 || shake > 0) {
         // зум «вдыхает» на реальном ударе и сильнее в громких частях; тряска — один толчок в сторону и плавный возврат
         const hit = Math.max(SY.env, pulse * 0.35), dyn = 0.55 + energy * 0.6 + SY.drop * 0.5;
@@ -190,6 +219,23 @@ const makeViz = (opts = {}) => {
       } catch (e) { hideDirect(); blankCv = false; cv.style.visibility = ''; console.warn('viz gpu', S.id, e); S.glFail = true; S.draw(g); } }
       else { hideDirect(); if(S.id==='coverfield')ctx.filter=`hue-rotate(${HUE*360}deg)`; S.draw(g); }
     } catch (e) { console.error('viz', S.id, e); } finally { ctx.restore(); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    if (groupedGlow) {
+      ctx = outputContext;
+      ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+      if (S.id === 'fire' || S.id === 'rays') ctx.globalCompositeOperation = 'lighter';
+      // Bloom is a low-frequency image, not the sharp geometry. Keep the latter
+      // at the selected DPR; only sample the blur mask at half resolution.
+      if (!bloomCanvas) { bloomCanvas=document.createElement('canvas'); bloomContext=bloomCanvas.getContext('2d'); }
+      const bw=Math.max(1,Math.ceil(cv.width/2)),bh=Math.max(1,Math.ceil(cv.height/2));
+      if(bloomCanvas.width!==bw)bloomCanvas.width=bw;
+      if(bloomCanvas.height!==bh)bloomCanvas.height=bh;
+      const bx=bloomContext; bx.clearRect(0,0,bw,bh);
+      bx.shadowColor=mix(0.15,0.65);bx.shadowBlur=GLOW*8*bw/cv.width;
+      // Draw only the shadow into this mask (the sharp source is out of bounds).
+      bx.shadowOffsetX=bw*2;bx.drawImage(glowCanvas,-bw*2,0,bw,bh);bx.shadowOffsetX=0;bx.shadowBlur=0;
+      ctx.drawImage(bloomCanvas,0,0,cv.width,cv.height);
+      ctx.drawImage(glowCanvas,0,0); ctx.restore();
+    }
     const mir = FX.mirror || 'off';
     if (mir !== 'off') {
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const w2 = cv.width / 2, h2 = cv.height / 2;
@@ -210,7 +256,8 @@ const makeViz = (opts = {}) => {
   function coverBars(g) {
     const n = Math.max(12,Math.round(48*DENS)), gap = 3, bw = Math.max(2, (W * 0.8) / (n * 2) - gap), x0 = W / 2, base = H - 4, mh = H * 0.13;
     for (let i = 0; i < n; i++) {
-      const h = 3 + Math.pow(bands[i], 1.25) * mh;
+      const index=n>NB?Math.min(NB-1,Math.floor(i/n*NB)):i;
+      const h = 3 + Math.pow(bands[index], 1.25) * mh;
       ctx.fillStyle = mix(i / n, 0.22);
       for (const s of [-1, 1]) { const x = x0 + s * (i * (bw + gap) + gap / 2) - (s < 0 ? bw : 0); rr(x, base - h, bw, h, bw / 2); ctx.fill(); }
     }
@@ -297,7 +344,7 @@ const makeViz = (opts = {}) => {
       ctx.beginPath(); const pts = Math.max(30,Math.round(120*DENS));
       for (let i = 0; i <= pts; i++) {
         const x = (i / pts) * W; let y;
-        if (g.wave) { const k = Math.floor((i / pts) * (g.wave.length - 1 - L * 8)) + L * 8; y = ((g.wave[k] - 128) / 128) * amp * (1.6 - L * 0.3); }
+        if (g.wave) { const offset=Math.min(L*8,g.wave.length-1),k = Math.floor((i / pts) * (g.wave.length - 1 - offset)) + offset; y = ((g.wave[k] - 128) / 128) * amp * (1.6 - L * 0.3); }
         else y = Math.sin(i * 0.16 + ph * (1 + L * 0.5) + L) * amp * 0.4 * (g.bass + 0.15) + Math.sin(i * 0.05 - ph) * amp * 0.25 * bands[8 + L * 6];
         y = cy + y * Math.sin((i / pts) * Math.PI) * (1 + g.beat * 0.3); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       }
@@ -477,7 +524,23 @@ const makeViz = (opts = {}) => {
     const sp = (0.4 + g.level * 2 + g.beat * 3) * g.speed;
     for (const p of st.p) { p.x += p.vx * g.dt * sp; p.y += p.vy * g.dt * sp; if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1; p.x = Math.max(0, Math.min(W, p.x)); p.y = Math.max(0, Math.min(H, p.y)); }
     const D = Math.min(W, H) * 0.16 * (1 + g.bass * 0.6); ctx.lineWidth = 1 * g.lw;
-    for (let i = 0; i < st.p.length; i++) { const a = st.p[i]; for (let j = i + 1; j < st.p.length; j++) { const b = st.p[j], dx = a.x - b.x, dy = a.y - b.y, d = dx * dx + dy * dy; if (d < D * D) { ctx.strokeStyle = g.mix(a.b, (1 - Math.sqrt(d) / D) * 0.6); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } } }
+    // Uniform grid, rebuilt after movement and bass-dependent radius changes.
+    // Exact distance/opacity and original pair order are retained; no links are capped.
+    const cols = Math.max(1,Math.floor(W/D)+1), rows = Math.max(1,Math.floor(H/D)+1);
+    if (!st.heads || st.heads.length < cols*rows) st.heads = new Int32Array(Math.max(cols*rows,st.heads?st.heads.length*2:0));
+    if (!st.next || st.next.length !== n) st.next = new Int32Array(n);
+    st.heads.fill(-1,0,cols*rows);
+    for (let i=0;i<n;i++) { const p=st.p[i],cell=Math.floor(p.y/D)*cols+Math.floor(p.x/D); st.next[i]=st.heads[cell]; st.heads[cell]=i; }
+    const near = st.near || (st.near=[]); st.pairTests=0; st.links=0;
+    for (let i=0;i<n;i++) {
+      const a=st.p[i],cx=Math.floor(a.x/D),cy=Math.floor(a.y/D); near.length=0;
+      for(let y=Math.max(0,cy-1);y<=Math.min(rows-1,cy+1);y++) for(let x=Math.max(0,cx-1);x<=Math.min(cols-1,cx+1);x++)
+        for(let j=st.heads[y*cols+x];j!==-1;j=st.next[j]) if(j>i)near.push(j);
+      near.sort((a,b)=>a-b);
+      for(const j of near) { st.pairTests++; const b=st.p[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;
+        if(d<D*D) { st.links++; ctx.strokeStyle=g.mix(a.b,(1-Math.sqrt(d)/D)*0.6);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke(); }
+      }
+    }
     for (const p of st.p) { const v = g.band(p.b); ctx.fillStyle = g.mix(p.b, 0.9); ctx.beginPath(); ctx.arc(p.x, p.y, (1.5 + v * 5 + g.beat * 2) * g.lw, 0, TAU); ctx.fill(); }
   } });
   B.push({ id: 'vinyl', name: 'Пластинка', icon: 'v-ring', cover: 'show', draw(g) {

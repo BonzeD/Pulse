@@ -7,7 +7,7 @@ window.PulseImmersion = (() => {
   let contextLost = false, error = null, quality = 'auto', world = 2, reduced = false;
   const director = C.create();
   const active = () => !!stage?.isConnected && stage.dataset.vis === 'immersion';
-  const hidden = () => document.hidden || !!window.pulseWinHidden;
+  const hidden = () => document.hidden || !!window.pulseWinHidden || !!window.PulsePrism?.active();
   const motion = () => matchMedia('(prefers-reduced-motion: reduce)').matches || S().look.anim === false;
   const stop = () => { cancelAnimationFrame(raf); raf = 0; last = 0; };
   function showError(message) {
@@ -102,6 +102,7 @@ window.PulseImmersion = (() => {
   }
   const close = () => { if (active()) lyStageOpen(false); };
   document.addEventListener('visibilitychange', () => { if (hidden()) stop(); else start(); });
+  window.addEventListener('pulse-prism-visibility', () => { if (hidden()) stop(); else start(); });
   // Electron can hide/minimize without changing document.visibilityState.
   setInterval(() => { if (hidden()) stop(); else if (active() && !raf) start(); }, 600);
   return {open, close, attach, detach, configure, setGpu, active, stats:() => ({active:active(), world, quality, eco, reduced, contextLost, draws:frames, travel, ambient, raf:!!raf, renderer:scene?.stats?.() || null})};

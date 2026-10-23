@@ -9,9 +9,9 @@ function openFix(tab) {
   if (!document.body.classList.contains('pp-open')) openPP();
   if (lib.tab !== 'lyrics') setTab('lyrics');
   if (typeof closeLyPop === 'function') closeLyPop(); hideMenu();
-  fixOpen = true; if (tab) fix.tab = tab; $('lyFix').classList.add('on'); $('lyFixBtn').classList.add('on'); $('lyFixBtn').setAttribute('aria-expanded', 'true'); renderFix(); $('lyFix').querySelector('[data-fx="close"]')?.focus();
+  fixOpen = true; if (tab) fix.tab = tab; PulseMotion.panel($('lyFix'),true); $('lyFixBtn').classList.add('on'); $('lyFixBtn').setAttribute('aria-expanded', 'true'); renderFix(); $('lyFix').querySelector('[data-fx="close"]')?.focus({preventScroll:true});
 }
-function closeFix() { ++fixSearchRevision; fix.busy = false; if (fix.tap) fix.tap = null; fixOpen = false; $('lyFix').classList.remove('on'); $('lyFixBtn').classList.remove('on'); $('lyFixBtn').setAttribute('aria-expanded', 'false'); $('lyFixBtn').focus(); }
+function closeFix() { ++fixSearchRevision; fix.busy = false; if ($('fxText')&&curTrack()) fixDrafts.set(curTrack().id,$('fxText').value); if (fix.tap) fix.tap = null; fixOpen = false; PulseMotion.panel($('lyFix'),false); $('lyFixBtn').classList.remove('on'); $('lyFixBtn').setAttribute('aria-expanded', 'false'); $('lyFixBtn').focus({preventScroll:true}); }
 // текущий текст в виде LRC (что видно на экране, с учётом сдвига и темпа)
 function currentLRC(applyTiming) {
   const k = applyTiming ? stretchK() : 1, o = applyTiming ? offset() : 0;
@@ -154,7 +154,7 @@ $('lyFix').addEventListener('click', (e) => {
   const [a, v] = el.dataset.fx.split(':'), t = curTrack(); if (!t) return;
   const L = lib.lyrics[t.id] || (lib.lyrics[t.id] = {});
   if (a === 'close') return closeFix();
-  if (a === 'tab') { if ($('fxText')) fixDrafts.set(t.id, $('fxText').value); fix.tab = v; if (v === 'find') fix.res = null; return renderFix(); }
+  if (a === 'tab') { if(fix.tab===v)return; if ($('fxText')) fixDrafts.set(t.id, $('fxText').value); fix.tab = v; if (v === 'find') fix.res = null; renderFix(); PulseMotion.enter($('lyFix').querySelector('.fx-body'),true); $('lyFix').querySelector(`[data-fx="tab:${v}"]`)?.focus({preventScroll:true}); return; }
   if (a === 'off') { shiftOffset(+v); return renderFix(); }
   if (a === 'off0') { delete lib.offsets[t.id]; delete L.autoOff; updateOffset(); save(); lyReRefine(); lyState.cur = -2; sendState(); return renderFix(); }
   if (a === 'nowline') { const i = Math.min((lyState.lines || []).length - 1, lyState.cur + 1); let j = i; while (lyState.lines && lyState.lines[j] && lyState.lines[j].gap) j++; if (j >= 0) tapSync(j); return renderFix(); }

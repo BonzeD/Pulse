@@ -12,7 +12,7 @@ const PX = (() => {
 const fix = { tap: null, tab: 'time', q: null, res: null, busy: false }; let fixOpen = false;
 const plug = { list: [], ok: {}, err: {} };
 window.Pulse = {
-  version: '1.0.1',
+  version: '1.0.2',
   on: PX.on,
   registerVisual: (v) => Viz.register(Object.assign(v, { plugin: true })),
   get visuals() { return Viz.STYLES.map((v) => ({ id: v.id, name: v.name })); },

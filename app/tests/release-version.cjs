@@ -1,19 +1,19 @@
 // 1.0.1: own application versions must agree; dependency/client versions are unrelated.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),path=require('path');
 const root=path.resolve(__dirname,'..');
-test('Pulse package, lockfile, plugin API, Mineradio host and installer defaults are 1.0.1',()=>{
+test('Pulse package, lockfile, plugin API, Mineradio host and installer defaults are 1.0.2',()=>{
  const read=f=>fs.readFileSync(path.join(root,f),'utf8');const pkg=JSON.parse(read('package.json')),lock=JSON.parse(read('package-lock.json'));
- assert.equal(pkg.version,'1.0.1');assert.equal(lock.version,pkg.version);assert.equal(lock.packages[''].version,pkg.version);
- for(const file of ['renderer/api.js','renderer/mineradio-host.js'])assert.match(read(file),/version: '1\.0\.1'/);
- assert.match(read('build/installer.nsi'),/!define VERSION "1\.0\.1"/);
+ assert.equal(pkg.version,'1.0.2');assert.equal(lock.version,pkg.version);assert.equal(lock.packages[''].version,pkg.version);
+ for(const file of ['renderer/api.js','renderer/mineradio-host.js'])assert.match(read(file),/version: '1\.0\.2'/);
+ assert.match(read('build/installer.nsi'),/!define VERSION "1\.0\.2"/);
  assert.match(read('build/make-setup.sh'),/require\('..\/package.json'\).version/);
  assert.equal(pkg.devDependencies.electron,'44.8.0');assert.equal(pkg.devDependencies.resedit,'^2.0.3');
 });
 // Generated artwork is gitignored and does not exist in a clean GitHub checkout.
 // Validate it after a build; source/version checks above always run.
-test('generated installer artwork matches 1.0.1 at every DPI', {skip: !fs.existsSync(path.join(root,'build/installer-ui/out/.version'))}, ()=>{
+test('generated installer artwork matches 1.0.2 at every DPI', {skip: !fs.existsSync(path.join(root,'build/installer-ui/out/.version'))}, ()=>{
  const read=f=>fs.readFileSync(path.join(root,f),'utf8');
- assert.equal(read('build/installer-ui/out/.version').trim(),'1.0.1');
+ assert.equal(read('build/installer-ui/out/.version').trim(),'1.0.2');
  for(const scale of [100,125,150,175,200]){const b=fs.readFileSync(path.join(root,'build/installer-ui/out',String(scale),'wel_bg.bmp'));assert.equal(b.toString('ascii',0,2),'BM');assert.equal(b.readInt32LE(18),680*scale/100);assert.equal(b.readInt32LE(22),440*scale/100);}
 });
 test('all first-party JavaScript files parse after version-label replacement',()=>{

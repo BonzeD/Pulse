@@ -1,0 +1,36 @@
+/* Four services, existing Pulse icons; no invented Audius brand mark. */
+.cl-sw{grid-template-columns:repeat(4,1fr)}
+.cl-ind{width:calc((100% - 20px)/4)}
+.cl-sw[data-c=ad]{--clc:#a35fff}
+
+.mini .cl-sw{grid-template-columns:1fr}.mini .cl-ind{width:calc(100% - 6px)}
+.ad-source{position:absolute;right:16px;top:-38px;display:inline-flex;align-items:center;gap:5px;min-height:32px;max-width:150px;padding:4px 8px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;flex-shrink:0}
+.ad-source[hidden]{display:none}.ad-source .i{width:15px;height:15px}
+.ad-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.ad-actions .btn{min-height:44px}
+#adSearch{display:flex;gap:8px}#adQuery{flex:1;min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text)}
+#adResults{max-height:330px;overflow:auto;margin-top:14px}.ad-candidate{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:5px;width:100%;min-height:60px;padding:12px;border-bottom:1px solid var(--line);background:transparent;color:inherit}.ad-candidate:hover{background:rgba(163,95,255,.12)}.ad-candidate span{font-size:12px;opacity:.7}
+@media(max-width:600px){.ad-source{max-width:100px;font-size:10px}.ad-source span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ad-actions{display:grid;grid-template-columns:1fr}.ad-actions .btn{justify-content:center}}
+
+body[data-client=ad] .nv-wave{display:none}
+.ad-source{min-height:36px;min-width:44px;color:#d4d1d8}
+.ad-source:focus-visible{outline:2px solid #d895ff;outline-offset:3px}
+/* Compact Audius navigation is purely responsive; lib.mini is never overwritten. */
+@media(max-width:600px){
+ body[data-client=ad]{--side:72px}
+ body[data-client=ad] .side{width:64px;padding:8px 4px}
+ body[data-client=ad] .cl-sw{grid-template-columns:1fr;margin:0 0 8px;padding:3px}
+ body[data-client=ad] .cl-sw button{height:36px}
+ body[data-client=ad] .cl-ind{top:3px;left:3px;width:calc(100% - 6px);height:36px;transform:translateY(calc(var(--i) * (100% + 4px)))}
+ body[data-client=ad] .side .nv{height:44px;min-height:44px;padding:0;justify-content:center;gap:0}
+ body[data-client=ad] .side .nv span,body[data-client=ad] .new-pl span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ body[data-client=ad] .side .nv em,body[data-client=ad] .side-sep,body[data-client=ad] .side-list{display:none}
+ body[data-client=ad] .new-pl{min-height:44px;margin:8px 0 0;padding:0}
+ body[data-client=ad] .top .top-l{width:44px;min-width:44px;margin-right:0;gap:0}
+ body[data-client=ad] .top .brand,body[data-client=ad] #btnFwd,body[data-client=ad] .ds-kbd{display:none}
+ body[data-client=ad] .top .top-c{padding:0;gap:0}
+ body[data-client=ad] .search{margin-left:0;padding-left:10px;gap:6px;min-width:0}
+ body[data-client=ad] #gqClear{width:28px;min-width:28px}
+ body[data-client=ad] .page{padding-left:16px;padding-right:16px}
+ body[data-client=ad] .pg-title{font-size:30px;overflow-wrap:anywhere}
+ body[data-client=ad] .cl-hint{font-size:12px;gap:8px;padding:12px}
+}

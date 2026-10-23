@@ -1,0 +1,30 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+function harness(){
+ const nodes=new Map(),events={},handlers={},timers=new Map(),calls=[],requests=[];let clock=0;
+ const node=id=>{if(!nodes.has(id))nodes.set(id,{style:{},addEventListener(){},setAttribute(){},append(){},innerHTML:''});return nodes.get(id);};
+ const audio={src:'',getAttribute(){return this.src;},removeAttribute(){this.src='';},load(){},pause(){calls.push('pauseAudio');},addEventListener(){},removeEventListener(){}};
+ const lib={audiusSources:{},lyrics:{},offsets:{},stretch:{},queue:{tracks:[],idx:0},settings:{app:{audioSource:'prefer'}}};
+ const c={console,lib,audio,loadTok:0,engine:'audio',audioTrackId:null,off:{},ready:false,fixOpen:false,lyTok:0,lyState:{},fixDrafts:new Map(),playing:false,
+  E:{load:(...args)=>{calls.push(['baseLoad',...args]);c.loadTok++;return true;},play:()=>calls.push('play'),pause:()=>calls.push('pause'),time:()=>22},
+  $:node,S:()=>lib.settings,curTrack:()=>lib.queue.tracks[lib.queue.idx],online:()=>true,slim:t=>({...t}),ico:()=>'',translateUiText:s=>s,
+  setLoading(){},updateMode(){},onA:(n,fn)=>events[n]=fn,toast:s=>calls.push(['toast',s]),
+  pulse:{audius:{cancel:k=>{calls.push(['cancel',k]);return Promise.resolve();},select:(...args)=>new Promise((resolve,reject)=>requests.push({args,resolve,reject}))}},
+  localStorage:{getItem:()=>null},window:{},setTimeout:fn=>{const id=++clock;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
+  healTrack(){},needsHeal:()=>false,healing:new Set(),remember(){},healed(){},clientTab:()=>({rows:[]}),clChanged(){},PAGES:{home:{load(){}},explore:{load(){}}},updateDlCur(){},renderAccBtn(){},openFix:()=>calls.push('openFix'),
+  PX:{on:(n,fn)=>handlers[n]=fn},lyEmpty:()=>'',lySrc(){},sendLyrics(){},document:{addEventListener(){},createElement:()=>node('created')},};
+ vm.createContext(c);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../renderer/audius.js'),'utf8'),c);
+ const t={id:'abcdefghijk',title:'Song',author:'Artist',dur:180};lib.queue.tracks=[t];
+ return {c,t,lib,audio,calls,requests,timers,events,handlers,tick:async()=>{await Promise.resolve();await Promise.resolve();}};
+}
+const candidate={id:'ad:abc123',title:'Song',author:'Artist',confirmed:true};
+test('Audius startup failure falls back once with original ID, play intent and position',async()=>{const h=harness();h.c.E.load(h.t,true,22);h.requests[0].reject(Error('stream unavailable'));await h.tick();const a=h.calls.filter(x=>x[0]==='baseLoad');assert.equal(a.length,1);assert.equal(a[0][1].id,h.t.id);assert.equal(a[0][2],true);assert.equal(a[0][3],22);});
+test('pending pause is respected when alternate source fails',async()=>{const h=harness();h.c.E.load(h.t,true,22);h.c.E.pause();h.requests[0].resolve(null);await h.tick();assert.equal(h.calls.find(x=>x[0]==='baseLoad')[2],false);});
+test('rapid switching ignores stale candidate and cancels old request',async()=>{const h=harness();h.c.E.load(h.t,true);const newer={...h.t,id:'qwertyuiopa'};h.lib.queue.tracks=[newer];h.c.E.load(newer,true);h.requests[0].resolve(candidate);await h.tick();assert.equal(h.audio.src,'');h.requests[1].resolve({...candidate,id:'ad:newtrack'});await h.tick();assert.equal(h.audio.src,'/audius/audio/newtrack');assert.ok(h.calls.some(x=>x[0]==='cancel'&&x[1]==='play-1'));});
+test('startup timeout resumes old path but playing Audius never auto-switches mid-track',async()=>{const h=harness();h.c.E.load(h.t,true);[...h.timers.values()][0]();assert.equal(h.calls.filter(x=>x[0]==='baseLoad').length,1);const j=harness();j.c.E.load(j.t,true);j.requests[0].resolve(candidate);await j.tick();j.events.playing();assert.equal(j.timers.size,0);assert.equal(j.c.window.PulseAudius.recover(),false);assert.equal(j.calls.filter(x=>x[0]==='baseLoad').length,0);});
+test('native unavailable Audius does not silently become YouTube',async()=>{const h=harness();h.t.id='ad:abc123';h.c.E.load(h.t,true);h.requests[0].reject(Error('unavailable'));await h.tick();assert.equal(h.calls.filter(x=>x[0]==='baseLoad').length,0);assert.equal(h.audio.src,'');});
+test('custom timing, offsets, stretch and drafts veto alternate source without deleting data',()=>{for(const kind of ['user','offset','stretch','draft']){const h=harness();if(kind==='user')h.lib.lyrics[h.t.id]={user:true,raw:'[00:01]My words'};if(kind==='offset')h.lib.offsets[h.t.id]=0;if(kind==='stretch')h.lib.stretch[h.t.id]=1;if(kind==='draft')h.c.fixDrafts.set(h.t.id,'draft');const before=JSON.stringify(h.lib);h.c.E.load(h.t,true);assert.equal(h.requests.length,0);assert.equal(JSON.stringify(h.lib),before);assert.equal(h.calls.filter(x=>x[0]==='baseLoad').length,1);}});
+test('timing saved while request is pending cancels use of alternate recording',async()=>{const h=harness();h.c.E.load(h.t,true);h.lib.lyrics[h.t.id]={user:true};h.requests[0].resolve(candidate);await h.tick();assert.equal(h.audio.src,'');assert.equal(h.calls.filter(x=>x[0]==='baseLoad').length,1);});
+test('queue, favourite IDs, timings remain unchanged by successful alternate playback',async()=>{const h=harness();h.lib.likes={[h.t.id]:true};const before=JSON.stringify(h.lib);h.c.E.load(h.t,true);h.requests[0].resolve(candidate);await h.tick();assert.equal(JSON.stringify(h.lib),before);assert.equal(h.c.audioTrackId,h.t.id);assert.equal(h.c.window.PulseAudius.actual().id,'ad:abc123');});
+test('Current source stays the default and saved source can be reset without changing track ID',()=>{const h=harness();delete h.lib.settings.app.audioSource;h.c.E.load(h.t,true);assert.equal(h.requests.length,0);assert.equal(h.calls.find(x=>x[0]==='baseLoad')[1].id,h.t.id);});
+test('unavailable startup stream recovers to old path with same queue identity',async()=>{const h=harness();h.c.E.load(h.t,true,22);h.requests[0].resolve(candidate);await h.tick();assert.equal(h.c.window.PulseAudius.recover(),true);assert.equal(h.calls.filter(x=>x[0]==='baseLoad').length,1);assert.equal(h.lib.queue.tracks[0].id,h.t.id);});

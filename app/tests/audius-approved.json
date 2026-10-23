@@ -1,0 +1,268 @@
+{
+  "main.js": {
+    "sha256": "d513eb37d0e74681d7b26883b88c0729eb4d3caff02648fbbab591134f04444d",
+    "originalSha256": "3cfa1f54acc470da7139e9f4a1e56529ed245ce9382c240f62f79350a548a5a8",
+    "patches": [
+      {
+        "from": 29,
+        "to": 32,
+        "original": [
+          "const svc = require('./services'); // 2.0.2: Apple Music и Spotify как клиенты\n"
+        ]
+      },
+      {
+        "from": 134,
+        "to": 135,
+        "original": []
+      },
+      {
+        "from": 139,
+        "to": 140,
+        "original": []
+      },
+      {
+        "from": 398,
+        "to": 399,
+        "original": [
+          "function saveLibrary(lib) { if (resetting || !lib || typeof lib !== 'object' || Array.isArray(lib)) return false; const s = readStore(); s.library = lib; safety.atomicJSON(storeFile(), s, true); return true; }\n"
+        ]
+      },
+      {
+        "from": 440,
+        "to": 441,
+        "original": []
+      },
+      {
+        "from": 446,
+        "to": 448,
+        "original": [
+          "ipcHandle('yt:prefetch', async (_e, id) => { try { return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id); } catch { return null; } });\n",
+          "ipcHandle('yt:resolve', async (_e, id) => { try { const v = svc.isSvc(id) ? await svc.ytFor(id) : id; await off.resolveStream(v); return { ok: true, vid: v }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });\n"
+        ]
+      },
+      {
+        "from": 467,
+        "to": 468,
+        "original": [
+          "  const fromSvc = () => svc.lyricsFor(q, mode === 'spicy' ? 'auto' : mode, { bgVox: !(q && q.bgVox === false) }).catch((e) => { console.error(e); return null; });\n"
+        ]
+      },
+      {
+        "from": 492,
+        "to": 501,
+        "original": [
+          "ipcHandle('ytm:feed', safe((_e, id, params) => (client !== 'yt' ? svc.feed(client, id, params) : ytm.feed(id, params))));\n",
+          "ipcHandle('ytm:browse', safe((_e, id, params) => (svc.isSvc(id) ? svc.browse(id) : ytm.browse(id, params))));\n",
+          "ipcHandle('ytm:search', safe((_e, q, f) => (client !== 'yt' ? svc.search(client, q, f) : ytm.search(q, f))));\n",
+          "ipcHandle('ytm:suggest', safe((_e, q) => (client !== 'yt' ? svc.suggest(client, q) : ytm.suggest(q))));\n",
+          "ipcHandle('ytm:next', safe((_e, v, list) => (svc.isSvc(v) || svc.isSvc(list) ? svc.next(v, list) : ytm.next(v, list))));\n",
+          "ipcHandle('ytm:related', safe((_e, id) => (svc.isSvc(id) ? svc.related(id) : ytm.related(id))));\n",
+          "ipcHandle('ytm:lyrics', safe((_e, id) => ytm.ytLyrics(id)));\n",
+          "ipcHandle('ytm:like', safe((_e, id, on) => (svc.isSvc(id) ? svc.like(id, on) : ytm.like(id, on))));\n",
+          "ipcHandle('ytm:dislike', safe((_e, id, on) => (svc.isSvc(id) ? svc.dislike(id, on) : ytm.dislike(id, on)))); // 2.0.4: «Не нравится»\n"
+        ]
+      },
+      {
+        "from": 502,
+        "to": 503,
+        "original": [
+          "ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); if (o && 'language' in o) catalogLocale.set(o.language); return client; });\n"
+        ]
+      },
+      {
+        "from": 508,
+        "to": 509,
+        "original": [
+          "ipcHandle('svc:link', (_e, id) => svc.link(id));\n"
+        ]
+      },
+      {
+        "from": 516,
+        "to": 520,
+        "original": []
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "bd160edd7da5ba3fe8d6e5f5adaf96be3ec38df2520ef6974e8609ad4201534c",
+    "originalSha256": "cd4f6ed934f2f635a3104bac2936e5748a9cb6d66b892ea9098997e95bbbae1c",
+    "patches": [
+      {
+        "from": 4,
+        "to": 5,
+        "original": [
+          "  \"description\": \"Pulse — неоновый плеер-клиент для YouTube Music, Apple Music и Spotify\",\n"
+        ]
+      },
+      {
+        "from": 11,
+        "to": 14,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs\",\n"
+        ]
+      },
+      {
+        "from": 72,
+        "to": 74,
+        "original": [
+          "      \"apple-profile.js\"\n"
+        ]
+      }
+    ]
+  },
+  "preload.js": {
+    "sha256": "9008fed2a6114ea7627fa6acd019ceed9c494ec3b4a054a3548c89f27ce4c6f7",
+    "originalSha256": "dbf2eaab342353ae5132fe9fc9bf1646e9cad74cbeb55d7049c50f0b1d23d06e",
+    "patches": [
+      {
+        "from": 24,
+        "to": 25,
+        "original": []
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "a68ef03d71f1a033411417c57e33194f8b1d54aceca5fbf49353671321180535",
+    "originalSha256": "25b5db76bf2c024b001f17f38feca942caad849c9c48e65170f414cdf435467a",
+    "patches": [
+      {
+        "from": 64,
+        "to": 65,
+        "original": [
+          "const slim = (t) => ({ id: t.id, title: t.title, author: t.author, dur: t.dur || 0, art: t.art || null, album: t.album || null, artistId: t.artistId || null, video: !!t.video, loaded: true });\n"
+        ]
+      },
+      {
+        "from": 85,
+        "to": 87,
+        "original": [
+          "const CL = () => (S().app && ['am', 'sp'].includes(S().app.client) ? S().app.client : 'yt');\n",
+          "const isSvcId = (id) => /^(am|sp):/.test(String(id || ''));\n"
+        ]
+      },
+      {
+        "from": 148,
+        "to": 149,
+        "original": []
+      },
+      {
+        "from": 495,
+        "to": 496,
+        "original": []
+      },
+      {
+        "from": 536,
+        "to": 537,
+        "original": [
+          "  tracks = tracks.filter((t) => t && (!off[t.id] || video) && !(dl[t.id] && /queued|downloading/.test(dl[t.id].status)));\n"
+        ]
+      },
+      {
+        "from": 559,
+        "to": 560,
+        "original": [
+          "function dlBtn(id) { const d = dlInner(id); return `<button class=\"ib ${d.c}\" data-dl=\"${esc(id)}\" title=\"${d.t}\">${d.h}</button>`; }\n"
+        ]
+      },
+      {
+        "from": 563,
+        "to": 564,
+        "original": []
+      },
+      {
+        "from": 761,
+        "to": 762,
+        "original": [
+          "      const F = [['', 'Все'], ['songs', 'Треки'], ['videos', 'Видео'], ['albums', 'Альбомы'], ['artists', 'Исполнители'], ['playlists', 'Плейлисты']].filter(([f]) => !(f === 'videos' && CL() !== 'yt')); // 2.0.2: у Apple Music / Spotify нет видео\n"
+        ]
+      },
+      {
+        "from": 1076,
+        "to": 1077,
+        "original": []
+      },
+      {
+        "from": 1439,
+        "to": 1440,
+        "original": []
+      },
+      {
+        "from": 2229,
+        "to": 2230,
+        "original": [
+          "  client: 'YouTube Music, Apple Music или Spotify — чей каталог и медиатеку открывать в Pulse',\n"
+        ]
+      }
+    ]
+  },
+  "renderer/clients.js": {
+    "sha256": "805759e13f481ecddb1472105ab5b795ed36ffb8dd6ffd95177d057516bd6148",
+    "originalSha256": "386a17a504fc84d6bb8fb86bc403bcc0a50164bc247f24f54948d51861027d93",
+    "patches": [
+      {
+        "from": 5,
+        "to": 8,
+        "original": [
+          "const CL_NAME = { yt: 'YouTube Music', am: 'Apple Music', sp: 'Spotify' };\n",
+          "const CL_ICO = { yt: 'ytm', am: 'apple', sp: 'spotify' };\n",
+          "const svcSt = { am: { user: false }, sp: { user: false } }; // вход в Apple Music / Spotify (узнаём у главного процесса)\n"
+        ]
+      },
+      {
+        "from": 22,
+        "to": 23,
+        "original": []
+      },
+      {
+        "from": 30,
+        "to": 31,
+        "original": [
+          "const CL_KEYS = ['yt', 'am', 'sp'];\n"
+        ]
+      },
+      {
+        "from": 54,
+        "to": 55,
+        "original": [
+          "  c = ['am', 'sp'].includes(c) ? c : 'yt';\n"
+        ]
+      },
+      {
+        "from": 93,
+        "to": 94,
+        "original": []
+      },
+      {
+        "from": 99,
+        "to": 100,
+        "original": []
+      },
+      {
+        "from": 106,
+        "to": 107,
+        "original": []
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "5bd3baa5fa6f244564b74b37f0a77638621427cf7773fde52e23a66512d4264d",
+    "originalSha256": "c2362189519bbb50f0f135e6c8213ceeb2c5bd9c330bec78ac81e448b51c75d9",
+    "patches": [
+      {
+        "from": 8,
+        "to": 9,
+        "original": []
+      },
+      {
+        "from": 20,
+        "to": 21,
+        "original": []
+      },
+      {
+        "from": 367,
+        "to": 368,
+        "original": []
+      }
+    ]
+  }
+}

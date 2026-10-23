@@ -21,3 +21,7 @@ body.lystudio-open .top,body.lystudio-open .top *,body.lystudio-open .lystudio,b
 /* The final card is reading text, not the dim inactive karaoke foreground. */
 #lyrics .ly-line.ly-credits{font-size:18px;font-weight:400;letter-spacing:normal}
 body.spicy-ly #lyrics .ly-line.ly-credits.cur{color:rgba(255,255,255,.9)}
+
+/* Credits must remain readable without the Spicy presentation as well. */
+#lyrics .ly-line.ly-credits.cur{color:rgba(255,255,255,.9);opacity:1}
+.lys-blk.lys-credits{text-transform:none}

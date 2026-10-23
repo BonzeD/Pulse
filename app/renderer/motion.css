@@ -122,3 +122,20 @@ body [data-motion-leaving]{animation:none!important;pointer-events:none!importan
 body:not(.no-anim) #czDock{animation:spFade2 240ms var(--motion-out) backwards}
 /* Settings navigation stays in place; the content transition is owned by settings-motion.js. */
 body:not(.no-anim) .set-side nav [data-stab]{transition:background-color 180ms ease,color 180ms ease,border-color 180ms ease}
+
+/* 1.0.2: retained player panels; only opacity/transform, never blur or height.
+   Discrete display keeps exit pixels alive without a duplicate DOM or frame loop. */
+body:not(.no-anim) :is(.ly-fix,.pop-panel){
+  opacity:0;transform:translateY(10px) scale(.99);pointer-events:none;animation:none;
+  transition:opacity 180ms ease,transform 240ms var(--motion-out),display 240ms allow-discrete;
+  transform-origin:bottom center;
+}
+body:not(.no-anim) :is(.ly-fix,.pop-panel).on{
+  opacity:1;transform:none;pointer-events:auto;animation:none;
+}
+@starting-style{
+  body:not(.no-anim) :is(.ly-fix,.pop-panel).on{opacity:0;transform:translateY(10px) scale(.99)}
+}
+body :is(.ly-fix,.pop-panel)[inert]{pointer-events:none}
+/* Narrow sidecar: a desktop-saved 260px width must not squeeze four corrector tabs. */
+@media(max-width:480px){body.ui-clean.clean-panel-only #pp{width:calc(100vw - 32px)}}

@@ -46,7 +46,7 @@ html,body{width:680px;height:440px;overflow:hidden;background:#0e0d12;font-famil
 .tip b{color:#ff8a9b;font-weight:700}
 </style></head><body><div id="root"></div>
 <script>
-const P=new URLSearchParams(location.search), page=P.get('p'), V=P.get('v')||'1.0.1', SIZE=P.get('size')||'420';
+const P=new URLSearchParams(location.search), page=P.get('p'), V=P.get('v')||'1.0.2', SIZE=P.get('size')||'420';
 const st=JSON.parse(P.get('st')||'{}'); // {id:'h'|'on'|'off'|'p'|'k1..k3'...}
 // 1.0.0: wf — кадр эквалайзера (0..11), wx=1 — «громкий» (курсор над шапкой), lf — кадр блика на логотипе (0 = нет), bd — масштаб значка «готово»
 const WF=+(P.get('wf')||-1), WX=+(P.get('wx')||0), LF=+(P.get('lf')||0), BD=P.has('bd')?+P.get('bd'):1;

@@ -279,6 +279,7 @@ function lysWaterFrame(Y, bass, now) {
   set('lysWbDisp', 'scale', ((glitch ? 34 : 24) * strength).toFixed(1));
 }
 function lysLoop(now) {
+  if (window.PulsePrism?.active()) { lys.raf = 0; return; }
   if (!lys.on) return; lys.raf = requestAnimationFrame(lysLoop);
   if (window.PulseImmersion?.active()) return;
   lysBgMark();

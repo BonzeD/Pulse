@@ -1,0 +1,78 @@
+{
+  "renderer/app.js": {
+    "sha256": "f4a587ea6679df017949097adf366747a4952b9d0b9a3c8b70e346312cf175f8",
+    "originalSha256": "a68ef03d71f1a033411417c57e33194f8b1d54aceca5fbf49353671321180535",
+    "patches": [
+      {
+        "from": 1595,
+        "to": 1596,
+        "original": []
+      },
+      {
+        "from": 1633,
+        "to": 1639,
+        "original": []
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "4be212673f72ead963cd5027376273168c8f91440d2df8299af99635d5a6e062",
+    "originalSha256": "5bd3baa5fa6f244564b74b37f0a77638621427cf7773fde52e23a66512d4264d",
+    "patches": [
+      {
+        "from": 368,
+        "to": 370,
+        "original": []
+      }
+    ]
+  },
+  "renderer/lystage.js": {
+    "sha256": "125dadd842781c915eb2897f9c75549e8a73973fdc718d32da3ca927aa715233",
+    "originalSha256": "1f4276cdbb8a5522f93ad965a9a7e01dfcf144f933c56f6bcf5aeca9954305e6",
+    "patches": [
+      {
+        "from": 281,
+        "to": 282,
+        "original": []
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "3556457a00eeacc917c2146b676be06dddb221e702974b272a098e4f5df7cd68",
+    "originalSha256": "a215aca1a2569d8f29de49840c5cdbaf05b2ccdd82efb5e22c2e101b811ea9a7",
+    "patches": [
+      {
+        "from": 10,
+        "to": 11,
+        "original": [
+          "  const want = () => !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит\n"
+        ]
+      },
+      {
+        "from": 105,
+        "to": 106,
+        "original": [
+          "    if (!w && !window.pulseWinHidden && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, 60000);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/immersion.js": {
+    "sha256": "0228da5dbc574465e73e79b129ed424619c1592d12f47b24ec43978445775082",
+    "originalSha256": "3bceaf09c2684d11cee8a2d3c18ca37e73b1e48dddf13a6012c8b2de9923be42",
+    "patches": [
+      {
+        "from": 9,
+        "to": 10,
+        "original": [
+          "  const hidden = () => document.hidden || !!window.pulseWinHidden;\n"
+        ]
+      },
+      {
+        "from": 104,
+        "to": 105,
+        "original": []
+      }
+    ]
+  }
+}

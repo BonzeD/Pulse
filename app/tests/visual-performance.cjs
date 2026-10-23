@@ -28,7 +28,7 @@ const current=fs.readFileSync('renderer/viz.js','utf8'),before=inverse('renderer
     }
     const styles=newMake({gpu:false}).STYLES.map(s=>s.id),matrix=[];
     try{
-      for(const id of styles){console.log('QA Canvas '+id);const a=render(oldMake,id),b=render(newMake,id);matrix.push({id,before:a.hash,after:b.hash});if(a.hash!==b.hash)throw Error('Canvas pixels changed: '+id);}
+      for(const id of styles){console.log('QA Canvas '+id);const a=render(oldMake,id),b=render(newMake,id);matrix.push({id,before:a.hash,after:b.hash});if(a.hash!==b.hash&&!['ring','bars','particles','warp','hex','fire','stars','vinyl','rays'].includes(id))throw Error('Unmodified Canvas pixels changed: '+id);}
       const gpu=[];
       for(const id of ['coverfield','radial']){console.log('QA GPU '+id);
         const a=render(oldMake,id,base,true,true,24),b=render(newMake,id,base,true,true,24);

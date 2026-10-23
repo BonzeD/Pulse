@@ -3,9 +3,9 @@
 // Переключатель в боковом меню меняет, чей каталог, поиск, рекомендации и медиатеку показывает Pulse.
 // Звук треков Apple Music и Spotify берётся из той же записи в YouTube Music (их собственный звук защищён DRM и доступен
 // только в их приложениях). Тексты песен можно брать из любого сервиса — см. lySrcRows() и меню у подписи источника.
-const CL_NAME = { yt: 'YouTube Music', am: 'Apple Music', sp: 'Spotify' };
-const CL_ICO = { yt: 'ytm', am: 'apple', sp: 'spotify' };
-const svcSt = { am: { user: false }, sp: { user: false } }; // вход в Apple Music / Spotify (узнаём у главного процесса)
+const CL_NAME = { yt: 'YouTube Music', am: 'Apple Music', sp: 'Spotify', ad: 'Audius' };
+const CL_ICO = { yt: 'ytm', am: 'apple', sp: 'spotify', ad: 'music' };
+const svcSt = { ad: { user: false }, am: { user: false }, sp: { user: false } }; // вход в Apple Music / Spotify (узнаём у главного процесса)
 const svcLists = { am: null, sp: null }; // плейлисты медиатеки
 // 2.0.4: список плейлистов сервиса запоминается — боковая панель и «Медиатека» показываются сразу, а свежий список подтягивается в фоне
 try { const o = JSON.parse(localStorage.getItem('pulse.svcLists') || '{}'); for (const k of ['am', 'sp']) if (Array.isArray(o[k])) svcLists[k] = o[k]; } catch {}
@@ -20,6 +20,7 @@ const LY_SRC = [['auto', 'Все источники'], ['yt', 'YouTube Music'], 
 const lySrcMode = () => (['yt', 'am', 'sp', 'lr', 'spicy'].includes(S().ly.src) ? S().ly.src : 'auto');
 const svcUrl = (id) => {
   const [s, k, ...r] = String(id).split(':'); const x = r.join(':');
+  if (s === 'ad') return lib.known?.[id]?.permalink || 'https://audius.co';
   if (s === 'sp') return r.length ? `https://open.spotify.com/${k}/${x}` : `https://open.spotify.com/track/${k}`;
   if (s === 'am') return r.length ? `https://music.apple.com/${k === 'lib' ? 'library/playlist' : k === 'artist' ? 'artist' : k === 'playlist' ? 'playlist' : 'album'}/${x}` : `https://music.apple.com/song/${k}`;
   return `https://music.youtube.com/watch?v=${id}`;
@@ -27,7 +28,7 @@ const svcUrl = (id) => {
 
 // ---------- переключатель клиента ----------
 // 2.0.2: только логотипы; выбранный сервис подсвечивает «плашка», которая плавно переезжает к нему
-const CL_KEYS = ['yt', 'am', 'sp'];
+const CL_KEYS = ['yt', 'am', 'sp', 'ad'];
 function renderClSw() {
   const el = $('clSw'); if (!el) return; const c = CL();
   if (!el.querySelector('.cl-ind')) el.innerHTML = '<i class="cl-ind"></i>' + CL_KEYS.map((k) => `<button data-cl="${k}" title="${CL_NAME[k]}" aria-label="${CL_NAME[k]}">${ico(CL_ICO[k])}</button>`).join('');
@@ -51,7 +52,7 @@ async function svcRefresh() {
   if (route().r === 'settings' && ['client', 'ly'].includes(lib.setTab)) deferRerender(0);
 }
 async function setClient(c) {
-  c = ['am', 'sp'].includes(c) ? c : 'yt';
+  c = ['am', 'sp', 'ad'].includes(c) ? c : 'yt';
   if (S().app.client !== c) { S().app.client = c; save(); }
   renderClSw(); // анимация переключения — сразу, не дожидаясь главного процесса
   // 2.0.4: «прыжок» страницы (cl-anim) убран — снятие класса через 0,6 с перезапускало анимацию появления, и страница моргала второй раз
@@ -90,17 +91,20 @@ const clLoginCard = (big) => {
 };
 function clGreet() {
   const c = CL(), st = svcSt[c];
+  if (c === 'ad') return `<div class="cl-hint">${ico('music')}<span>Audius — прямой звук без входа</span></div>`;
   if (st.user) return `<div class="sh-strap cl-strap">${ico(CL_ICO[c])}${st.name ? `Привет, ${esc(String(st.name).split(' ')[0])}` : CL_NAME[c]}</div>`;
   return `<div class="cl-hint">${ico(CL_ICO[c])}<span>${CL_NAME[c]} без входа: каталог, чарты и поиск.</span><button class="btn sm" data-clact="login:${c}">Войти</button></div>`;
 }
 function clSideLists() {
   const c = CL();
+  if (c === 'ad') return `<div class="cl-hint">Audius — прямой звук без входа</div>`;
   if (!svcSt[c].user) return `<div class="sl-login cl-side">${ico(CL_ICO[c])} Твоя медиатека ${CL_NAME[c]} появится здесь после входа<button data-clact="login:${c}">${ico(CL_ICO[c])}Войти</button></div>`;
   return (svcLists[c] || []).map((p) => `<a class="sl" data-b="${esc(p.browseId)}"><div class="n">${p.icon === 'heart' ? ico('heart-f') : ''}${esc(p.title)}</div><div class="s">${esc(p.sub || CL_NAME[c])}</div></a>`).join('');
 }
 // медиатека сервиса: плейлисты, треки («Нравится»), альбомы, исполнители
 async function clLibrary(r, tab, force) {
   const c = CL();
+  if (c === 'ad') return window.PulseAudius.library(tab);
   const tabs = `<div class="lib-tabs">${[['pl', 'Плейлисты'], ['songs', 'Треки'], ['albums', 'Альбомы'], ['artists', 'Исполнители']].map(([k, n]) => `<button class="chip ${tab === k ? 'on' : ''}" data-lib="${k}">${n}</button>`).join('')}</div>`;
   if (tab === 'pl') {
     const items = [{ kind: 'local', id: '__off', title: 'Скачанное', sub: tr(offlineTracks().length), icon: 'offline' }]; // 2.0.3: «Мои треки» убран

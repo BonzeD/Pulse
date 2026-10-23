@@ -2,7 +2,7 @@
   "name": "pulse-repository",
   "private": true,
   "productName": "Pulse",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Pulse — неоновый плеер-клиент для YouTube Music, Apple Music и Spotify",
   "author": "werxapee & Daswi",
   "license": "GPL-3.0-or-later",

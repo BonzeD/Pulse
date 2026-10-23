@@ -1,0 +1,44 @@
+{
+  "renderer/viz.js": {
+    "sha256": "5a0264e8969c03f9ce6820cf48c44d7902c4f3c847b93e285526ad692b1b0489",
+    "originalSha256": "f084b0ce203ecdab2fbe19a647883be5f3a259389a4dd9a44b7a912ad30d7d0f",
+    "patches": [
+      {
+        "from": 17,
+        "to": 29,
+        "original": []
+      },
+      {
+        "from": 43,
+        "to": 44,
+        "original": [
+          "  function destroy() { hideDirect(); if(gcv&&gcv.parentNode)gcv.remove(); if (ro) try { ro.disconnect(); } catch {} ro = null; cv = null; ctx = null; W = 0; }\n"
+        ]
+      },
+      {
+        "from": 166,
+        "to": 169,
+        "original": []
+      },
+      {
+        "from": 186,
+        "to": 187,
+        "original": [
+          "      ctx.shadowColor=mix(0.15,0.65);ctx.shadowBlur=lowQ?0:GLOW*8;\n"
+        ]
+      },
+      {
+        "from": 207,
+        "to": 224,
+        "original": []
+      },
+      {
+        "from": 511,
+        "to": 528,
+        "original": [
+          "    for (let i = 0; i < st.p.length; i++) { const a = st.p[i]; for (let j = i + 1; j < st.p.length; j++) { const b = st.p[j], dx = a.x - b.x, dy = a.y - b.y, d = dx * dx + dy * dy; if (d < D * D) { ctx.strokeStyle = g.mix(a.b, (1 - Math.sqrt(d) / D) * 0.6); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } } }\n"
+        ]
+      }
+    ]
+  }
+}

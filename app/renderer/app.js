@@ -62,7 +62,7 @@ function artFailed(img){
 // mine() оставлен для плагинов и старого кода: только для чтения, в список плейлистов не попадает.
 function mine() { return { id: MINE, name: 'Понравившиеся', tracks: Object.keys(lib.likes || {}).map((id) => lib.known[id]).filter(Boolean) }; }
 const isLiked = (id) => !!(lib.likes && lib.likes[id]);
-const slim = (t) => ({ id: t.id, title: t.title, author: t.author, dur: t.dur || 0, art: t.art || null, album: t.album || null, artistId: t.artistId || null, video: !!t.video, loaded: true });
+const slim = (t) => ({ id: t.id, title: t.title, author: t.author, dur: t.dur || 0, art: t.art || null, album: t.album || null, artistId: t.artistId || null, video: !!t.video, loaded: true, ...(t.platform === 'ad' || t.isrc ? { platform:t.platform, isrc:t.isrc||null, explicit:t.explicit, permalink:t.permalink||null } : {}) });
 // 2.0.4: неполный объект трека (только id) больше не затирает известные название, исполнителя и обложку пустыми значениями
 function remember(t) { if (!t || !t.id) return; if(window.MediaLibrary)Object.assign(t,MediaLibrary.decorate(t)); const k = lib.known[t.id] || (lib.known[t.id] = {}), s0 = slim(t); for (const f in s0) { const v = s0[f]; if (v == null || v === '' || (f === 'dur' && !v)) { if (!(f in k)) k[f] = v; continue; } k[f] = v; } }
 // 2.0.4: «пустые» треки (без названия — чаще всего клипы и треки, сохранённые старой версией) восстанавливаются:
@@ -83,8 +83,8 @@ async function healTrack(t) {
 function healed(t) { lib.queue.tracks.forEach((q) => { if (q !== t && q.id === t.id) Object.assign(q, { title: t.title, author: t.author, art: q.art || t.art, dur: q.dur || t.dur }); }); if (curTrack() && curTrack().id === t.id) updateNow(); renderQueue(); }
 const curTrack = () => { const t=lib.queue.tracks[lib.queue.idx]; if(t&&window.MediaLibrary)Object.assign(t,MediaLibrary.decorate(t)); return t; };
 // 2.0.2: клиенты. Треки Apple Music / Spotify имеют id «am:…» / «sp:…»; звук — из найденной записи YouTube Music (её id — в vidMap)
-const CL = () => (S().app && ['am', 'sp'].includes(S().app.client) ? S().app.client : 'yt');
-const isSvcId = (id) => /^(am|sp):/.test(String(id || ''));
+const CL = () => (S().app && ['am', 'sp', 'ad'].includes(S().app.client) ? S().app.client : 'yt');
+const isSvcId = (id) => /^(am|sp|ad):/.test(String(id || ''));
 const vidMap = {};
 const ytVid = (t) => (!t || t.id?.startsWith('local-') ? null : !isSvcId(t.id) ? t.id : vidMap[t.id] || (off[t.id] && off[t.id].vid) || null);
 const canEmbed = (t) => !!t && !noEmbed[t.id] && !!ytVid(t);
@@ -146,6 +146,7 @@ onA('progress', () => { try { const d = audio.duration, b = audio.buffered; if (
 const retried = new Set();
 onA('error', () => {
   if (engine !== 'audio' || !audio.getAttribute('src')) return;
+  if (window.PulseAudius?.recover()) return; // Audius startup-only fallback
   if (window.PulseFileVideo?.recover()) return; // file-video integration
   const t = curTrack(), errorTok = loadTok; setLoading(false);
   // первая ошибка потока — просто переподключаемся (ссылка YouTube могла протухнуть), с того же места
@@ -362,6 +363,7 @@ function applyPalette(src) {
   const tok = ++palTok;
   Viz.palette(src).then((p) => {
     if (tok !== palTok) return;
+    window.PulsePrism?.setCoverPalette(p);
     p = fixedPalette() || p || [[255, 45, 149], [139, 61, 255], [0, 229, 255]];
     setPaletteVars(p);
   }).catch(() => {});
@@ -492,6 +494,7 @@ function toggleLike(t) {
   if (!t) return; lib.likes = lib.likes || {}; lib.likeQ = lib.likeQ || [];
   const on = !lib.likes[t.id]; remember(t);
   if (on) lib.likes[t.id] = 1; else delete lib.likes[t.id];
+  if(t.id.startsWith('ad:')){save();updateLike();document.querySelectorAll(`[data-like="${CSS.escape(t.id)}"]`).forEach(b=>{b.classList.toggle('liked',on);b.innerHTML=ico(on?'heart-f':'heart');});toast(on?'Нравится · сохранено на устройстве':'Лайк снят');PX.emit('like',{t,on});return;}
   if(t.id.startsWith('local-')){save();updateLike();toast(on?'Нравится · сохранено на устройстве':'Лайк снят');return;}
   // 2.0.3: лайк уходит на сервер сервиса, из которого трек; без входа/интернета — ждёт в очереди и отправится сам
   lib.likeQ = lib.likeQ.filter((x) => x.id !== t.id); lib.likeQ.push({ id: t.id, on, at: Date.now(), n: 0 });
@@ -532,7 +535,7 @@ function updateLike() { const t = curTrack(), on = !!t && isLiked(t.id); $('btnL
 
 // ---------- загрузки ----------
 function download(tracks, video = false) {
-  tracks = tracks.filter((t) => t && (!off[t.id] || video) && !(dl[t.id] && /queued|downloading/.test(dl[t.id].status)));
+  tracks = tracks.filter((t) => t && !t.id.startsWith('ad:') && (!off[t.id] || video) && !(dl[t.id] && /queued|downloading/.test(dl[t.id].status)));
   if (!tracks.length) return toast('Всё уже скачано');
   if (!online()) return toast('Нет интернета — скачать не получится');
   tracks.forEach((t) => { dl[t.id] = { status: 'queued', pct: 0 }; remember(t); updDl(t.id); }); save();
@@ -555,10 +558,11 @@ function dlInner(id) {
   if (d && d.status === 'error') return { c: 'err', h: ico('alert'), t: 'Ошибка — нажми, чтобы повторить' };
   return { c: '', h: ico('download'), t: 'Скачать' };
 }
-function dlBtn(id) { const d = dlInner(id); return `<button class="ib ${d.c}" data-dl="${esc(id)}" title="${d.t}">${d.h}</button>`; }
+function dlBtn(id) { if(id.startsWith('ad:'))return ''; const d = dlInner(id); return `<button class="ib ${d.c}" data-dl="${esc(id)}" title="${d.t}">${d.h}</button>`; }
 function updDl(id) { const d = dlInner(id); document.querySelectorAll(`.tr [data-dl="${CSS.escape(id)}"]`).forEach((b) => { b.className = 'ib ' + d.c; b.innerHTML = d.h; b.title = d.t; }); if (curTrack()?.id === id) updateDlCur(); }
 function updateDlCur() { const t = curTrack(), b = $('btnDlCur'); if (!t) return; const d = dlInner(t.id); b.innerHTML = d.h; b.title = d.t; b.classList.toggle('done', !!off[t.id]); }
 function downloadChoices(tracks) {
+  if (tracks.some(t => t.id.startsWith('ad:'))) return []; // No Audius downloads without separate permission review.
   const items = [['download', 'Только аудио', () => download(tracks)], ['video', 'Вместе с видео', () => download(tracks, true)]];
   if (tracks.length === 1 && off[tracks[0].id]) items.push('-', ['trash', 'Удалить с устройства', () => removeDownload(tracks[0].id)]);
   return items;
@@ -756,7 +760,7 @@ const PAGES = {
   },
   search: {
     async load(r, force) {
-      const F = [['', 'Все'], ['songs', 'Треки'], ['videos', 'Видео'], ['albums', 'Альбомы'], ['artists', 'Исполнители'], ['playlists', 'Плейлисты']].filter(([f]) => !(f === 'videos' && CL() !== 'yt')); // 2.0.2: у Apple Music / Spotify нет видео
+      const F = [['', 'Все'], ['songs', 'Треки'], ['videos', 'Видео'], ['albums', 'Альбомы'], ['artists', 'Исполнители'], ['playlists', 'Плейлисты']].filter(([f]) => !(f === 'videos' && CL() !== 'yt') && !(f === 'albums' && CL() === 'ad')); // 2.0.2: у Apple Music / Spotify нет видео
       const chips = `<div class="chips">${F.map(([f, n]) => `<button class="chip ${(r.f || '') === f ? 'on' : ''}" data-sf="${f}">${n}</button>`).join('')}</div>`;
       const d = await cached('s:' + r.f + ':' + r.q, () => ytm('search', r.q, r.f || undefined).then((x) => ({ shelves: x })), force);
       const S = d.shelves || [];
@@ -1029,8 +1033,11 @@ function menuTop() { const t = $('top'); if (!t) return 8; const b = t.getBoundi
 // всплывающая панель (эффекты визуала, вид текста) не уходит под верхнюю панель окна
 function fitPop(el) {
   if (!el) return; el.style.maxHeight = '';
-  const r = el.getBoundingClientRect(), lim = menuTop();
-  if (r.height && r.top < lim) el.style.maxHeight = Math.max(160, r.bottom - lim) + 'px';
+  // Use layout geometry, not the in-flight entrance transform. Respect the tab's clipping edge.
+  const parent=el.offsetParent, tab=el.closest('.tab'), lim=Math.max(menuTop(),tab?tab.getBoundingClientRect().top:0)+8;
+  const bottom=(parent?parent.getBoundingClientRect().top+parent.clientTop:0)+el.offsetTop+el.offsetHeight;
+  const available=Math.max(44,bottom-lim);
+  if(el.offsetHeight>available)el.style.maxHeight=available+'px';
 }
 const hideMenu = () => { window.PulseMenus?.closeSub(); const m = $('menu'); m.classList.remove('pulse-parent-hidden'); m._viz = false; if (!m.classList.contains('show') || m.classList.contains('hiding')) return; if (!animOn()) { clearTimeout(m._ht); return m.classList.remove('show', 'hiding'); } m.classList.add('hiding'); clearTimeout(m._ht); m._ht = setTimeout(() => m.classList.remove('show', 'hiding'), 120); }; // 2.0.4: меню тает
 window.hideMenu = hideMenu;
@@ -1068,6 +1075,7 @@ function trackMenu(t, x, y, ctx) {
   items.push(['link', 'Копировать ссылку', () => copyTrackLink(t)]); // 2.0.2: ссылка на сервис трека
   if (curTrack() && curTrack().id === t.id) items.push(['tune', 'Корректор текста', () => openFix()]);
   for (const f of PX.trackMenu) { try { const it = f({ ...t }); if (it) items.push(it); } catch (e) { console.error(e); } }
+  if(t.id.startsWith('ad:'))for(let i=items.length-1;i>=0;i--)if(Array.isArray(items[i])&&['download','wave2','radio'].includes(items[i][0]))items.splice(i,1);
   showMenu(x, y, items);
 }
 
@@ -1430,6 +1438,7 @@ const beatState = { an: null, kp: -1, lastT: 0, bass: 0, flux: 0 };
 const anCache = new Map();
 function getAnalysis(t) {
   const url = audioUrl(t); if (!url || typeof AutoSync === 'undefined') return Promise.resolve(null);
+  if (t.id.startsWith('ad:') || window.PulseAudius?.actual()?.source === 'ad' && curTrack()?.id === t.id) return Promise.resolve(null); // No whole-file Audius analysis/download. Live analyser remains available.
   if (anCache.has(t.id)) return anCache.get(t.id);
   const p = AutoSync.analyze(url).catch(() => null);
   anCache.set(t.id, p); if (anCache.size > 4) anCache.delete(anCache.keys().next().value);
@@ -1585,6 +1594,7 @@ let hiddenNow = document.hidden; document.addEventListener('visibilitychange', (
 let winHiddenIpc = false;
 function setWinHidden(v) {
   v = !!v; if (v === winHiddenIpc) return; winHiddenIpc = v; window.pulseWinHidden = v; hiddenNow = document.hidden || v;
+  window.dispatchEvent(new Event('pulse-window-visibility'));
   document.body.classList.toggle('win-hidden', v);
   if (typeof mrSync === 'function') try { mrSync(); } catch (e) {}
   if (!v && typeof lys !== 'undefined' && lys.on && !lys.raf) lys.raf = requestAnimationFrame(lysLoop);
@@ -1622,6 +1632,12 @@ function liteTick(now) {
 function frame(now) {
   requestAnimationFrame(frame);
   // Direct GPU draw runs first in this same RAF, before service/DOM writes.
+  if (window.PulsePrism?.active()) {
+    if (hiddenNow) return;
+    if (PulseTimecode.precise && playing) PulseTimecode.tick(now);
+    if (now - lastFrame >= 100) { lastFrame = now; if (playing && typeof djTick === 'function') djTick(E.time()); }
+    return; // The opaque Prism lens owns visual rendering, never the audio transport.
+  }
   const visualExperiment = typeof VisualExperiment !== 'undefined' && VisualExperiment.sync(now);
   if (hiddenNow) { liteS.last = 0; mainFramePacer.reset(); return; }
   if (PulseTimecode.precise && playing) PulseTimecode.tick(now);
@@ -1657,6 +1673,8 @@ function frame(now) {
   let f = null, wv = null;
   const open = ppOpenNow && !lyOnlyNow; // 2.0.8: в «Только текст» плеер закрыт сценой — визуал плеера не рисуем
   const mode0 = open ? (lib.mode === 'video' && engine === 'audio' && !window.PulseFileVideo?.visible() ? 'cover' : lib.mode) : null, ar = !visualExperiment && mode0 === 'visual' ? artRect() : null; // 2.0.4: до записи стилей
+  // Read the fallback centre with art geometry, before beat/palette DOM writes.
+  const visualCenter=!ar&&!visualExperiment&&mode0==='visual'?stageCenter():null;
   const vLag = (V.lag || 0), ht = heard(vLag);
   const fr = readSpectrum(now, outLat() * 1000 + vLag);
   if (fr) {
@@ -1695,7 +1713,7 @@ function frame(now) {
   if (!visualExperiment && typeof djFrame === 'function') djFrame(now);
   if (open && !visualExperiment) {
     const mode = mode0;
-    try { Viz.draw({ minDt, quality: S().perf.mode, sens: V.sens / 100, noBars: true, freq: f, wave: wv, beat: V.tempo ? beat : beat * 0.6, playing, mode, style: lib.vizStyle, artRect: ar, center: !ar && mode === 'visual' ? stageCenter() : null, tempo: V.tempo ? tempo : { bpm: 100, pos: performance.now() / 600, conf: 0 }, sr: fr ? fr.sampleRate : actx ? actx.sampleRate : 48000, fx: V.fx, cover: coverImg, energy: beatState.an && beatState.an.energy ? beatState.an.energy(ht) : null }); } catch (e) { console.error(e); }
+    try { Viz.draw({ minDt, quality: S().perf.mode, sens: V.sens / 100, noBars: true, freq: f, wave: wv, beat: V.tempo ? beat : beat * 0.6, playing, mode, style: lib.vizStyle, artRect: ar, center: visualCenter, tempo: V.tempo ? tempo : { bpm: 100, pos: performance.now() / 600, conf: 0 }, sr: fr ? fr.sampleRate : actx ? actx.sampleRate : 48000, fx: V.fx, cover: coverImg, energy: beatState.an && beatState.an.energy ? beatState.an.energy(ht) : null }); } catch (e) { console.error(e); }
   }
   if (!visualExperiment && (playing || dragging || lyState.cur === -2 || lyState.manual)) lyricsFrame(dragging ? heard(S().ly.lag || 0) : lySmooth(heard(S().ly.lag || 0)));
   if (typeof extFrame === 'function') extFrame(now, f, wv, V.tempo ? beat : beat * 0.6, tempo, ht, false);
@@ -2178,6 +2196,7 @@ function builtinTabs() {
     ...(typeof waveTab === 'function' ? [waveTab()] : []), // 2.0.4
     ...(typeof extraTabs === 'function' ? extraTabs() : []),
     { id: 'app', icon: 'settings', title: 'Основные', rows: [
+      ...(window.PulseWelcome ? [{ raw: PulseWelcome.settingsRow() }] : []),
       grp('Язык интерфейса'),
       R('Язык интерфейса', 'Выбери язык интерфейса. Названия песен и тексты не переводятся.', `<select class="language-list" data-language-list data-i18n-skip aria-label="${esc(PulseI18n.t('Язык интерфейса'))}">${[['en','English'],['ru','Русский'],['ja','日本語'],['uk','Українська']].map(([v,n])=>`<option value="${v}"${getP('app.language')===v?' selected':''}>${n}</option>`).join('')}</select>`),
       grp('Запуск и окно'),
@@ -2217,7 +2236,7 @@ const SET_DESC = {
   dj: 'Режим диджея: включение, автомикс и сведение треков',
   app: 'Запуск, поведение окна, производительность и резервная копия',
   accounts: 'Аккаунты YouTube Music, Apple Music и Spotify — у каждого сервиса свои',
-  client: 'YouTube Music, Apple Music или Spotify — чей каталог и медиатеку открывать в Pulse',
+  client: 'YouTube Music, Apple Music, Spotify или Audius — чей каталог открывать в Pulse',
   sync: 'Синхронизация плейлистов с YouTube Music и музыка без интернета',
   look: 'Цвета, фон из обложки и масштаб интерфейса',
   ui: 'Шрифты, скругления, прозрачность и мелкие детали интерфейса',
@@ -2359,6 +2378,7 @@ document.addEventListener('click', (e) => {
   if (el.dataset.tg) { const p = el.dataset.tg, v = !getP(p); setP(p, v); document.querySelectorAll(`.toggle[data-tg="${p}"],.set-cell[data-tg="${p}"]`).forEach((x) => x.classList.toggle('on', v)); settingChanged(p); deferRerender(); return; }
   if (el.dataset.eqp) { const a = S().audio; a.preset = el.dataset.eqp; a.eq = [...EQ_P[a.preset][1]]; a.preamp = a.preset === 'bassplus' ? -4 : a.eq.some((x) => x > 4) ? -2 : 0; a.eqOn = true; settingChanged('audio.eq'); rerenderSettings(); return; }
   const a = el.dataset.sact;
+  if (a === 'welcome') return window.PulseWelcome?.open();
   if (a === 'primary-preset') return applyPrimaryPreset();
   if (a === 'export' && typeof exportSettings === 'function') return exportSettings();
   if (a === 'import' && typeof importSettings === 'function') return importSettings();

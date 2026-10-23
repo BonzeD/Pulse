@@ -1,0 +1,48 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
+const {chromium}=require('playwright'),root=path.resolve(__dirname,'../renderer'),out=process.env.PULSE_PRISM_ARTIFACTS||path.join(__dirname,'artifacts/prism-live');fs.mkdirSync(out,{recursive:true});
+const fixture=`<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#11131c;color:white;--a1:255,45,149;--a2:139,61,255;--a3:0,229,255}#brand{display:inline-flex;padding:16px;cursor:pointer}</style><link rel="stylesheet" href="splash.css"><div id="splash"></div><script>localStorage.setItem('pulse.splash','off')</script><script src="splash.js"></script><div id="brand"><svg width="24" height="24"><circle cx="12" cy="12" r="8"/></svg><b>Pulse</b></div><main id="under"><button>Underlay</button></main><aside inert id="alreadyInert">Keep inert</aside><script>
+window.__lang='ru';window.PulseI18n={language:()=>__lang};const settings={look:{anim:true},perf:{fps:0},viz:{lag:0}};window.S=()=>settings;window.__f=new Uint8Array(1024);window.__f.fill(0);window.__audio=false;window.readSpectrum=()=>__audio?{f:__f,sampleRate:48000,fftSize:2048}:null;window.outLat=()=>0;window.__toggles=0;window.toggle=()=>__toggles++;window.__home=0;document.getElementById('brand').onclick=()=>__home++;
+window.__draws=0;window.__contexts=0;window.__canvasSets=0;const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){if(type==='webgl'){__contexts++;if(location.search.includes('fallback'))return null;const gl=get.call(this,type,...args);window.__gl=gl;const draw=gl.drawArrays.bind(gl);gl.drawArrays=(...a)=>{__draws++;draw(...a)};return gl;}return get.call(this,type,...args)};for(const key of ['width','height']){const d=Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype,key);Object.defineProperty(HTMLCanvasElement.prototype,key,{...d,set(v){__canvasSets++;d.set.call(this,v)}})};
+</script><script src="prism-signal.js"></script><script src="prism-live.js"></script>`;
+const server=http.createServer((req,res)=>{const u=req.url.split('?')[0];if(u==='/fixture'){res.setHeader('Content-Type','text/html');return res.end(fixture);}if(u==='/favicon.ico'){res.writeHead(204);return res.end();}const p=path.resolve(root,'.'+u);if(!p.startsWith(root+path.sep)||!fs.existsSync(p)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',p.endsWith('.css')?'text/css':'text/javascript');fs.createReadStream(p).pipe(res);});
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/local/bin/chromium',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});const errors=[];
+ async function setup(options={}){const context=await browser.newContext({viewport:{width:1366,height:768},...options}),page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));await page.clock.install();await page.clock.pauseAt(new Date());await page.goto(origin+'/fixture'+(options.fallback?'?fallback':''));return{context,page};}
+ const rapid=async page=>{for(let i=0;i<5;i++){await page.locator('#brand').click();await page.clock.runFor(65);}};
+ try{
+ const {context,page}=await setup();
+ for(let i=0;i<4;i++){await page.locator('#brand').click();await page.clock.runFor(500);}assert.equal(await page.locator('#prismLive').count(),0,'slow clicks keep normal home');
+ await page.clock.runFor(600);await page.locator('#brand').focus();await rapid(page);await page.clock.runFor(1000);
+ assert.equal(await page.locator('#prismLive').count(),1);assert.equal(await page.locator('#prismLive').getAttribute('role'),'dialog');assert.equal(await page.locator('#brand').evaluate(e=>e.inert),true);assert.equal(await page.evaluate(()=>__contexts),1);assert.equal(await page.evaluate(()=>__gl.getError()),0);
+ assert.equal(await page.locator('#prismLive').getAttribute('data-signal'),'wait');
+ const sizes=await page.evaluate(()=>__canvasSets),draws=await page.evaluate(()=>__draws);await page.clock.runFor(100);assert.equal(await page.evaluate(()=>__canvasSets),sizes,'no repeated framebuffer allocation');assert.ok(await page.evaluate(()=>__draws)>draws);
+ await page.screenshot({path:out+'/prism-live-idle-1366.png'});
+ await page.evaluate(()=>{__audio=true;__f.fill(0);__f.fill(220,2,9);__f.fill(150,21,107);__f.fill(180,220,470);});await page.clock.runFor(700);
+ assert.equal(await page.locator('#prismLive').getAttribute('data-signal'),'live');await page.screenshot({path:out+'/prism-live-audio-1366.png'});
+ const a=await page.locator('canvas').screenshot();await page.evaluate(()=>{__audio=false;});await page.clock.runFor(1500);const b=await page.locator('canvas').screenshot();assert.notDeepEqual(a,b,'real signal changes the glass lens');
+ await page.keyboard.press('Space');assert.equal(await page.evaluate(()=>__toggles),1);assert.equal(await page.locator('#prismLive').count(),1,'Space controls playback, not close');
+ await page.keyboard.press('Tab');assert.equal(await page.locator('.sp-live-back').evaluate(e=>document.activeElement===e),true);
+ // Native tray/minimize signal stops every art frame; overlay has no TTL.
+ await page.evaluate(()=>{pulseWinHidden=true;dispatchEvent(new Event('pulse-window-visibility'));});const paused=await page.evaluate(()=>__draws);await page.clock.runFor(16000);assert.equal(await page.evaluate(()=>__draws),paused);assert.equal(await page.locator('#prismLive').count(),1);
+ await page.evaluate(()=>{pulseWinHidden=false;dispatchEvent(new Event('pulse-window-visibility'));});await page.clock.runFor(100);assert.ok(await page.evaluate(()=>__draws)>paused);
+ for(const [lang,close]of [['en','Return'],['ja','戻る'],['uk','Повернутися'],['ru','Вернуться']]){await page.evaluate(lang=>{__lang=lang;dispatchEvent(new Event('pulse-language'));},lang);assert.equal(await page.locator('.sp-live-back span').innerText(),close);}
+ await page.setViewportSize({width:390,height:844});await page.evaluate(()=>{__audio=true;__f.fill(180);});await page.clock.runFor(600);
+ for(const selector of ['.sp-word','.sp-live-status']){const r=await page.locator(selector).boundingBox();assert.ok(r.x>=0&&r.x+r.width<=390,selector+' inside mobile');}
+ await page.screenshot({path:out+'/prism-live-audio-390.png'});await page.keyboard.press('Escape');await page.clock.runFor(600);assert.equal(await page.locator('#prismLive').count(),0);assert.equal(await page.evaluate(()=>__gl.isContextLost()),true);assert.equal(await page.locator('#brand').evaluate(e=>e.inert),false);assert.equal(await page.locator('#alreadyInert').evaluate(e=>e.inert),true);assert.equal(await page.locator('#brand').evaluate(e=>document.activeElement===e),true);
+ const ended=await page.evaluate(()=>__draws);await page.clock.runFor(1000);assert.equal(await page.evaluate(()=>__draws),ended,'no idle renderer survives exit');
+ await rapid(page);await page.clock.runFor(700);assert.equal(await page.evaluate(()=>__contexts),2);await page.keyboard.press('Enter');await page.clock.runFor(600);assert.equal(await page.locator('#prismLive').count(),0);await context.close();
+ for(const options of [{reducedMotion:'reduce'},{forcedColors:'active'},{fallback:true}]){
+  const f=await setup(options);await rapid(f.page);await f.page.clock.runFor(1200);assert.equal(await f.page.locator('#prismLive').isVisible(),true);assert.equal(await f.page.locator('#prismLive.sp-prism-fallback').count(),1);
+  // Virtual JS time does not advance compositor CSS timelines in a static
+  // fallback. Finish only finite entrance animations, as in motion-splash.cjs.
+  if(!options.reducedMotion)await f.page.locator('#prismLive').evaluate(e=>{for(const a of e.getAnimations({subtree:true}))if(Number.isFinite(a.effect.getComputedTiming().endTime))a.finish();});
+  assert.equal(await f.page.locator('.sp-word b').evaluateAll(es=>es.every(e=>+getComputedStyle(e).opacity===1)),true,'fallback and reduced motion keep the identity visible');
+  await f.page.screenshot({path:out+'/prism-live-'+(options.reducedMotion?'reduced':options.forcedColors?'forced':'fallback')+'.png'});
+  const before=await f.page.evaluate(()=>__draws);await f.page.clock.runFor(7000);assert.equal(await f.page.evaluate(()=>__draws),before);await f.page.keyboard.press('Escape');await f.page.clock.runFor(600);assert.equal(await f.page.locator('#prismLive').count(),0);await f.context.close();
+ }
+ const live=await setup();await rapid(live.page);await live.page.clock.runFor(500);await live.page.emulateMedia({reducedMotion:'reduce'});await live.page.clock.runFor(50);assert.equal(await live.page.locator('#prismLive').isVisible(),true);assert.equal(await live.page.evaluate(()=>__gl.isContextLost()),true);await live.page.emulateMedia({reducedMotion:'no-preference'});await live.page.clock.runFor(600);await live.page.waitForFunction(()=>__contexts===2);await live.page.evaluate(()=>__gl.getExtension('WEBGL_lose_context').loseContext());await live.page.clock.runFor(100);assert.equal(await live.page.locator('#prismLive.sp-prism-fallback').count(),1);await live.page.keyboard.press('Escape');await live.page.clock.runFor(600);await live.context.close();
+ assert.deepEqual(errors,[]);console.log('PASS Prism live: gesture timing, persistence, real-signal uniforms, shared Space, close/focus/inert, 1366/390, RU/EN/JA/UK, tray pause, no canvas reallocations, no idle RAF, repeated open, reduced motion, forced colors, GPU fallback/context loss');
+ }finally{await browser.close();}
+})().then(()=>server.close()).catch(e=>{console.error(e);server.close();process.exitCode=1;});

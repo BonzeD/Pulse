@@ -70,12 +70,16 @@ function pvDraw(id, opts) {
 }
 let pvLyAt = 0, pvLyW = -1;
 function pvFrame(now, f, wv, bt, tempo) {
+  // Removed settings tabs no longer call pvDraw; release their owned GPU/bitmap resources.
   const T = tempo && tempo.conf ? tempo : { bpm: 112, pos: now / (60000 / 112), conf: 0.6 };
   if (document.getElementById('pvViz')) pvDraw('pvViz', { freq: playing ? f : null, wave: playing ? wv : null, beat: bt, style: pvHover || lib.vizStyle, tempo: T, fx: S().viz.fx, cover: coverImg });
   const W = S().wall;
   if (document.getElementById('pvWall')) pvDraw('pvWall', { freq: playing ? f : null, wave: playing ? wv : null, beat: bt, style: W.style === 'same' ? lib.vizStyle : W.style, tempo: T, fx: Object.assign({}, S().viz.fx, { glow: W.glow ? S().viz.fx.glow : 0, trails: 0 }), cover: coverImg });
   const ly = document.getElementById('pvLy');
   if (ly && now - pvLyAt > 420) { pvLyAt = now; const ws = ly.querySelectorAll('.ly-line.cur .w'); pvLyW = (pvLyW + 1) % (ws.length + 2); ws.forEach((s, k) => { s.classList.toggle('on', k <= pvLyW); s.classList.toggle('pop', k === pvLyW); }); }
+}
+function pvCleanup(){
+  for(const id of Object.keys(pvInst))if(document.getElementById(id)!==pvInst[id].cv){pvInst[id].v.destroy();delete pvInst[id];}
 }
 
 // ================= DISCORD RICH PRESENCE =================
@@ -503,6 +507,7 @@ async function extraAct(a, el) {
 // ================= КАДР / ТАЙМЕРЫ =================
 let dcTickAt = 0;
 function extFrame(now, f, wv, bt, tempo, ht, hidden) {
+  pvCleanup();
   if (!hidden && route().r === 'settings' || (!hidden && (pops.ly || pops.viz))) pvFrame(now, f, wv, bt, tempo);
   if (now - dcTickAt > 1000) { dcTickAt = now; if (S().discord.on) { discordTick(false); const pv = document.getElementById('pvDiscord'); if (pv && !hidden && visible(pv)) updPreview('pvDiscord', discordPreview); } }
 }

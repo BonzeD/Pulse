@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 const baseline=require('./stable-baseline.json');
 for(const [file,hash] of Object.entries(baseline).filter(([file])=>!['renderer/spicy.js','renderer/lystage.js','renderer/viz.js','main.js','preload.js','offline.js','services.js'].includes(file)))test('Stable 2.0.12 unchanged: '+file,()=>assert.equal(crypto.createHash('sha256').update(file==='main.js'?read(file).replace(/  \/\/ 1\.0\.0 panel14: begin Pulse-only tray integration\n[\s\S]*?  \/\/ 1\.0\.0 panel14: end Pulse-only tray integration\n/,'').split('\n// 1.0.0: read-only tap')[0].replace('  tray.__pulseMenu = menu;\n',''):file==='renderer/shell.js'?read(file).replace("  if(e.target.closest?.('.media-dialog'))return;\n",''):file==='preload.js'?read(file).replace("  visualizerTap: (options) => ipcRenderer.invoke('visualizer:tap', options),\n",''):require('./final-original.cjs')(file,fs.readFileSync(path.join(root,file)))).digest('hex'),hash));
 test('Playback retains reviewed safety fixes, YouTube fallback and explicit file-video hooks',()=>{
- const a=read('renderer/app.js');let expected=read('tests/stable-player.txt');
+ const a=require('./audius-original.cjs')('renderer/app.js',read('renderer/app.js'));let expected=read('tests/stable-player.txt');
  const changes=[
   ['audio.src = `/offline/${encodeURIComponent(off[t.id].file)}`;', 'audio.src = fileAudioUrl(t);'],
   ['const t = curTrack(); setLoading(false);','const t = curTrack(), errorTok = loadTok; setLoading(false);'],

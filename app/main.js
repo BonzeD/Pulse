@@ -27,7 +27,9 @@ const acc = require('./account');
 const ytm = require('./ytm');
 const discord = require('./discord');
 const wallpaper = require('./wallpaper-host');
-const svc = require('./services'); // 2.0.2: Apple Music и Spotify как клиенты
+const svc = require('./services');
+const audius = require('./audius').create();
+const isAudius = require('./audius').isAudius; // 2.0.2: Apple Music и Spotify как клиенты
 ytm.setApi((ep, body, q) => acc.api(ep, body, q));
 svc.setYtm(ytm);
 // 2.0.2: текущий клиент ('yt' | 'am' | 'sp') — задаёт renderer; запросы с id «am:…»/«sp:…» всегда идут в свой сервис
@@ -90,6 +92,7 @@ const ICON = path.join(__dirname, 'build', 'icon.png');
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.jpg': 'image/jpeg' };
 let pendingFs = false, manualWidget = false;
 let win, widget, tray, port, quitting = false, lastState = null, lastLyrics = null, closeMode = 'widget';
+let widgetWanted = false, widgetReady = false;
 
 const storeFile = () => path.join(app.getPath('userData'), 'library.json');
 const readStore = () => safety.readJSON(storeFile(), {}, true);
@@ -129,10 +132,12 @@ function startServer() {
       if (!hosts.includes(req.headers.host) || req.headers['sec-fetch-site'] === 'cross-site') { res.writeHead(403); return res.end(); }
       if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); return res.end(); }
       let p; try { p = decodeURIComponent(req.url.split('?')[0]); } catch { res.writeHead(400); return res.end(); }
+      if (p.startsWith('/audius/audio/') || p.startsWith('/audius/art/')) return audius.proxy(req, res, p);
       if (p === '/img') return serveImg(req, res);
       if (p.startsWith('/plugins/')) return servePlugin(res, p.slice(9));
       if (p.startsWith('/stream/')) { // 2.0.2: трек Apple Music / Spotify звучит из найденной записи YouTube Music
         const id = p.slice(8);
+        if (isAudius(id)) return audius.proxy(req, res, '/audius/audio/' + id.slice(3));
         if (!svc.isSvc(id)) return off.proxyStream(req, res, id);
         return svc.ytFor(id).then((v) => off.proxyStream(req, res, v)).catch((e) => { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(String(e.message || e)); });
       }
@@ -170,9 +175,9 @@ function createMain() {
   win.loadURL(`http://127.0.0.1:${port}/index.html`);
   win.once('ready-to-show', () => { win.show(); if (pendingFs) { win.setFullScreen(true); pendingFs = false; } });
   // 1.9: открыл плеер — виджет прячется сам (если включено «Скрывать при открытии плеера»)
-  const autoHideWidget = () => { if (quitting) return; if (widget && !widget.isDestroyed() && widget.isVisible() && wcfg.autoHide !== false && !manualWidget) widget.hide(); };
+  const autoHideWidget = () => { if (quitting || !win || win.isDestroyed() || !win.isVisible() || win.isMinimized()) return; if (wcfg.autoHide !== false && !manualWidget) hideWidget(); };
   win.on('show', autoHideWidget); win.on('restore', autoHideWidget);
-  win.on('focus', () => { if (quitting || win.isDestroyed()) return; if (widget && !widget.isDestroyed() && widget.isVisible() && wcfg.autoHide !== false && !manualWidget && win.isVisible() && !win.isMinimized()) widget.hide(); });
+  win.on('focus', autoHideWidget);
   win.on('minimize', () => { if (wcfg.onMin) { manualWidget = false; showWidget(); } });
   // 2.0.12: фон. Окно с backgroundThrottling:false браузер считает видимым всегда — даже закрытое в трей/виджет оно
   // рисовало анимации и визуал 60 раз в секунду, отнимая видеокарту и процессор у игр. Теперь при скрытии окно
@@ -242,6 +247,8 @@ let wcfgSaveT = null;
 const saveWidgetCfgSoon = () => { clearTimeout(wcfgSaveT); wcfgSaveT = setTimeout(() => { const st = readStore(); st.widgetCfg = wcfg; writeStore(st); }, 600); };
 
 function createWidget() {
+  if (quitting || (widget && !widget.isDestroyed())) return;
+  widgetReady = false;
   const s = readStore();
   if (s.widgetCfg) wcfg = Object.assign(wcfg, s.widgetCfg);
   const wa = screen.getPrimaryDisplay().workArea;
@@ -258,17 +265,40 @@ function createWidget() {
   widget.setOpacity(Math.max(0.3, Math.min(1, +wcfg.opacity || 1)));
   // 1.9.4: свой хост — у Chromium зум общий на хост, и масштаб виджета сбрасывал «Размер интерфейса» главного окна
   safety.lockNavigation(widget.webContents, u => safety.appURL(u, port, 'widget.localhost', '/widget.html'));
+  const createdWidget = widget;
+  widget.webContents.on('did-start-loading', () => { if (widget === createdWidget) widgetReady = false; });
   widget.loadURL(`http://widget.localhost:${port}/widget.html`);
-  widget.webContents.on('did-finish-load', () => { applyWidgetCfg.zf = Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100)); try { widget.webContents.setZoomFactor(Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100))); } catch {} widget.webContents.send('wcfg', wcfg); lastState && widget.webContents.send('state', lastState); lastLyrics && widget.webContents.send('lyrics', lastLyrics); });
+  widget.webContents.on('did-finish-load', () => { applyWidgetCfg.zf = Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100)); try { widget.webContents.setZoomFactor(Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100))); } catch {} widget.webContents.send('wcfg', wcfg); lastState && widget.webContents.send('state', lastState); lastLyrics && widget.webContents.send('lyrics', lastLyrics); widgetReady = true; if (widgetWanted) showWidget(); widget.webContents.send('widget-visible', widget.isVisible()); });
   for (const event of ['show','hide']) widget.on(event, () => { if (widget && !widget.isDestroyed()) widget.webContents.send('widget-visible', event === 'show'); });
   widget.on('moved', () => { const [x, y] = widget.getPosition(); const st = readStore(); st.widgetPos = { x, y }; writeStore(st); });
-  widget.on('close', (e) => { if (!quitting) { e.preventDefault(); widget.hide(); } });
+  widget.on('close', (e) => { if (!quitting) { e.preventDefault(); hideWidget(); } });
   // 2.0.4: при выходе виджет закрывается раньше главного окна — обнуляем ссылку, чтобы события/IPC не трогали уничтоженное окно
-  widget.on('closed', () => { widget = null; });
+  widget.on('closed', () => { if (widget === createdWidget) { widget = null; widgetReady = false; } });
 }
 
-const showWidget = () => { if (widget && !widget.isVisible()) widget.showInactive(); };
-const toggleWidget = () => { if (!widget) return; if (widget.isVisible()) { if (widget && !widget.isDestroyed()) widget.hide(); manualWidget = false; } else { manualWidget = true; widget.showInactive(); } };
+// A request survives initial loading. A stale main-window focus event must not cancel it.
+function hideWidget() {
+  widgetWanted = false;
+  if (widget && !widget.isDestroyed()) widget.hide();
+}
+function showWidget() {
+  if (quitting) return;
+  widgetWanted = true;
+  if (!widget || widget.isDestroyed()) createWidget();
+  if (!widget || widget.isDestroyed() || !widgetReady) return;
+  // Displays/DPI can change after startup (dock, monitor disconnect, remote desktop).
+  const b = widget.getBounds(), displays = screen.getAllDisplays();
+  const visible = displays.some(({workArea:a}) => Math.min(b.x+b.width,a.x+a.width)-Math.max(b.x,a.x) >= Math.min(64,b.width) && Math.min(b.y+b.height,a.y+a.height)-Math.max(b.y,a.y) >= Math.min(40,b.height));
+  if (!visible) {
+    const a = screen.getDisplayMatching(b).workArea;
+    widget.setPosition(Math.max(a.x,Math.min(b.x,a.x+a.width-b.width)),Math.max(a.y,Math.min(b.y,a.y+a.height-b.height)));
+  }
+  if (!widget.isVisible()) widget.showInactive();
+}
+const toggleWidget = () => {
+  if (widgetWanted || (widget && !widget.isDestroyed() && widget.isVisible())) { hideWidget(); manualWidget = false; }
+  else { manualWidget = true; showWidget(); }
+};
 // виджет в угол экрана
 function snapWidget(corner) {
   if (!widget) return; const [W, H] = widget.getSize(), wa = screen.getDisplayMatching(widget.getBounds()).workArea, m = 16;
@@ -366,7 +396,7 @@ ipcHandle('clipboard:write', (_e, text) => {
   try { clipboard.writeText(text); return {ok:true}; } catch { return {error:'Системный буфер обмена недоступен'}; }
 });
 ipcHandle('store:get', () => { const library = readStore().library || null; catalogLocale.set(library?.settings?.app?.language); return library; });
-function saveLibrary(lib) { if (resetting || !lib || typeof lib !== 'object' || Array.isArray(lib)) return false; const s = readStore(); s.library = lib; safety.atomicJSON(storeFile(), s, true); return true; }
+function saveLibrary(lib) { if (resetting || !lib || typeof lib !== 'object' || Array.isArray(lib)) return false; const s = readStore(); s.library = require('./audius').libraryReferences(lib); safety.atomicJSON(storeFile(), s, true); return true; }
 ipcOn('store:set', (_e, lib) => { try { saveLibrary(lib); } catch(e) { console.error('library save', e); } });
 ipcOn('store:flush', (e, lib) => { try { e.returnValue = saveLibrary(lib); } catch { e.returnValue = false; } });
 ipcHandle('app:reset', (_e, o) => {
@@ -408,13 +438,14 @@ const vidOf = (id) => (svc.isSvc(id) ? svc.cachedYt(id) : id);
 ipcHandle('dl:list', () => { const m = off.offlineCatalog(); const o = {}; for (const id in m) { o[id] = { file: m[id].file, audioFile:m[id].audioFile||null, videoFile:m[id].videoFile||null, hasVideo:!!m[id].videoFile, kind: off.thumbKind(id) }; for (const a of svc.aliasesOf(id)) o[a] = { ...o[id], vid: id }; } return {...o,...media().list().offline}; });
 ipcOn('dl:start', (_e, items) => items.forEach(async (it) => {
   const id = typeof it === 'string' ? it : it.id, art = typeof it === 'string' ? null : it.art;
+  if (isAudius(id)) return; // Audius streaming only; no offline download.
   if (!svc.isSvc(id)) return off.enqueue(id, art, it?.video===true);
   try { off.enqueue(await svc.ytFor(id), art, it?.video===true); } catch (e) { win && win.webContents.send('dl', { id, status: 'error', error: String(e.message || e) }); }
 }));
 ipcOn('dl:cancel', (_e, id) => { const v = vidOf(id); if (v) off.cancel(v); else win && win.webContents.send('dl', { id, status: 'none' }); });
 ipcHandle('dl:remove', async (_e, id) => { if(typeof id==='string'&&id.startsWith('local-')){await media().remove(id);return true;} const v = vidOf(id); if (v) { off.cancel(v); off.remove(v); } return true; });
-ipcHandle('yt:prefetch', async (_e, id) => { try { return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id); } catch { return null; } });
-ipcHandle('yt:resolve', async (_e, id) => { try { const v = svc.isSvc(id) ? await svc.ytFor(id) : id; await off.resolveStream(v); return { ok: true, vid: v }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });
+ipcHandle('yt:prefetch', async (_e, id) => { try { if (isAudius(id)) return null; return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id); } catch { return null; } });
+ipcHandle('yt:resolve', async (_e, id) => { try { if (isAudius(id)) return { ok: !!(await audius.getTrack(id)), source: 'ad' }; const v = svc.isSvc(id) ? await svc.ytFor(id) : id; await off.resolveStream(v); return { ok: true, vid: v }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });
 ipcHandle('yt:search', async (_e, q) => { try { return await yt.search(q); } catch (e) { console.error(e); return null; } });
 ipcHandle('yt:mix', async (_e, v, list) => { try { return await yt.fetchMix(v, list); } catch (e) { console.error(e); return null; } });
 ipcHandle('yt:video', (_e, id) => yt.videoInfo(id));
@@ -434,7 +465,7 @@ const LY_RANK = { word: 0, line: 1, plain: 2, instrumental: 3 };
 ipcHandle('lyrics:get', async (_e, q) => {
   const mode = ['yt', 'am', 'sp', 'lr', 'spicy'].includes(q && q.src) ? q.src : 'auto';
   const db = () => lyr.getLyrics(q).catch((e) => { console.error(e); return null; });
-  const fromSvc = () => svc.lyricsFor(q, mode === 'spicy' ? 'auto' : mode, { bgVox: !(q && q.bgVox === false) }).catch((e) => { console.error(e); return null; });
+  const fromSvc = () => isAudius(q?.id) ? Promise.resolve(null) : svc.lyricsFor(q, mode === 'spicy' ? 'auto' : mode, { bgVox: !(q && q.bgVox === false) }).catch((e) => { console.error(e); return null; });
   let r;
   // Spicy Lyrics uses the project credential in the main process; fallback sources remain available.
   if (mode === 'spicy' || (mode === 'auto' && q && q.useSpicy === true)) {
@@ -459,23 +490,23 @@ ipcHandle('lyrics:get', async (_e, q) => {
   return r;
 });
 ipcHandle('acc:browser', safe((_e, b, site) => acc.loginFromBrowser(b, site, spSink(site))));
-ipcHandle('ytm:feed', safe((_e, id, params) => (client !== 'yt' ? svc.feed(client, id, params) : ytm.feed(id, params))));
-ipcHandle('ytm:browse', safe((_e, id, params) => (svc.isSvc(id) ? svc.browse(id) : ytm.browse(id, params))));
-ipcHandle('ytm:search', safe((_e, q, f) => (client !== 'yt' ? svc.search(client, q, f) : ytm.search(q, f))));
-ipcHandle('ytm:suggest', safe((_e, q) => (client !== 'yt' ? svc.suggest(client, q) : ytm.suggest(q))));
-ipcHandle('ytm:next', safe((_e, v, list) => (svc.isSvc(v) || svc.isSvc(list) ? svc.next(v, list) : ytm.next(v, list))));
-ipcHandle('ytm:related', safe((_e, id) => (svc.isSvc(id) ? svc.related(id) : ytm.related(id))));
-ipcHandle('ytm:lyrics', safe((_e, id) => ytm.ytLyrics(id)));
-ipcHandle('ytm:like', safe((_e, id, on) => (svc.isSvc(id) ? svc.like(id, on) : ytm.like(id, on))));
-ipcHandle('ytm:dislike', safe((_e, id, on) => (svc.isSvc(id) ? svc.dislike(id, on) : ytm.dislike(id, on)))); // 2.0.4: «Не нравится»
+ipcHandle('ytm:feed', safe((_e, id, params) => (client === 'ad' ? audius.feed(id) : client !== 'yt' ? svc.feed(client, id, params) : ytm.feed(id, params))));
+ipcHandle('ytm:browse', safe((_e, id, params) => (isAudius(id) ? audius.browse(id) : svc.isSvc(id) ? svc.browse(id) : ytm.browse(id, params))));
+ipcHandle('ytm:search', safe((_e, q, f) => (client === 'ad' ? audius.search(q, f) : client !== 'yt' ? svc.search(client, q, f) : ytm.search(q, f))));
+ipcHandle('ytm:suggest', safe((_e, q) => (client === 'ad' ? [] : client !== 'yt' ? svc.suggest(client, q) : ytm.suggest(q))));
+ipcHandle('ytm:next', safe((_e, v, list) => (isAudius(v) ? audius.related(v).then(tracks => ({ tracks, lyricsId: null })) : svc.isSvc(v) || svc.isSvc(list) ? svc.next(v, list) : ytm.next(v, list))));
+ipcHandle('ytm:related', safe((_e, id) => (isAudius(id) ? audius.related(id).then(items => [{ title: 'Треки', items, list: true }]) : svc.isSvc(id) ? svc.related(id) : ytm.related(id))));
+ipcHandle('ytm:lyrics', safe((_e, id) => isAudius(id) ? null : ytm.ytLyrics(id)));
+ipcHandle('ytm:like', safe((_e, id, on) => (isAudius(id) ? { local: true } : svc.isSvc(id) ? svc.like(id, on) : ytm.like(id, on))));
+ipcHandle('ytm:dislike', safe((_e, id, on) => (isAudius(id) ? { local: true } : svc.isSvc(id) ? svc.dislike(id, on) : ytm.dislike(id, on)))); // 2.0.4: «Не нравится»
 // 2.0.2: клиенты Apple Music / Spotify
-ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); if (o && 'language' in o) catalogLocale.set(o.language); return client; });
+ipcHandle('cl:set', (_e, c, o) => { client = ['am', 'sp', 'ad'].includes(c) ? c : 'yt'; if (o && 'amSf' in o) svc.setAppleRegion(o.amSf); if (o && 'language' in o) catalogLocale.set(o.language); return client; });
 ipcHandle('svc:login', safe((_e, s) => svc.login(win, s)));
 ipcHandle('svc:logout', safe((_e, s) => svc.logout(s)));
 ipcHandle('svc:status', safe(() => svc.status()));
 ipcHandle('svc:playlists', safe((_e, s) => svc.playlists(s)));
 ipcHandle('svc:playlist-art', safe((_e, id) => svc.playlistArtwork(id)));
-ipcHandle('svc:link', (_e, id) => svc.link(id));
+ipcHandle('svc:link', (_e, id) => isAudius(id) ? audius.link(id) : svc.link(id));
 ipcHandle('ytm:subscribe', safe((_e, id, on) => ytm.subscribe(id, on)));
 ipcHandle('ytm:addTo', safe((_e, ids) => ytm.addToOptions(ids)));
 ipcHandle('ytm:plCreate', safe((_e, title, desc, privacy, ids) => ytm.createPlaylist(title, desc, privacy, ids)));
@@ -483,6 +514,10 @@ ipcHandle('ytm:plAdd', safe((_e, pid, ids) => ytm.addToPlaylist(pid, ids)));
 ipcHandle('ytm:plRemove', safe((_e, pid, items) => ytm.removeFromPlaylist(pid, items)));
 ipcHandle('ytm:plDelete', safe((_e, pid) => ytm.deletePlaylist(pid)));
 ipcHandle('ytm:plRename', safe((_e, pid, name) => ytm.renamePlaylist(pid, name)));
+ipcHandle('audius:track', safe((_e, id) => audius.getTrack(id)));
+ipcHandle('audius:search', safe((_e, q) => audius.search(q, 'songs')));
+ipcHandle('audius:select', safe((e, t, mode, manual, key) => audius.select(t, ['auto','prefer'].includes(mode) ? mode : 'current', typeof manual === 'string' ? manual : null, e.sender.id + ':' + key)));
+ipcHandle('audius:cancel', (e, key) => { audius.cancel(e.sender.id + ':' + key); return true; });
 ipcHandle('lyrics:search', safe((_e, q) => lyr.searchLyrics(q)));
 // Spicy Lyrics: official developer API, authenticated with the Pulse project credential.
 // Внутренний API расширения сторонним клиентам запрещён, поэтому его не трогаем.
@@ -626,7 +661,7 @@ ipcOn('win', (_e, action) => {
     win.isMaximized() ? win.unmaximize() : win.maximize(); }
   if (action === 'close') win.close();
   if (action === 'widget') toggleWidget();
-  if (action === 'widget-hide') { if (widget && !widget.isDestroyed()) widget.hide(); manualWidget = false; }
+  if (action === 'widget-hide') { hideWidget(); manualWidget = false; }
   if (action === 'open') showMain();
   if (action === 'edit-widget') { showMain(); win.webContents.send('cmd', 'editor', 'widget'); }
   if (action === 'quit') { quitting = true; app.quit(); }

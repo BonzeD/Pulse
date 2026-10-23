@@ -8,7 +8,7 @@
   LYS_VIS.push(['mineradio', 'Mineradio']);
   const Y = () => lyY();
   const isMr = () => (Y().vis || 'classic') === 'mineradio';
-  const want = () => !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит
+  const want = () => !window.PulsePrism?.active() && !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит
   const active = () => want() && MR.ready;
   window.mrActive = active;
   const win = () => { try { return MR.frame && MR.frame.contentWindow; } catch (e) { return null; } };
@@ -25,7 +25,7 @@
 
   // ---------- API для фрейма ----------
   window.PulseMR = {
-    version: '1.0.1',
+    version: '1.0.2',
     time: () => { const k = stretchK() || 1; return Math.max(0, (heard(S().ly.lag || 0) - offset()) / k); },
     dur: () => E.dur() || 0,
     playing: () => !!playing,
@@ -103,7 +103,7 @@
     document.body.classList.toggle('mr-on', on);
     // своя сцена Pulse под Mineradio не рисуется — возвращаем цикл, когда Mineradio ушёл
     if (!on && MR.parked && typeof lys !== 'undefined' && lys.on) { MR.parked = false; cancelAnimationFrame(lys.raf); lys.raf = requestAnimationFrame(lysLoop); }
-    if (!w && !window.pulseWinHidden && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, 60000);
+    if (!w && !window.PulsePrism?.active() && !window.pulseWinHidden && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, 60000);
   }
   window.mrSync = mrSync;
   window.mrConsole = () => { const fw = win(); if (fw && fw.__pulse) fw.__pulse.openConsole(); };

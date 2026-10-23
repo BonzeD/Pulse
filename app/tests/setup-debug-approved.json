@@ -1,0 +1,129 @@
+{
+  "renderer/app.js": {
+    "sha256": "06b39791fa05faaebe4b717bfdfdcd416760dc74dbf8f9d506d63514134511c2",
+    "originalSha256": "f4a587ea6679df017949097adf366747a4952b9d0b9a3c8b70e346312cf175f8",
+    "patches": [
+      {
+        "from": 365,
+        "to": 366,
+        "original": []
+      },
+      {
+        "from": 2198,
+        "to": 2199,
+        "original": []
+      },
+      {
+        "from": 2380,
+        "to": 2381,
+        "original": []
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "8427fc7179d0685d15689ab4b49c2000e3acb082340a66b75352ea9b3633a0d6",
+    "originalSha256": "4be212673f72ead963cd5027376273168c8f91440d2df8299af99635d5a6e062",
+    "patches": [
+      {
+        "from": 64,
+        "to": 65,
+        "original": [
+          "    <div class=\"sp-word\"><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div>\n"
+        ]
+      },
+      {
+        "from": 370,
+        "to": 373,
+        "original": []
+      }
+    ]
+  },
+  "renderer/boot.js": {
+    "sha256": "3b520739422367c0f02cf6bf0b4c9d9b3c88e8beafe0cddfc6c9126afe714fb0",
+    "originalSha256": "1b5609b0eb8f9a8e4eb7b3f3bbad57570bccb49b08ae4a1ff3156627f6176122",
+    "patches": [
+      {
+        "from": 13,
+        "to": 15,
+        "original": [
+          "  const saved = await pulse.getLibrary().catch(() => null);\n"
+        ]
+      },
+      {
+        "from": 59,
+        "to": 61,
+        "original": [
+          "  if (primaryFirstRun) save(); // Persist once; upgrades never reapply the author preset.\n"
+        ]
+      }
+    ]
+  },
+  "renderer/prism-live.js": {
+    "sha256": "a7bcfee12fc35f2ac7895781dc2100fb76aea89cb5277e394673f1da7f98144a",
+    "originalSha256": "a31e8083d2b6b25cbc5439c37f6ad256c588a456c12e7a78f45ae3628874faca",
+    "patches": [
+      {
+        "from": 34,
+        "to": 35,
+        "original": [
+          "    host.querySelector('.sp-live-back').setAttribute('aria-label',t.close+' (Esc)');host.querySelector('.sp-live-hint').textContent=t.hint;\n"
+        ]
+      },
+      {
+        "from": 63,
+        "to": 64,
+        "original": []
+      },
+      {
+        "from": 84,
+        "to": 85,
+        "original": [
+          "    if(host||document.getElementById('splash'))return false;\n"
+        ]
+      },
+      {
+        "from": 88,
+        "to": 89,
+        "original": [
+          "    host.innerHTML='<div class=\"sp-prism-static\"></div><canvas class=\"sp-prism\" aria-hidden=\"true\"></canvas><div class=\"sp-vig\"></div><div class=\"sp-grain\"></div><button type=\"button\" class=\"sp-live-back\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M14 6l-6 6 6 6\"/></svg><span></span><kbd>Esc</kbd></button><div class=\"sp-core\"><p class=\"sp-live-eyebrow\">PRISM / LIVE</p><div class=\"sp-word\" aria-label=\"Pulse\"><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div><div class=\"sp-signal\" aria-hidden=\"true\"><i></i></div><p class=\"sp-live-status\" data-i18n-skip></p></div><p class=\"sp-live-hint\" data-i18n-skip></p>';\n"
+        ]
+      },
+      {
+        "from": 92,
+        "to": 94,
+        "original": []
+      },
+      {
+        "from": 111,
+        "to": 120,
+        "original": [
+          "  return{open,close,active,stats:()=>({active:active(),opened,draws:draws+(art?.stats().frames||0),renderer:art?.stats()||null,signal:!!model?.state.signal})};\n"
+        ]
+      }
+    ]
+  },
+  "renderer/splash.css": {
+    "sha256": "903114eae2ffff1226947ef860223d1ea6477ef4e69e941f131649de6e1b0054",
+    "originalSha256": "aad15d990510972cfe15112c97b1a27105c3f02aaf4d59b8c627317a7e534f10",
+    "patches": [
+      {
+        "from": 60,
+        "to": 72,
+        "original": []
+      }
+    ]
+  },
+  "renderer/splash.js": {
+    "sha256": "91ef408b81a258ce35fd2c121404483c46728362220b058534ecfe8678e90e09",
+    "originalSha256": "7065195184f550f23986b0c072625d0c9ad9e114ee4fc5d09e68940da310f374",
+    "patches": [
+      {
+        "from": 13,
+        "to": 14,
+        "original": [
+          "  el.innerHTML = '<div class=\"sp-prism-static\"></div><canvas class=\"sp-prism\" aria-hidden=\"true\"></canvas><div class=\"sp-vig\"></div><div class=\"sp-grain\"></div><div class=\"sp-core\"><div class=\"sp-word\" aria-label=\"Pulse\"><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div><div class=\"sp-signal\" aria-hidden=\"true\"><i></i></div><p class=\"sp-tagline\" data-i18n-skip></p></div>';\n"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,254 @@
+{
+  "renderer/viz.js": {
+    "sha256": "b6febe54f091dcd0c08c6f158cf698359c6ff1cbe7fa4d5109d247b36a623547",
+    "originalSha256": "5a0264e8969c03f9ce6820cf48c44d7902c4f3c847b93e285526ad692b1b0489",
+    "patches": [
+      {
+        "to": 56,
+        "original": [
+          "  function init(c) { if (ro) try { ro.disconnect(); } catch {} cv = c; ctx = c.getContext('2d', { alpha: true, desynchronized: true }); resize(); ro = new ResizeObserver(resize); ro.observe(c.parentElement); }\n",
+          "  function destroy() { hideDirect(); if(gcv&&gcv.parentNode)gcv.remove(); if (ro) try { ro.disconnect(); } catch {} ro = null; cv = null; ctx = null; glowCanvas = glowContext = bloomCanvas = bloomContext = null; W = 0; }\n"
+        ],
+        "from": 42
+      },
+      {
+        "to": 96,
+        "original": [],
+        "from": 94
+      },
+      {
+        "to": 112,
+        "original": [
+          "        const kk = v > bands[i] ? 0.55 + REACT * 0.45 : 0.1 + REACT * 0.3;\n",
+          "        bands[i] += (v - bands[i]) * (kk >= 1 ? 1 : 1 - Math.pow(1 - kk, fk));\n"
+        ],
+        "from": 111
+      },
+      {
+        "to": 117,
+        "original": [],
+        "from": 116
+      },
+      {
+        "to": 120,
+        "original": [
+          "        const v = playing ? Math.max(0, base * SENS * (i<8?BASSK:1)) : 0.02;const k=.12+REACT*.68;bands[i]+=(v-bands[i])*(1-Math.pow(1-k,fk));\n"
+        ],
+        "from": 119
+      },
+      {
+        "to": 140,
+        "original": [
+          "    if (!ctx) return; if (!W) resize(); if (!W) return;\n"
+        ],
+        "from": 139
+      },
+      {
+        "to": 260,
+        "original": [
+          "      const h = 3 + Math.pow(bands[i], 1.25) * mh;\n"
+        ],
+        "from": 258
+      },
+      {
+        "to": 347,
+        "original": [
+          "        if (g.wave) { const k = Math.floor((i / pts) * (g.wave.length - 1 - L * 8)) + L * 8; y = ((g.wave[k] - 128) / 128) * amp * (1.6 - L * 0.3); }\n"
+        ],
+        "from": 346
+      },
+      {
+        "to": 530,
+        "original": [
+          "    if (!st.heads || st.heads.length !== cols*rows) st.heads = new Int32Array(cols*rows);\n"
+        ],
+        "from": 529
+      },
+      {
+        "to": 532,
+        "original": [
+          "    st.heads.fill(-1);\n"
+        ],
+        "from": 531
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "25b5db76bf2c024b001f17f38feca942caad849c9c48e65170f414cdf435467a",
+    "originalSha256": "2274e4441eb506363ba3a9b5250712eab9cd70873b5c6c3969dbad1d46192331",
+    "patches": [
+      {
+        "to": 1036,
+        "original": [
+          "  const r = el.getBoundingClientRect(), lim = menuTop();\n",
+          "  if (r.height && r.top < lim) el.style.maxHeight = Math.max(160, r.bottom - lim) + 'px';\n"
+        ],
+        "from": 1031
+      },
+      {
+        "to": 1664,
+        "original": [],
+        "from": 1662
+      },
+      {
+        "to": 1703,
+        "original": [
+          "    try { Viz.draw({ minDt, quality: S().perf.mode, sens: V.sens / 100, noBars: true, freq: f, wave: wv, beat: V.tempo ? beat : beat * 0.6, playing, mode, style: lib.vizStyle, artRect: ar, center: !ar && mode === 'visual' ? stageCenter() : null, tempo: V.tempo ? tempo : { bpm: 100, pos: performance.now() / 600, conf: 0 }, sr: fr ? fr.sampleRate : actx ? actx.sampleRate : 48000, fx: V.fx, cover: coverImg, energy: beatState.an && beatState.an.energy ? beatState.an.energy(ht) : null }); } catch (e) { console.error(e); }\n"
+        ],
+        "from": 1702
+      }
+    ]
+  },
+  "renderer/extras.js": {
+    "sha256": "08e69d817aa7a11b854b427f5f9939818024ed8588fd35eabe087e3a4a20938c",
+    "originalSha256": "eafc7959bec7d8cb77afa0465463969823fad29cc06b5294aa4efdb1a975999e",
+    "patches": [
+      {
+        "to": 73,
+        "original": [],
+        "from": 72
+      },
+      {
+        "to": 82,
+        "original": [],
+        "from": 79
+      },
+      {
+        "to": 510,
+        "original": [],
+        "from": 509
+      }
+    ]
+  },
+  "renderer/custom.js": {
+    "sha256": "31e01eb72eb076b282762c01d578ab760dcb5d2cb6afc052b1c368e5431b0103",
+    "originalSha256": "f1c81fc0fd5c77884a131f8067d7220049f98041b5adcb4aaf0e7e844072ef83",
+    "patches": [
+      {
+        "to": 158,
+        "original": [
+          "function closeLyPop() { pops.ly = pops.viz = false; const a = $('lyPop'), b = $('vizPop'); if (a) { a.classList.remove('on'); a.innerHTML = ''; } if (b) { b.classList.remove('on'); b.innerHTML = ''; } }\n"
+        ],
+        "from": 157
+      },
+      {
+        "to": 161,
+        "original": [
+          "$('lyLookBtn').onclick = (e) => { e.stopPropagation(); const on = !pops.ly; closeLyPop(); closeOthers(); pops.ly = on; if (on) { renderLyPop(); $('lyPop').classList.add('on'); fitPop($('lyPop')); } };\n",
+          "$('vizFx').onclick = (e) => { e.stopPropagation(); const on = !pops.viz; closeLyPop(); closeOthers(); pops.viz = on; if (on) { renderVizPop(); $('vizPop').classList.add('on'); fitPop($('vizPop')); } };\n"
+        ],
+        "from": 159
+      }
+    ]
+  },
+  "renderer/lyfix.js": {
+    "sha256": "528f32c4bdbc4d5a361211a72fc100871d9a1491ad2995a652a4a54327b46160",
+    "originalSha256": "cc368bee2746997370f8d85e78d70d7f9d265302db1b3a79e50d4736a374a184",
+    "patches": [
+      {
+        "to": 12,
+        "original": [
+          "  fixOpen = true; if (tab) fix.tab = tab; $('lyFix').classList.add('on'); $('lyFixBtn').classList.add('on'); $('lyFixBtn').setAttribute('aria-expanded', 'true'); renderFix(); $('lyFix').querySelector('[data-fx=\"close\"]')?.focus();\n"
+        ],
+        "from": 11
+      },
+      {
+        "to": 14,
+        "original": [
+          "function closeFix() { ++fixSearchRevision; fix.busy = false; if (fix.tap) fix.tap = null; fixOpen = false; $('lyFix').classList.remove('on'); $('lyFixBtn').classList.remove('on'); $('lyFixBtn').setAttribute('aria-expanded', 'false'); $('lyFixBtn').focus(); }\n"
+        ],
+        "from": 13
+      },
+      {
+        "to": 157,
+        "original": [
+          "  if (a === 'tab') { if ($('fxText')) fixDrafts.set(t.id, $('fxText').value); fix.tab = v; if (v === 'find') fix.res = null; return renderFix(); }\n"
+        ],
+        "from": 156
+      }
+    ]
+  },
+  "renderer/surface-motion.js": {
+    "sha256": "5cedd4dcfd8227a0eb52fa99f082b188fd571600a6afb6b077d26e1bc7dfdec5",
+    "originalSha256": "38a81bf24b0805f9e08cdadace269503611520a8c1a31aa8951cf84362dec2ef",
+    "patches": [
+      {
+        "to": 24,
+        "original": [
+          " function stop(){flush();for(const a of running)a.cancel();running.clear();}\n"
+        ],
+        "from": 12
+      },
+      {
+        "to": 28,
+        "original": [
+          " window.PulseMotion={enter,remove,flush,stop,enabled,stats:()=>({pending:pending.size,running:running.size})};\n"
+        ],
+        "from": 27
+      }
+    ]
+  },
+  "renderer/motion.css": {
+    "sha256": "df99ef3de4e1a64950357d960530f6465c1e1e4d37e5df79bd9c7cb44e292f79",
+    "originalSha256": "95ba193f333336e194c5134395942784b536aec9ff8a964db949d7a75ab24e74",
+    "patches": [
+      {
+        "to": 141,
+        "original": [],
+        "from": 124
+      }
+    ]
+  },
+  "renderer/api.js": {
+    "sha256": "fea66bcb242347a5bd6aad488705ddcd571f5d585b41295789276948d2300cb3",
+    "originalSha256": "fe6c9c83e2e418f01e8b841af8652c5027b02de61a7cbb387c894e4d24f4a2c9",
+    "patches": [
+      {
+        "to": 15,
+        "original": [
+          "  version: '1.0.1',\n"
+        ],
+        "from": 14
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "a215aca1a2569d8f29de49840c5cdbaf05b2ccdd82efb5e22c2e101b811ea9a7",
+    "originalSha256": "8710d2e8b28f078936619035ac4cc4b13042f07b5998290a0d1e544d54ba9ea8",
+    "patches": [
+      {
+        "to": 28,
+        "original": [
+          "    version: '1.0.1',\n"
+        ],
+        "from": 27
+      }
+    ]
+  },
+  "build/installer.nsi": {
+    "sha256": "21fe3769460c15db1d8f940ab80bac6e80c59774e2245420ab2b48455dbd0796",
+    "originalSha256": "776a8d898eb844be5c3b449727072a4f053150a7f88593116847d4775493f361",
+    "patches": [
+      {
+        "to": 9,
+        "original": [
+          "  !define VERSION \"1.0.1\"\n"
+        ],
+        "from": 8
+      }
+    ]
+  },
+  "build/installer-ui/design.html": {
+    "sha256": "f663dc36c5ea97cf8bc8e584a9835fdafa99d1bcfb22d8af0a7841443fc591e6",
+    "originalSha256": "eb706da5c0c383d453bf8ad0cec2335ce1a630bb6965b422cf53bd588a4281c0",
+    "patches": [
+      {
+        "to": 49,
+        "original": [
+          "const P=new URLSearchParams(location.search), page=P.get('p'), V=P.get('v')||'1.0.1', SIZE=P.get('size')||'420';\n"
+        ],
+        "from": 48
+      }
+    ]
+  }
+}

@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('pulse', {
   lyrics: (q) => ipcRenderer.invoke('lyrics:get', q),
   lyricsSearch: (q) => ipcRenderer.invoke('lyrics:search', q),
   plugins: { list: () => ipcRenderer.invoke('plugins:list'), open: () => ipcRenderer.send('plugins:open') },
+  audius: { track: id => ipcRenderer.invoke('audius:track', id), search: q => ipcRenderer.invoke('audius:search', q), select: (t, mode, manual, key) => ipcRenderer.invoke('audius:select', t, mode, manual, key), cancel: key => ipcRenderer.invoke('audius:cancel', key) },
   resolve: (id) => ipcRenderer.invoke('yt:resolve', id),
   visualizerTap: (options) => ipcRenderer.invoke('visualizer:tap', options),
   prefetch: (id) => ipcRenderer.invoke('yt:prefetch', id),

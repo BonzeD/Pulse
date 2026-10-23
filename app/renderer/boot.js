@@ -11,7 +11,8 @@ async function loadPlugins() {
 { const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.async = true; sc.onerror = () => (window.__ytFailed = true); document.head.appendChild(sc); }
 // ---------- запуск ----------
 (async () => {
-  const saved = await pulse.getLibrary().catch(() => null);
+  let libraryReadFailed = false;
+  const saved = await pulse.getLibrary().catch(() => { libraryReadFailed = true; return null; });
   if (saved) {
     // миграция с 1.3: текущий плейлист → очередь
     if (!saved.queue && saved.cur && saved.playlists) { const p = saved.playlists.find((x) => x.id === saved.cur.pl); if (p) saved.queue = { name: p.name, tracks: p.tracks, idx: Math.max(0, saved.cur.idx) }; }
@@ -56,5 +57,6 @@ async function loadPlugins() {
   if (online()) refreshAccount();
   scheduleSync();
   PX.emit('ready');
-  if (primaryFirstRun) save(); // Persist once; upgrades never reapply the author preset.
+  window.PulseWelcome?.ready(saved, libraryReadFailed);
+  if (!libraryReadFailed) { if (primaryFirstRun) save(); } // Persist once; upgrades never reapply the author preset.
 })();

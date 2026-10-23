@@ -1,83 +1,72 @@
-/* 2.0.4-fix: анимация запуска. Показывается только при настоящем запуске программы (не при открытии из трея — окно там
-   не перезагружается) и не при перезагрузке страницы. Всё движение — transform/opacity, считает видеокарта. */
-#splash{position:fixed;inset:0;z-index:100000;background:#07060b;overflow:hidden;display:grid;place-items:center;pointer-events:auto;
-  --s1:rgb(var(--a1,255,45,149));--s2:rgb(var(--a2,139,61,255));--s3:rgb(var(--a3,0,229,255));contain:strict}
-#splash.wait *{animation-play-state:paused!important}
-#splash .sp-aur{position:absolute;inset:-25%;filter:blur(70px);opacity:0;animation:spFade 1.4s ease-out .05s forwards}
-#splash .sp-aur i{position:absolute;width:55vmax;height:55vmax;border-radius:50%;mix-blend-mode:screen;opacity:.55;will-change:transform}
-#splash .sp-aur i:nth-child(1){left:8%;top:12%;background:radial-gradient(circle,var(--s1),transparent 62%);animation:spOrb1 7s ease-in-out infinite alternate}
-#splash .sp-aur i:nth-child(2){right:4%;top:22%;background:radial-gradient(circle,var(--s2),transparent 62%);animation:spOrb2 8s ease-in-out infinite alternate}
-#splash .sp-aur i:nth-child(3){left:30%;bottom:0;background:radial-gradient(circle,var(--s3),transparent 60%);opacity:.32;animation:spOrb3 9s ease-in-out infinite alternate}
-@keyframes spOrb1{to{transform:translate3d(12%,8%,0) scale(1.15)}}
-@keyframes spOrb2{to{transform:translate3d(-14%,10%,0) scale(.9)}}
-@keyframes spOrb3{to{transform:translate3d(6%,-12%,0) scale(1.2)}}
-#splash .sp-vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(4,3,8,.85) 100%)}
-#splash .sp-grain{position:absolute;inset:0;opacity:.05;background-image:repeating-radial-gradient(circle at 30% 40%,#fff 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
-/* линия пульса: «вытирается» слева направо двумя встречными сдвигами (дёшево, без пересчёта SVG) */
-#splash .sp-line{position:absolute;left:0;right:0;top:calc(50% - 38px);height:160px;margin-top:-80px;overflow:hidden;transform:translate3d(-100%,0,0);animation:spWipe 1.05s cubic-bezier(.65,0,.35,1) .15s forwards,spDim .8s ease-out 1.2s forwards}
-#splash .sp-line>div{position:absolute;inset:0;transform:translate3d(100%,0,0);animation:spWipeIn 1.05s cubic-bezier(.65,0,.35,1) .15s forwards}
-#splash .sp-line svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 6px var(--s1)) drop-shadow(0 0 18px var(--s2))}
-#splash .sp-line path{fill:none;stroke:url(#spG);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-@keyframes spWipe{to{transform:none}}
-@keyframes spDim{from{opacity:1}to{opacity:.45}}
-@keyframes spWipeIn{to{transform:none}}
-#splash .sp-line{-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
-#splash .sp-line.out{animation:spLineOut .7s ease-in forwards}
-@keyframes spLineOut{from{transform:none;opacity:1}to{transform:scaleY(.2);opacity:0}}
-/* центр */
-#splash .sp-core{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px;z-index:2}
-#splash .sp-logo{position:relative;width:132px;height:132px;opacity:0;transform:scale(.35) rotate(-14deg);animation:spPop .9s cubic-bezier(.34,1.56,.5,1) .72s forwards}
-#splash .sp-tilt{position:absolute;inset:0;transform:perspective(600px) rotateX(calc(var(--my,0) * -14deg)) rotateY(calc(var(--mx,0) * 16deg));transition:transform .5s cubic-bezier(.2,.8,.25,1);will-change:transform}
-#splash .sp-logo svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 18px 40px rgba(0,0,0,.6)) drop-shadow(0 0 30px color-mix(in srgb,var(--s1) 55%,transparent))}
-/* 2.0.4: логотип заставки = настоящая иконка приложения (build/icon.svg). Класс полосок — .sp-b, а не .bar:
-   правило .bar из style.css (полоса плеера, height:var(--bar)) растягивало SVG-полоски вниз. Каждая полоска
-   «играет» от своего центра — все центры на y=256, поэтому полоски всегда остаются на одной линии. */
-#splash .sp-logo .sp-b{transform-box:fill-box;transform-origin:50% 50%;animation:spEq .9s ease-in-out infinite alternate}
-#splash .sp-logo .sp-b:nth-of-type(2){animation-duration:.7s;animation-delay:-.3s}
-#splash .sp-logo .sp-b:nth-of-type(3){animation-duration:.8s;animation-delay:-.55s}
-@keyframes spEq{0%{transform:scaleY(.55)}100%{transform:scaleY(1)}}
-#splash .sp-logo .sp-tri{transform-box:fill-box;transform-origin:30% 50%;opacity:0;transform:translateX(-40px) scale(.6);animation:spTri .6s cubic-bezier(.2,.9,.3,1.3) 1.05s forwards,spBeat .9s ease-in-out 1.8s infinite}
-@keyframes spTri{to{opacity:1;transform:none}}
-@keyframes spBeat{0%,100%{transform:none}12%{transform:scale(1.08)}28%{transform:none}}
-#splash .sp-glare{transform:translate(calc(var(--mx,0) * 140px),calc(var(--my,0) * 140px));transition:transform .5s cubic-bezier(.2,.8,.25,1)}
-#splash .sp-spot{position:absolute;left:0;top:0;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,color-mix(in srgb,var(--s1) 26%,transparent),transparent 65%);transform:translate3d(var(--cx,50vw),var(--cy,50vh),0);transition:opacity .6s;mix-blend-mode:screen}
-#splash.hot .sp-spot{opacity:1}
-#splash .sp-word b{transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
-#splash .sp-word b.hv{transform:translateY(-8px) scale(1.12)!important}
-#splash .sp-logo .shine{position:absolute;inset:6px;border-radius:29px;overflow:hidden;pointer-events:none}
-#splash .sp-logo .shine::after{content:"";position:absolute;top:-20%;bottom:-20%;width:45%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-18deg);animation:spShine 1.1s ease-in-out 1.35s forwards}
-@keyframes spShine{to{transform:translateX(420%) skewX(-18deg)}}
-@keyframes spPop{0%{opacity:0;transform:scale(.35) rotate(-14deg)}60%{opacity:1}100%{opacity:1;transform:none}}
-#splash .sp-ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:30px;border:2px solid var(--s1);opacity:0;animation:spRing 1.8s cubic-bezier(.15,.7,.3,1) infinite;pointer-events:none}
-#splash .sp-ring:nth-child(2){border-color:var(--s2);animation-delay:.6s}
-#splash .sp-ring:nth-child(3){border-color:var(--s3);animation-delay:1.2s}
-#splash .sp-rings{position:absolute;inset:0;opacity:0;animation:spFade .3s ease-out .85s forwards}
-@keyframes spRing{0%{opacity:.75;transform:scale(1)}100%{opacity:0;transform:scale(3.2)}}
-#splash .sp-word{display:flex;gap:2px;font:800 54px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.02em;color:#fff}
-#splash .sp-word b{display:inline-block;opacity:0;transform:translateY(26px) scale(.8);filter:blur(10px);animation:spLet .75s cubic-bezier(.2,.9,.25,1.15) forwards;
-  background:linear-gradient(100deg,#fff 20%,var(--s1) 45%,var(--s2) 60%,#fff 85%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent}
-#splash .sp-word b:nth-child(1){animation-delay:1.1s}#splash .sp-word b:nth-child(2){animation-delay:1.17s}#splash .sp-word b:nth-child(3){animation-delay:1.24s}#splash .sp-word b:nth-child(4){animation-delay:1.31s}#splash .sp-word b:nth-child(5){animation-delay:1.38s}
-@keyframes spLet{0%{opacity:0;transform:translateY(26px) scale(.8);filter:blur(10px);background-position:100% 0}100%{opacity:1;transform:none;filter:blur(0);background-position:0 0}}
-#splash .sp-dots{position:absolute;inset:0;pointer-events:none}
-#splash .sp-dots i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:0;animation:spDot 3.2s ease-in-out infinite}
-@keyframes spDot{0%{opacity:0;transform:translate3d(0,20px,0)}30%{opacity:.7}100%{opacity:0;transform:translate3d(0,-60px,0)}}
-@keyframes spFade{to{opacity:1}}
-/* уход: центр улетает вперёд, ударная волна, фон растворяется — под ним уже приложение */
-#splash.bye{pointer-events:none;animation:spBye .85s cubic-bezier(.6,0,.3,1) forwards}
-#splash.bye .sp-core{animation:spCoreOut .75s cubic-bezier(.5,0,.75,0) forwards}
-#splash .sp-wave{position:absolute;left:50%;top:50%;width:160px;height:160px;margin:-80px 0 0 -80px;border-radius:50%;opacity:0;box-shadow:0 0 0 3px var(--s1),0 0 60px 10px color-mix(in srgb,var(--s2) 60%,transparent),inset 0 0 40px color-mix(in srgb,var(--s1) 50%,transparent)}
-#splash.bye .sp-wave{animation:spShock .8s cubic-bezier(.2,.7,.3,1) forwards}
-@keyframes spShock{0%{opacity:.9;transform:scale(.5)}100%{opacity:0;transform:scale(14)}}
-@keyframes spCoreOut{to{opacity:0;transform:scale(1.6);filter:blur(6px)}}
-@keyframes spBye{0%{opacity:1}35%{opacity:1}100%{opacity:0}}
-/* приложение «собирается» после заставки */
-body.sp-intro .side{animation:spInL .8s cubic-bezier(.2,.8,.25,1) both}
-body.sp-intro .top{animation:spInT .8s cubic-bezier(.2,.8,.25,1) .06s both}
-body.sp-intro #view{animation:spInV .9s cubic-bezier(.2,.8,.25,1) .12s both}
-body.sp-intro .bar{animation:spInB .8s cubic-bezier(.2,.8,.25,1) .18s both}
-@keyframes spInL{from{opacity:0;transform:translate3d(-28px,0,0)}}
-@keyframes spInT{from{opacity:0;transform:translate3d(0,-16px,0)}}
-@keyframes spInV{from{opacity:0;transform:translate3d(0,22px,0) scale(.985)}}
-@keyframes spInB{from{opacity:0;transform:translate3d(0,26px,0)}}
-@media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
+/* Pulse / PRISM. Large, quiet identity over curved dark glass. The original
+   launch preferences and timing live in splash.js; this is not a loading bar. */
+:is(#splash,#prismLive){position:fixed;inset:0;z-index:100000;overflow:hidden;display:grid;place-items:center;pointer-events:auto;background:#050609;color:#f6f5f1;contain:strict;--s1:rgb(var(--a1,255,45,149));--s2:rgb(var(--a2,139,61,255));--s3:rgb(var(--a3,0,229,255));isolation:isolate}
+/* Hide old parser markup until the small inline startup controller mounts it. */
+:is(#splash,#prismLive) .sp-aur,:is(#splash,#prismLive) .sp-logo,:is(#splash,#prismLive) .sp-line,:is(#splash,#prismLive) .sp-dots,:is(#splash,#prismLive) .sp-spot,:is(#splash,#prismLive) .sp-wave{display:none}
+:is(#splash,#prismLive).wait *{animation-play-state:paused!important}
+:is(#splash,#prismLive) .sp-prism,:is(#splash,#prismLive) .sp-prism-static,:is(#splash,#prismLive) .sp-vig,:is(#splash,#prismLive) .sp-grain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+:is(#splash,#prismLive) .sp-prism{opacity:0;transition:opacity 360ms ease}
+:is(#splash,#prismLive).sp-prism-ready .sp-prism{opacity:1}
+:is(#splash,#prismLive) .sp-prism-static{background:radial-gradient(ellipse at 20% 28%,color-mix(in srgb,var(--s2) 12%,transparent),transparent 48%),radial-gradient(ellipse at 78% 70%,color-mix(in srgb,var(--s1) 8%,transparent),transparent 52%),#050609;transition:opacity 360ms ease}
+:is(#splash,#prismLive).sp-prism-ready .sp-prism-static{opacity:0}
+:is(#splash,#prismLive).sp-prism-fallback .sp-prism-static::after{content:"";position:absolute;inset:-30%;transform:rotate(-22deg);background:repeating-linear-gradient(90deg,transparent 0 72px,rgba(181,181,205,.045) 74px,rgba(181,181,205,.008) 105px,transparent 106px 152px);mask-image:radial-gradient(ellipse,#000,transparent 66%)}
+:is(#splash,#prismLive) .sp-vig{background:radial-gradient(ellipse at 50% 44%,transparent 15%,rgba(2,3,6,.28) 65%,rgba(2,3,6,.72) 100%)}
+:is(#splash,#prismLive) .sp-grain{opacity:.025;background:repeating-linear-gradient(0deg,transparent 0 3px,#e6e9f2 3px 4px);mask-image:radial-gradient(ellipse,#000,transparent 78%)}
+:is(#splash,#prismLive) .sp-core{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;max-width:calc(100% - 48px);transform:translateY(-3%);pointer-events:none}
+:is(#splash,#prismLive) .sp-word{display:flex;justify-content:center;align-items:baseline;gap:0;font:800 clamp(76px,14vw,176px)/1.06 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.065em;padding-right:.065em;white-space:nowrap;color:#f6f5f1}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b{display:inline-block;font-weight:inherit;opacity:0;filter:none;transform:translate3d(0,12px,0);animation:spPrismLetter 680ms cubic-bezier(.2,.75,.25,1) both;text-shadow:0 2px 28px rgba(0,0,0,.25);background:none;color:inherit}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(1){animation-delay:140ms}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(2){animation-delay:190ms}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(3){animation-delay:240ms;color:#f3dce7}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(4){animation-delay:290ms;color:#d7c9ef}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(5){animation-delay:340ms;color:#c6dce6}
+:is(#splash,#prismLive) .sp-signal{position:relative;width:clamp(160px,24vw,280px);height:1px;margin:25px 0 20px;background:linear-gradient(90deg,transparent,rgba(236,227,239,.24),transparent);overflow:hidden;opacity:0;animation:spPrismFade 700ms ease 400ms both}
+:is(#splash,#prismLive) .sp-signal i{position:absolute;inset:0;background:linear-gradient(90deg,transparent 20%,rgba(255,244,251,.72),transparent 80%);transform:translateX(-100%);animation:spPrismSignal 1500ms cubic-bezier(.25,.65,.3,1) 150ms both}
+:is(#splash,#prismLive) .sp-tagline{margin:0;max-width:100%;color:#b3afbd;font:500 14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.15em;text-align:center;opacity:0;animation:spPrismFade 650ms ease 570ms both}
+:is(#splash,#prismLive).bye{pointer-events:none;animation:spPrismExit 500ms ease forwards}
+:is(#splash,#prismLive).bye .sp-core{animation:spPrismCoreOut 420ms ease forwards}
+@keyframes spPrismLetter{to{opacity:1;transform:none}}
+@keyframes spPrismFade{from{opacity:0}to{opacity:1}}
+@keyframes spPrismSignal{to{transform:translateX(100%)}}
+@keyframes spPrismExit{to{opacity:0}}
+@keyframes spPrismCoreOut{to{opacity:0;transform:translateY(-10px)}}
+body.sp-intro .side,body.sp-intro .top,body.sp-intro #view,body.sp-intro .bar{animation:spPrismAppIn 420ms ease backwards}
+@keyframes spPrismAppIn{from{opacity:0}}
+@media(max-width:480px){:is(#splash,#prismLive) .sp-core{max-width:calc(100% - 32px)}:is(#splash,#prismLive) .sp-word{font-size:clamp(64px,24vw,104px)}:is(#splash,#prismLive) .sp-tagline{letter-spacing:.06em}:is(#splash,#prismLive) .sp-signal{margin-top:22px;width:168px}}
+@media(prefers-reduced-motion:reduce){#splash{display:none}:is(#splash,#prismLive) *{animation:none!important;transition:none!important}}
+@media(forced-colors:active){:is(#splash,#prismLive){background:Canvas;color:CanvasText}:is(#splash,#prismLive) .sp-prism,:is(#splash,#prismLive) .sp-prism-static,:is(#splash,#prismLive) .sp-vig,:is(#splash,#prismLive) .sp-grain{display:none}:is(#splash,#prismLive)[data-style="prism"] .sp-word b,:is(#splash,#prismLive) .sp-tagline{color:CanvasText}:is(#splash,#prismLive) .sp-signal{background:CanvasText}}
+
+/* Explicit easter-egg surface: persistent, keyboard accessible, no app reset. */
+#brand{user-select:none;-webkit-app-region:no-drag}
+#brand:focus-visible{outline:2px solid #b7dff3;outline-offset:4px;border-radius:6px}
+#prismLive{z-index:100002;outline:none}
+#prismLive .sp-core{transform:translateY(-3%)}
+#prismLive .sp-live-eyebrow{color:#c2c5d7;font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.36em;margin:0 0 22px .36em}
+#prismLive .sp-word{font-size:clamp(76px,12vw,164px)}
+#prismLive .sp-live-status{margin:0;color:#c4c0d0;font:400 14px/1.6 system-ui,sans-serif;text-align:center;max-width:32ch}
+#prismLive .sp-live-hint{position:absolute;inset:auto 24px 28px;margin:0;text-align:center;color:#a5a5b8;font:400 12px/1.6 system-ui,sans-serif;letter-spacing:.035em}
+#prismLive .sp-live-back{position:absolute;top:24px;right:24px;z-index:3;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px 0 10px;border:1px solid #616575;border-radius:24px;background:#141720;color:#f4f2f7;font:500 14px/1.3 system-ui,sans-serif;cursor:pointer;-webkit-app-region:no-drag;transition:background 160ms ease,border-color 160ms ease}
+#prismLive .sp-live-back:hover{background:#252a37;border-color:#aab5cd}
+#prismLive .sp-live-back:focus-visible{outline:2px solid #c7e8ff;outline-offset:4px}
+#prismLive .sp-live-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+#prismLive .sp-live-back kbd{border:1px solid #697185;border-radius:4px;padding:2px 4px;margin-left:4px;color:#c7cedd;font:10px/1.2 system-ui,sans-serif}
+#prismLive.wait *{animation-play-state:paused!important}
+body.prism-live #fpsMeter{display:none}
+@media(max-width:480px){#prismLive .sp-live-back{top:16px;right:16px}#prismLive .sp-word{font-size:clamp(64px,24vw,104px)}#prismLive .sp-live-hint{bottom:24px;inset-inline:16px}#prismLive .sp-live-eyebrow{margin-bottom:24px}}
+@media(prefers-reduced-motion:reduce){#prismLive[data-style="prism"] .sp-word b,#prismLive .sp-signal{opacity:1;transform:none}#prismLive .sp-prism{display:none}}
+@media(forced-colors:active){#prismLive .sp-live-back{background:ButtonFace;color:ButtonText;border-color:ButtonText}#prismLive .sp-live-status,#prismLive .sp-live-eyebrow,#prismLive .sp-live-hint{color:CanvasText}#prismLive .sp-live-back kbd{color:ButtonText;border-color:ButtonText}}
+
+#prismLive[data-style="prism"].sp-calm .sp-word b,#prismLive.sp-calm .sp-signal{opacity:1;transform:none;animation:none!important}
+#prismLive.sp-calm *{animation:none!important;transition:none!important}
+
+/* Cover-coloured identity. Animation paints only the text, not the viewport. */
+:is(#splash,#prismLive)[data-style="prism"] .sp-word{background:linear-gradient(110deg,rgb(var(--prism-ink1,243,220,231)) 0%,rgb(var(--prism-ink2,215,201,239)) 24%,rgb(var(--prism-ink3,198,220,230)) 48%,rgb(var(--prism-ink1,243,220,231)) 72%,rgb(var(--prism-ink2,215,201,239)) 100%);background-size:250% 100%;background-clip:text;-webkit-background-clip:text;animation:spCoverFlow 12s ease-in-out infinite alternate}
+:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(n){color:transparent;text-shadow:none}
+@keyframes spCoverFlow{from{background-position:0% 50%}to{background-position:100% 50%}}
+/* Chrome removed by request. Keep a screen-reader/keyboard escape action. */
+#prismLive .sp-live-back{position:absolute;inset:0 auto auto 0;width:1px;height:1px;min-height:0;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);border:0;white-space:nowrap}
+#prismLive .sp-live-hint{display:none}
+:is(#splash,#prismLive).sp-calm .sp-word,body.noanim :is(#splash,#prismLive) .sp-word{animation:none}
+@media(prefers-reduced-motion:reduce){:is(#splash,#prismLive)[data-style="prism"] .sp-word{animation:none}}
+@media(forced-colors:active){:is(#splash,#prismLive)[data-style="prism"] .sp-word{background:none;animation:none}:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(n){color:CanvasText}}
+#prismLive .sp-word{pointer-events:auto;user-select:none;-webkit-app-region:no-drag}
