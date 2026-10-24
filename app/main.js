@@ -675,3 +675,6 @@ ipcHandle('visualizer:tap', (event, options) => require('./visualizer-tap').conf
 
 // 1.0.0: localized native tray captions.
 require('./native-locale')({ app, ipcMain, Menu, getTray: () => tray, readStore });
+
+// Isolated developer companion; only the exact main frame may open it.
+require('./dev-window')({app,BrowserWindow,ipcMain,clipboard,path,safety,getMain:()=>win,getPort:()=>port});

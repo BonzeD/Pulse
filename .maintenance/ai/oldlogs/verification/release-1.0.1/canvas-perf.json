@@ -1,0 +1,21 @@
+{
+  "noGlowPixelIdentical": [
+    "ring",
+    "bars",
+    "particles",
+    "warp",
+    "hex",
+    "fire",
+    "stars",
+    "vinyl",
+    "rays"
+  ],
+  "points": 90,
+  "pairTests": 657,
+  "allPairs": 4005,
+  "links": 273,
+  "sharpOutputShadowCalls": 0,
+  "oldAlpha": 4066285,
+  "newAlpha": 4191473,
+  "effectsDistinct": true
+}

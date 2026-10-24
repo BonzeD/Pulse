@@ -1,0 +1,29 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{EventEmitter}=require('node:events');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+test('developer companion is isolated, pinned, single-instance and rejects hostile frames',async()=>{
+ const handlers=new Map(),listeners=new Map(),app=new EventEmitter();Object.assign(app,{getVersion:()=> '1.0.2',getGPUFeatureStatus:()=>({webgl:'enabled'}),getAppMetrics:()=>[{type:'Tab',cpu:{percentCPUUsage:1},memory:{workingSetSize:123}}]});
+ let count=0,options,main,send,screenshot=false;
+ class WC extends EventEmitter{constructor(){super();this.mainFrame={url:'http://127.0.0.1:47831/index.html'};}setWindowOpenHandler(fn){this.popup=fn;}send(...a){send=a;}openDevTools(opts){this.opened=opts;}async capturePage(){return {getSize:()=>({width:1280,height:800})};}inspectElement(x,y){this.point=[x,y];}}
+ class W extends EventEmitter{constructor(o){super();options=o;this.webContents=new WC();this.destroyed=false;count++;this.size=[1280,800];}isDestroyed(){return this.destroyed;}loadURL(url){this.webContents.mainFrame.url=url;}show(){this.shown=true;}focus(){}getContentSize(){return this.size;}close(){this.destroyed=true;this.emit('closed');}destroy(){this.close();}}
+ main=new W();count=0;const ipcMain={handle:(name,fn)=>handlers.set(name,fn),on:(name,fn)=>listeners.set(name,fn)},clipboard={writeText:t=>{clipboard.text=t;},writeImage:()=>{screenshot=true;}},safety={appURL:u=>u.startsWith('http://127.0.0.1:47831/'),lockNavigation:(wc,fn)=>{wc.navigation=fn;}};
+ const original=W.prototype.loadURL;let dev;W.prototype.loadURL=function(u){dev=this;return original.call(this,u);};
+ require('../dev-window')({app,BrowserWindow:W,ipcMain,clipboard,path,safety,getMain:()=>main,getPort:()=>47831});
+ const event=w=>({sender:w.webContents,senderFrame:w.webContents.mainFrame});
+ assert.throws(()=>handlers.get('dev:open')({sender:main.webContents,senderFrame:{url:main.webContents.mainFrame.url}}),/Untrusted/);
+ assert.equal(handlers.get('dev:open')(event(main)),true);assert.equal(count,1);assert.equal(options.alwaysOnTop,true);assert.equal(options.parent,main);assert.equal(options.webPreferences.nodeIntegration,false);assert.equal(options.webPreferences.sandbox,true);assert.equal(options.webPreferences.contextIsolation,true);assert.match(options.webPreferences.preload,/dev-preload.js$/);
+ handlers.get('dev:open')(event(main));assert.equal(count,1);assert.deepEqual(dev.webContents.popup({url:'https://example.com'}),{action:'deny'});assert.equal(dev.webContents.navigation('https://example.com'),false);
+ await assert.rejects(handlers.get('dev:request')(event(main),'runtime'),/Untrusted/);await assert.rejects(handlers.get('dev:request')({sender:dev.webContents,senderFrame:{url:dev.webContents.mainFrame.url}},'runtime'),/Untrusted/);
+ assert.deepEqual(await handlers.get('dev:request')(event(dev),'factoryReset'),{error:'unknown-command'});
+ const report=await handlers.get('dev:request')(event(dev),'runtime');assert.equal(report.version,'1.0.2');assert.ok(!/pid|path|cookie|token/i.test(JSON.stringify(report)));
+ await handlers.get('dev:request')(event(dev),'devtools');assert.equal(main.webContents.opened.mode,'detach');await handlers.get('dev:request')(event(dev),'screenshot');assert.equal(screenshot,true);
+ const pending=handlers.get('dev:request')(event(dev),'snapshot'),id=send[1].id;listeners.get('dev:response')({sender:dev.webContents,senderFrame:dev.webContents.mainFrame},{id,data:{fake:true}});listeners.get('dev:response')(event(main),{id,data:{queueLength:0}});assert.deepEqual(await pending,{queueLength:0});
+ listeners.get('dev:inspect')(event(main),{x:10000,y:-5});assert.deepEqual(main.webContents.point,[1280,0]);
+ const unfinished=handlers.get('dev:request')(event(dev),'frames');dev.close();assert.deepEqual(await unfinished,{error:'disconnected'});assert.deepEqual(send,['dev:closed']);
+});
+test('developer tools are fixed commands, not a privileged eval or secret-profile export',()=>{
+ const bridge=read('renderer/developer-bridge.js'),preload=read('dev-preload.js');assert.doesNotMatch(bridge,/eval\(|new Function|JSON.stringify\(lib|factoryReset|logout\(|removeDownload\(/);assert.doesNotMatch(preload,/getLibrary|saveLibrary|sendSync|require\('fs'\)/);assert.match(bridge,/frameReport/);assert.match(bridge,/cancelAnimationFrame/);assert.match(bridge,/stopFrames\('hidden'\)/);assert.match(bridge,/pulse.dev.onClosed/);assert.match(bridge,/pointermove/);
+});
+test('source controls exist only in settings; playback implementation is preserved',()=>{const s=read('renderer/audius.js');assert.doesNotMatch(s,/host=\$\('bar'\)|host\?\.append\(el\)/);assert.match(s,/sourceControl\(\)/);assert.match(s,/data-ad-source-open/);assert.match(s,/audio.src='\/audius\/audio\//);});
+test('Prism mini spectrum reuses the live signal with a silent baseline and reduced-motion fallback',()=>{const s=read('renderer/prism-live.js'),css=read('renderer/splash.css');assert.match(s,/drawMiniSpectrum\(state\)/);assert.match(s,/state.bands\[band\]/);assert.match(s,/Math.max\(2\/28,level\)/);assert.match(css,/sp-mini-spectrum/);assert.match(css,/sp-calm .sp-mini-spectrum/);assert.doesNotMatch(s,/new Audio|createOscillator|Math.random|setInterval/);});
+test('new inverse precisely reconstructs all old runtime sources without rewriting old manifests',()=>{const crypto=require('node:crypto'),manifest=require('./developer-experience-approved.json'),inverse=require('./developer-experience-original.cjs');for(const [file,m] of Object.entries(manifest)){const current=fs.readFileSync(path.join(__dirname,'..',file));assert.equal(crypto.createHash('sha256').update(current).digest('hex'),m.sha256,file);assert.equal(crypto.createHash('sha256').update(inverse(file,current)).digest('hex'),m.originalSha256,file);}});

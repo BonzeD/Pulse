@@ -34,11 +34,11 @@
   if(!['INPUT','TEXTAREA'].includes(e.target.tagName)&&(e.code==='Space'||e.key.startsWith('Arrow')||e.ctrlKey||e.metaKey))e.stopImmediatePropagation();
  }
  const button=(key,action,cls='',disabled=false)=>`<button type="button" class="${cls}" data-pt="${action}"${disabled?' disabled':''}>${h(t(key))}</button>`;
- const cards=(key,items)=>`<div class="pt-grid">${items.map(([value,title,desc])=>`<button type="button" class="pt-card" data-choice="${key}" data-value="${h(value)}" aria-pressed="${draft[key]===value}"><b>${h(title)}</b>${desc?`<small>${h(desc)}</small>`:''}</button>`).join('')}</div>`;
+ const cards=(key,items)=>`<div class="pt-grid" data-group="${key}">${items.map(([value,title,desc])=>`<button type="button" class="pt-card" data-choice="${key}" data-value="${h(value)}" aria-pressed="${draft[key]===value}"><span class="pt-card-icon" aria-hidden="true">${key==='app.language'?h(value.toUpperCase()):ico(key==='app.client'?({yt:'ytm',am:'apple',sp:'spotify',ad:'music'})[value]:key==='app.start'?({home:'home',library:'library',downloads:'download'})[value]:({widget:'widget',tray:'min',quit:'x'})[value])}</span><span class="pt-card-copy"><b>${h(title)}</b>${desc?`<small>${h(desc)}</small>`:''}</span><span class="pt-choice-check" aria-hidden="true">✓</span></button>`).join('')}</div>`;
  const toggle=(key,label,desc='')=>`<label class="pt-row"><span>${h(t(label))}${desc?`<br><small>${h(t(desc))}</small>`:''}</span><input type="checkbox" data-pref="${key}"${draft[key]?' checked':''}></label>`;
- let step=0,draft={},graphics='current',graphicsOriginal={},busy=false,note='',accountState=null,fresh=false,waiting=null;
+ let renderedStep=-1,step=0,draft={},graphics='current',graphicsOriginal={},busy=false,note='',accountState=null,fresh=false,waiting=null;
  function welcomeOpen(options={}){
-  if(!mount('pulseWelcome',t('setup')))return false;kind='welcome';step=0;note='';busy=false;accountState=null;fresh=options.fresh===true;draft=M.draft(S());graphicsOriginal=M.validate(draft);graphics='current';
+  if(!mount('pulseWelcome',t('setup')))return false;kind='welcome';step=0;renderedStep=-1;note='';busy=false;accountState=null;fresh=options.fresh===true;draft=M.draft(S());graphicsOriginal=M.validate(draft);graphics='current';
   if(fresh){const suggested=String(navigator.language||'en').toLowerCase().split('-')[0];draft['app.language']=languages[suggested]?suggested:'en';window.PulseI18n?.setLanguage(draft['app.language'],false);}
   renderWelcome();focus();return true;
  }
@@ -51,7 +51,11 @@
   if(step===2){body=`<div class="pt-grid">${['current','balanced','eco','high'].map(x=>`<button type="button" class="pt-card" data-graphics="${x}" aria-pressed="${graphics===x}"><b>${h(t(x))}</b><small>${h(t(x+'Desc'))}</small></button>`).join('')}</div>`+toggle('perf.gpu','gpu','gpuDesc');}
   if(step===3)body=`<h2>${h(t('start'))}</h2>`+cards('app.start',['home','library','downloads'].map(x=>[x,t(x)]))+`<h2>${h(t('windowClose'))}</h2>`+cards('app.close',['widget','tray','quit'].map(x=>[x,t(x)]))+toggle('look.anim','animations')+toggle('look.splash','splash');
   if(step===4)body=[['language',languages[draft['app.language']]],['catalog',catalogs[draft['app.client']]],['graphics',t(graphics)],['start',t(draft['app.start'])],['windowClose',t(draft['app.close'])],['animations',t(draft['look.anim']?'yes':'no')],['splash',t(draft['look.splash']?'yes':'no')]].map(([a,b])=>`<div class="pt-row"><span>${h(t(a))}</span><b>${h(b)}</b></div>`).join('');
-  overlay.setAttribute('aria-label',t('setup'));overlay.innerHTML=`<div class="pt-panel"><div class="pt-top"><b class="pt-label">PULSE / SETUP</b><small>${step+1} / 5</small></div><div class="pt-progress" aria-hidden="true">${Array.from({length:5},(_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div><h1 tabindex="-1">${h(t(titles[step]))}</h1><p>${h(t(descs[step]))}</p>${body}${note?`<div role="status" class="pt-note pt-error">${h(note)}</div>`:''}<footer class="pt-footer">${button('later','later','',busy)}<div>${step>0?button('back','back','',busy):''}${button(busy?'busy':step===4?'finish':'next',step===4?'finish':'next','pt-primary',busy)}</div></footer></div>`;
+  const changed=renderedStep!==step,forward=step>=renderedStep;renderedStep=step;
+  overlay.dataset.step=String(step);overlay.dataset.motion=String(S().look.anim!==false);overlay.dataset.hidden=String(document.hidden||!!window.pulseWinHidden);
+  const labels=['language','catalog','graphics','preferences','review'];
+  overlay.setAttribute('aria-label',t('setup'));overlay.innerHTML=`<div class="pt-panel pt-setup-shell"><aside class="pt-aside"><div class="pt-brand"><img src="logo.png" alt="" width="28" height="28"><b>Pulse</b><span>SETUP</span></div><div class="pt-identity" aria-hidden="true"><div class="pt-orbit"></div><img src="logo.png" alt=""><span class="pt-identity-line"></span></div><ol class="pt-steps">${labels.map((x,i)=>`<li class="${i===step?'active':i<step?'done':''}"${i===step?' aria-current="step"':''}><span>${i<step?'✓':String(i+1).padStart(2,'0')}</span><b>${h(t(x))}</b></li>`).join('')}</ol><div class="pt-aside-foot">YOUR MUSIC. YOUR PULSE.</div></aside><div class="pt-main"><div class="pt-top"><span class="pt-label">${h(t(labels[step]))}</span><small>${String(step+1).padStart(2,'0')} <span class="pt-step-divider">/</span> 05</small></div><div class="pt-progress" aria-hidden="true">${Array.from({length:5},(_,i)=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div><div class="pt-content"><header><h1 tabindex="-1">${h(t(titles[step]))}</h1><p>${h(t(descs[step]))}</p></header><div class="pt-options">${body}</div>${note?`<div role="status" class="pt-note pt-error">${h(note)}</div>`:''}</div><footer class="pt-footer">${button('later','later','pt-quiet',busy)}<div>${step>0?button('back','back','pt-quiet',busy):''}${button(busy?'busy':step===4?'finish':'next',step===4?'finish':'next','pt-primary',busy)}</div></footer></div></div>`;
+  if(changed&&S().look.anim!==false&&!matchMedia('(prefers-reduced-motion: reduce)').matches){overlay.querySelector('.pt-content').animate([{opacity:0,transform:`translateX(${forward?18:-18}px)`},{opacity:1,transform:'translateX(0)'}],{duration:340,easing:'cubic-bezier(.2,.8,.2,1)'});}
  }
  function persist(){if(!pulse.flushLibrary||pulse.flushLibrary(lib)!==true)throw Error('save');}
  function finish(skip=false){
@@ -86,57 +90,24 @@
   catch{resume();note=t('authFail');renderWelcome();}
  }
  function deadline(p,ms=4500){let timer;return Promise.race([p,new Promise((_,reject)=>timer=setTimeout(()=>reject(Error('timeout')),ms))]).finally(()=>clearTimeout(timer));}
- let tab='actions',results=[],running=false;
- const actionList=()=>[
-  ['reopen',()=>welcomeOpen()],['prism',()=>window.PulsePrism.open()],['home',()=>go({r:'home'})],['library',()=>go({r:'library'})],['downloads',()=>go({r:'downloads'})],
-  ['player',()=>openPP(),true],['lyrics',()=>lyStageOpen(true),true],['immersive',()=>PulseImmersion.open(),true],['visual',()=>{openPP();setMode('visual');},true],['cover',()=>{openPP();setMode('cover');},true],
-  ['play',()=>toggle(),true],['nextTrack',()=>next(),true],['prevTrack',()=>prev(),true],
-  ...['settings','accounts','audio','editor','plugins','shortcuts','about'].map(x=>[x,()=>dsOpenSetting(({settings:'app',shortcuts:'keys'})[x]||x)]),
-  ...['client','sync','look','ui','ly','viz','dj','wave','widget','wall','discord','cfg'].map(x=>['section:'+x,()=>dsOpenSetting(x)]),
-  ['full',()=>pulse.win('fs')],['widgetAction',()=>pulse.win('widget')],['toast',()=>toast(t('toast'))]
- ];
  function snapshot(){
   const signal=typeof readSpectrum==='function'?readSpectrum():null;const f=signal?.f;
   // Fixed allow-list only. Never include lib, track metadata, file paths,
   // account objects, cookies, errors from remote services or raw IPC data.
   return {version:'1.0.2',language:lang(),online:navigator.onLine,visibility:!document.hidden&&!window.pulseWinHidden,trackSelected:!!curTrack(),playing:typeof playing==='boolean'?playing:false,queueLength:Array.isArray(lib.queue?.tracks)?lib.queue.tracks.length:0,graphics:{mode:S().perf.mode,fps:S().perf.fps,dpr:S().perf.dpr,gpu:S().perf.gpu},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,signalPresent:!!f&&Array.prototype.some.call(f,x=>x>0),modules:{welcome:!!window.PulseWelcome,prism:!!window.PulsePrism,immersion:!!window.PulseImmersion,library:!!window.MediaLibrary},onboarding:lib.onboarding?.status||'existing'};
  }
- function debugOpen(){if(!mount('pulseDebug',t('debug')))return false;kind='debug';tab='actions';running=false;note='';renderDebug();focus();return true;}
- function renderDebug(){
-  if(kind!=='debug'||!overlay)return;let body='';
-  if(tab==='actions')body=`<div class="pt-grid">${actionList().map(([key,_fn,track],i)=>`<button type="button" class="pt-card" data-debug-action="${i}"${track&&!curTrack()?' disabled':''}><b>${h(t(key))}</b>${track&&!curTrack()?`<small>${h(t('requiresTrack'))}</small>`:''}</button>`).join('')}</div>`;
-  if(tab==='tests')body=button(running?'busy':'run','run','pt-primary',running)+`<div class="pt-results" aria-live="polite">${results.length?results.map(r=>`<div class="pt-result" data-state="${r.state}"><b>${h(t(r.name))} · ${h(t(r.state))}</b>${h(r.detail||'')}</div>`).join(''):`<p class="pt-empty">${h(t('empty'))}</p>`}</div>`;
-  if(tab==='status')body=button('refresh','refresh')+`<pre>${h(JSON.stringify(snapshot(),null,2))}</pre>`;
-  overlay.innerHTML=`<div class="pt-panel"><div class="pt-top"><b class="pt-label">PULSE / DEBUG</b>${button('close','close')}</div><h1 tabindex="-1">${h(t('debug'))}</h1><p>${h(t('debugDesc'))}</p><div class="pt-tabs" role="tablist" aria-label="${h(t('debug'))}">${['actions','tests','status'].map(x=>`<button type="button" role="tab" aria-selected="${tab===x}" data-debug-tab="${x}">${h(t(x))}</button>`).join('')}</div>${body}<div class="pt-note">${h(t('nativeNote'))}</div>${note?`<div class="pt-note" role="status">${h(note)}</div>`:''}<footer class="pt-footer">${button('copy','copy')}</footer></div>`;
- }
- async function runChecks(){
-  if(running||kind!=='debug')return;running=true;results=[];const generation=++checkGeneration;renderDebug();
-  const add=(name,state,detail='')=>{if(generation!==checkGeneration||kind!=='debug')return;results.push({name,state,detail});renderDebug();};
-  const check=(name,fn)=>{try{add(name,fn()?'pass':'fail');}catch{add(name,'fail');}};
-  check('structure',()=>!!S().app&&!!S().perf&&Array.isArray(S().audio.eq)&&S().audio.eq.length===10);
-  check('queue',()=>Array.isArray(lib.queue?.tracks)&&Number.isInteger(lib.queue.idx)&&(lib.queue.tracks.length===0?lib.queue.idx===-1:lib.queue.idx>=0&&lib.queue.idx<lib.queue.tracks.length));
-  check('locales',()=>!!window.PulseI18n&&!!window.PulseWelcome&&!!window.PulsePrism&&!!window.MediaLibrary);
-  check('native',()=>typeof pulse.getLibrary==='function'&&typeof pulse.win==='function');
-  // Query existing probe, never allocate another graphics context in a check.
-  try{add('gpuTest',typeof PulseGPU!=='undefined'&&PulseGPU.supported()?'pass':'skip');}catch{add('gpuTest','skip');}
-  const snap=snapshot();add('signal',snap.signalPresent?'pass':'skip',snap.signalPresent?'':t('noSignal'));
-  try{const p=await deadline(pulse.getLibrary());add('storage',p===null||p&&typeof p==='object'?'pass':'fail');}catch{add('storage','fail');}
-  if(generation===checkGeneration&&kind==='debug'){running=false;renderDebug();}
- }
- async function copyReport(){try{const report={pulseDiagnostics:1,...snapshot(),checks:results.map(({name,state})=>({name,state}))};const result=await pulse.copyText(JSON.stringify(report,null,2));note=t(result?.ok?'copied':'copyFail');}catch{note=t('copyFail');}renderDebug();}
  function click(e){
   if(!overlay||auth)return;const el=e.target.closest('button');if(!el||el.disabled)return;
   if(el.dataset.choice){draft[el.dataset.choice]=el.dataset.value;note='';if(el.dataset.choice==='app.language')window.PulseI18n?.setLanguage(el.dataset.value,false);if(el.dataset.choice==='app.client'){accountState=null;refreshSignIn();}renderWelcome();overlay.querySelector(`[data-choice="${el.dataset.choice}"][data-value="${el.dataset.value}"]`)?.focus();return;}
   if(el.dataset.graphics){graphics=el.dataset.graphics;Object.assign(draft,graphics==='current'?Object.fromEntries(Object.entries(graphicsOriginal).filter(([k])=>k.startsWith('perf.')&&k!=='perf.gpu')):M.presets[graphics]);renderWelcome();overlay.querySelector(`[data-graphics="${graphics}"]`)?.focus();return;}
-  if(el.dataset.debugTab){tab=el.dataset.debugTab;renderDebug();overlay.querySelector(`[data-debug-tab="${tab}"]`)?.focus();return;}
-  if(el.dataset.debugAction!==undefined){const a=actionList()[+el.dataset.debugAction];if(!a||a[2]&&!curTrack())return;unmount();try{const r=a[1]();if(r===false)toast(t('unknown'));else toast(t('launched'));}catch{toast(t('fail'));}return;}
-  const action=el.dataset.pt;if(action==='close'){unmount();return;}if(action==='copy'){copyReport();return;}if(action==='refresh'){renderDebug();return;}if(action==='run'){runChecks();return;}
+  const action=el.dataset.pt;
   if(busy)return;if(action==='later')finish(true);else if(action==='finish')finish();else if(action==='login')login();else if(action==='back'||action==='next'){step+=action==='back'?-1:1;note='';renderWelcome();focus();if(step===1)refreshSignIn();}
  }
  function change(e){if(kind==='welcome'&&!busy&&e.target.dataset.pref)draft[e.target.dataset.pref]=e.target.checked;}
  window.PulseWelcome={open:()=>welcomeOpen(),ready,active:()=>kind==='welcome',settingsRow:()=>`<div class="set-row"><div class="set-l" data-i18n-skip><b>${h(t('reopen'))}</b><span>${h(t('settingsNote'))}</span></div><button type="button" class="btn sm" data-sact="welcome" data-i18n-skip>${h(t('reopen'))}</button></div>`};
- window.PulseDebug={open:debugOpen,close:()=>{if(kind==='debug')unmount();},active:()=>kind==='debug',snapshot};
+ function debugOpen(){if(typeof pulse.dev?.open!=='function')return false;Promise.resolve(pulse.dev.open()).catch(()=>toast(t('unknown'),'alert'));return true;}
+ window.PulseDebug={open:debugOpen,close:()=>{if(kind==='debug')unmount();},active:()=>false,snapshot};
  let rights=0,first=0,last=0;document.getElementById('brand')?.addEventListener('contextmenu',e=>{e.preventDefault();if(overlay||window.PulsePrism?.active())return;const now=performance.now();if(!rights||now-last>450||now-first>1600){rights=0;first=now;}last=now;if(++rights===5){rights=0;e.stopImmediatePropagation();debugOpen();}},true);
- window.addEventListener('pulse-language',()=>{if(kind==='debug')renderDebug();});
+ const welcomeVisibility=()=>{if(kind==='welcome'&&overlay)overlay.dataset.hidden=String(document.hidden||!!window.pulseWinHidden);};document.addEventListener('visibilitychange',welcomeVisibility);window.addEventListener('pulse-window-visibility',welcomeVisibility);
  window.addEventListener('pagehide',()=>{waiting?.disconnect();unmount();});
 })();

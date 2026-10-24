@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 contextBridge.exposeInMainWorld('pulse', {
+  dev: {open:()=>ipcRenderer.invoke('dev:open'),respond:message=>ipcRenderer.send('dev:response',message),inspect:point=>ipcRenderer.send('dev:inspect',point),onCommand:fn=>{const cb=(_e,message)=>fn(message);ipcRenderer.on('dev:command',cb);return()=>ipcRenderer.removeListener('dev:command',cb);},onClosed:fn=>{const cb=()=>fn();ipcRenderer.on('dev:closed',cb);return()=>ipcRenderer.removeListener('dev:closed',cb);}},
   spicy: { lyrics: (t) => ipcRenderer.invoke('spicy:lyrics', t) }, // 2.0.4: Spicy Lyrics
   media: {
     list:()=>ipcRenderer.invoke('media:list'), import:()=>ipcRenderer.invoke('media:import'),

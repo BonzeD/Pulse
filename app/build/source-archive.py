@@ -14,7 +14,7 @@ for base, dirs, names in os.walk(root):
         p=Path(base)/name; rel=p.relative_to(root)
         # The old manifest may exist after unpacking a release; generate exactly one new copy.
         if rel==Path('SOURCE-MANIFEST-SHA256.txt'):continue
-        if rel==Path('docs/manifests/SOURCE-MANIFEST-organized-SHA256.txt'):continue
+        if rel==Path('.maintenance/ai/oldlogs/manifests/SOURCE-MANIFEST-organized-SHA256.txt'):continue
         if rel.as_posix().startswith('app/build/installer-ui/out/'):continue
         if rel==Path('app/build/uninstall-files.nsh') or name.startswith('.env'):continue
         if p.resolve()==out or p.suffix in {'.log','.pdb','.pyc'}:continue
@@ -28,7 +28,7 @@ with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
     for p,rel in files:
         data=p.read_bytes(); archive=str(Path(prefix)/rel)
         z.writestr(archive,data);manifest.append(hashlib.sha256(data).hexdigest()+'  '+str(rel))
-    z.writestr(prefix+'/docs/manifests/SOURCE-MANIFEST-organized-SHA256.txt','\n'.join(manifest)+'\n')
+    z.writestr(prefix+'/.maintenance/ai/oldlogs/manifests/SOURCE-MANIFEST-organized-SHA256.txt','\n'.join(manifest)+'\n')
 with zipfile.ZipFile(out) as z:
     assert len(z.namelist())==len(set(z.namelist())), 'Duplicate archive entries'
     assert z.testzip() is None

@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "npm run build:media && electron-builder --win portable --x64 --publish never && sh build/make-setup.sh",
-    "test": "node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs",
+    "test": "node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs",
     "test:audius": "node --test tests/audius.cjs tests/audius-runtime.cjs",
     "test:audius-live": "node tests/audius-ui.cjs",
     "test:ui": "node tests/ui.cjs",
@@ -39,13 +39,16 @@
     "test:graphics-102": "node tests/graphics-102-ui.cjs",
     "test:panels-102": "node tests/panels-102-ui.cjs",
     "test:prism": "node tests/prism-splash-ui.cjs && node tests/prism-live-ui.cjs && node tests/prism-integration-ui.cjs",
-    "test:setup-debug": "node tests/setup-debug-ui.cjs"
+    "test:setup-debug": "node tests/developer-experience-ui.cjs",
+    "test:developer": "node --test tests/developer-experience.cjs && node tests/developer-experience-ui.cjs"
   },
   "build": {
     "appId": "com.scada.pulse",
     "productName": "Pulse",
     "files": [
       "account.js",
+      "dev-window.js",
+      "dev-preload.js",
       "build/icon.png",
       "main.js",
       "offline.js",

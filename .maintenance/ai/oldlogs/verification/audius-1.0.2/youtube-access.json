@@ -1,0 +1,8 @@
+{
+  "purpose": "YouTube reachability probe, NOT matched-track benchmark",
+  "httpStatus": 200,
+  "status": "ERROR",
+  "reason": "Видео недоступно",
+  "audioFormats": 0,
+  "elapsed": 329
+}

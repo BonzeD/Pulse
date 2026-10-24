@@ -13,11 +13,14 @@ for(const name of ['main.js','renderer','build','native','resources','tests','to
 const workflow=read('.github/workflows/build.yml');assert.match(workflow,/working-directory: app/);assert.match(workflow,/cache-dependency-path: app\/package-lock\.json/);assert.match(workflow,/path: app\/dist\/\*\.exe/);
 assert.match(read('.gitignore'),/app\/build\/installer-ui\/out\//);assert.match(read('.gitignore'),/!app\/resources\/media-bridge\/\.gitkeep/);
 assert.equal(read('LICENSE'),read('app/LICENSE'));
-for(const name of ['README.md','AGENTS.md','docs/REPOSITORY-LAYOUT.md','docs/development/FOR AI.md'])assert.ok(read(name).length>100,name);
-const map=JSON.parse(read('docs/manifests/REORGANIZATION-MAP.json'));
+for(const name of ['README.md','Logs/1.0.2.md','.maintenance/ai/oldlogs/REPOSITORY-LAYOUT.md','.maintenance/ai/oldlogs/development/FOR AI.md'])assert.ok(read(name).length>100,name);
+const map=JSON.parse(read('.maintenance/ai/oldlogs/manifests/REORGANIZATION-MAP.json'));
+assert.ok(!fs.existsSync(path.join(root,'AGENTS.md')));assert.ok(!fs.existsSync(path.join(root,'docs')));
 for(const f of map.files){
+ if(f.after==='AGENTS.md')continue;
+ f.after=f.after.replace(/^docs\//,'.maintenance/ai/oldlogs/');
  assert.ok(fs.existsSync(path.join(root,f.after)),f.after);
- if(f.after.startsWith('docs/history/'))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f.after))).digest('hex'),f.sha256Before,'historical report changed: '+f.after);
+ if(f.after.startsWith('.maintenance/ai/oldlogs/history/'))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f.after))).digest('hex'),f.sha256Before,'historical report changed: '+f.after);
 }
 for(const entry of actual.build.files.filter(s=>!s.includes('*')))assert.ok(fs.existsSync(path.join(app,entry)),'missing package input '+entry);
 for(const entry of actual.build.extraResources)assert.ok(fs.existsSync(path.join(app,entry.from)),'missing extraResources input '+entry.from);

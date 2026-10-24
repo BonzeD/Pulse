@@ -10,7 +10,7 @@ window.PulsePrism = (() => {
     ja:{title:'Prism · ライブミュージック',close:'戻る',hint:'Esc — 音楽に戻る',live:'音楽に寄り添う光',wait:'音楽を再生すると光が動き出します',calm:'静かなモード · 動きを停止'},
     uk:{title:'Prism · жива музика',close:'Повернутися',hint:'Esc — повернутися до музики',live:'Світло слідує за музикою',wait:'Увімкни музику — світло оживе',calm:'Спокійний режим · рух вимкнено'}
   };
-  let host=null,art=null,model=null,focusBefore=null,releaseTimer=0,closing=false;
+  let spectrumBars=[],host=null,art=null,model=null,focusBefore=null,releaseTimer=0,closing=false;
   let clicks=0,firstClick=0,lastClick=0,lastStatus='',opened=0,draws=0;
   const inertBefore=new Map();
   const active=()=>!!host&&!closing;
@@ -27,7 +27,15 @@ window.PulsePrism = (() => {
     // Same delayed source as the main visualizers: no duplicate AudioContext,
     // microphone request, track switch, playback restart or fake oscillator.
     const fr=readSpectrum(now,outLat()*1000+(S().viz.lag||0));
-    const state=model.step(fr,dt);status(state.signal?'live':'wait');return state;
+    const state=model.step(fr,dt);status(state.signal?'live':'wait');drawMiniSpectrum(state);return state;
+  }
+  function drawMiniSpectrum(state){
+    const live=state?.signal&&!(typeof playing==='boolean'&&!playing);
+    for(let i=0;i<spectrumBars.length;i++){
+      const position=i*(8/(spectrumBars.length-1)),band=Math.floor(position),mix=position-band;
+      const level=live?Math.max(0,Math.min(1,(state.bands[band]||0)*(1-mix)+(state.bands[Math.min(8,band+1)]||0)*mix)):0;
+      spectrumBars[i].style.transform='scaleY('+Math.max(2/28,level).toFixed(4)+')';
+    }
   }
   function translate(){
     if(!host)return;const t=words();
@@ -50,8 +58,8 @@ window.PulsePrism = (() => {
     const oldCanvas=host.querySelector('canvas');oldCanvas.replaceWith(oldCanvas.cloneNode(false));
     host.classList.remove('sp-prism-ready','sp-prism-fallback');
     host.classList.toggle('sp-calm',calm());
-    if(calm()||colors.matches){host.classList.add('sp-prism-fallback');status(calm()?'calm':'wait');return;}
-    try{art=window.PulsePrismArt(host.querySelector('canvas'),host,{live:true,sample,onCalm:makeArt,onLoss:()=>status('wait')});}
+    if(calm()||colors.matches){drawMiniSpectrum(null);host.classList.add('sp-prism-fallback');status(calm()?'calm':'wait');return;}
+    try{art=window.PulsePrismArt(host.querySelector('canvas'),host,{live:true,sample,onCalm:makeArt,onLoss:()=>{drawMiniSpectrum(null);status('wait');}});}
     catch{host.classList.add('sp-prism-fallback');}
     art?.visible(!hidden());status('wait');
   }
@@ -66,7 +74,7 @@ window.PulsePrism = (() => {
   }
   function remove(){
     clearTimeout(releaseTimer);releaseTimer=0;if(!host)return;
-    host.remove();host=null;model=null;closing=false;document.body.classList.remove('prism-live');
+    host.remove();spectrumBars=[];host=null;model=null;closing=false;document.body.classList.remove('prism-live');
     for(const [el,inert]of inertBefore)el.inert=inert;inertBefore.clear();
     syncBackground();
     if(focusBefore?.isConnected&&!focusBefore.closest('[inert]'))focusBefore.focus({preventScroll:true});else brand?.focus({preventScroll:true});
@@ -86,9 +94,9 @@ window.PulsePrism = (() => {
     clicks=0;lastClick=firstClick=0;lastStatus='';closing=false;model=PulsePrismSignal.create();focusBefore=document.activeElement;
     host=document.createElement('section');host.id='prismLive';host.className='prism-live-scene';host.dataset.style='prism';
     host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.tabIndex=-1;
-    host.innerHTML='<div class="sp-prism-static"></div><canvas class="sp-prism" aria-hidden="true"></canvas><div class="sp-vig"></div><div class="sp-grain"></div><button type="button" class="sp-live-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6"/></svg><span></span><kbd>Esc</kbd></button><div class="sp-core"><p class="sp-live-eyebrow">PRISM / LIVE</p><div class="sp-word" aria-label="Pulse" data-i18n-skip><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div><div class="sp-signal" aria-hidden="true"><i></i></div><p class="sp-live-status" data-i18n-skip></p></div>';
+    host.innerHTML='<div class="sp-prism-static"></div><canvas class="sp-prism" aria-hidden="true"></canvas><div class="sp-vig"></div><div class="sp-grain"></div><button type="button" class="sp-live-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l-6 6 6 6"/></svg><span></span><kbd>Esc</kbd></button><div class="sp-core"><p class="sp-live-eyebrow">PRISM / LIVE</p><div class="sp-word" aria-label="Pulse" data-i18n-skip><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div><div class="sp-signal" aria-hidden="true"><i></i></div><div class="sp-mini-spectrum" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p class="sp-live-status" data-i18n-skip></p></div>';
     for(const el of document.body.children)if(el instanceof HTMLElement&&!['SCRIPT','STYLE','LINK'].includes(el.tagName)){inertBefore.set(el,el.inert);el.inert=true;}
-    document.body.appendChild(host);document.body.classList.add('prism-live');opened++;
+    document.body.appendChild(host);spectrumBars=[...host.querySelectorAll('.sp-mini-spectrum i')];drawMiniSpectrum(null);document.body.classList.add('prism-live');opened++;
     host.querySelector('.sp-live-back').addEventListener('click',()=>close());
     // Invisible chrome, but mouse/touch users can leave with a double tap.
     host.addEventListener('dblclick',()=>close());

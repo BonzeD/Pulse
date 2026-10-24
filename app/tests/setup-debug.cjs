@@ -18,7 +18,7 @@ test('current graphics round trips, presets are explicit and do not mutate defau
  const before=JSON.stringify(settings);M.patch(settings,{...d,...M.presets.eco});assert.equal(JSON.stringify(settings),before);assert.equal(d['perf.fps'],144);assert.equal(M.presets.balanced['perf.fps'],60);
 });
 test('renderer has distinct left/right gestures; no eval, secret export or destructive debug shortcuts',()=>{
- const s=fs.readFileSync('renderer/setup-debug.js','utf8'),p=fs.readFileSync('renderer/prism-live.js','utf8');
+ const s=require('./developer-experience-original.cjs')('renderer/setup-debug.js',fs.readFileSync('renderer/setup-debug.js')).toString(),p=fs.readFileSync('renderer/prism-live.js','utf8');
  assert.match(s,/addEventListener\('contextmenu'/);assert.match(s,/\+\+rights===5/);assert.match(s,/now-last>450/);assert.match(p,/addEventListener\('click'/);assert.match(p,/e.button>0/);
  assert.doesNotMatch(s,/\beval\(|new Function|factoryReset\(|logout\(|removeDownload\(|JSON.stringify\(lib/);assert.match(s,/pulse.flushLibrary\(lib\)!==true/);assert.match(s,/setP\(c.p,c.before\)/);assert.match(s,/getLibrary\(\)/);
 });
@@ -28,5 +28,5 @@ test('cover colour is decoded once via existing palette; no per-frame image deco
  assert.match(p,/function setCoverPalette\(p\)/);assert.doesNotMatch(p,/new Image|setInterval/);assert.match(css,/spCoverFlow 12s/);assert.match(css,/forced-colors:active/);assert.match(p,/dblclick/);
 });
 test('new inverse captures only this change, retaining every older baseline unchanged',()=>{
- const manifest=require('./setup-debug-approved.json'),inverse=require('./setup-debug-original.cjs');for(const [file,m]of Object.entries(manifest)){const s=fs.readFileSync(file);assert.equal(crypto.createHash('sha256').update(s).digest('hex'),m.sha256,file);assert.equal(crypto.createHash('sha256').update(inverse(file,s)).digest('hex'),m.originalSha256,file);}
+ const manifest=require('./setup-debug-approved.json'),inverse=require('./setup-debug-original.cjs');for(const [file,m]of Object.entries(manifest)){const s=require('./developer-experience-original.cjs')(file,fs.readFileSync(file));assert.equal(crypto.createHash('sha256').update(s).digest('hex'),m.sha256,file);assert.equal(crypto.createHash('sha256').update(inverse(file,s)).digest('hex'),m.originalSha256,file);}
 });

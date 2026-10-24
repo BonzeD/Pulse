@@ -7,13 +7,16 @@
  const mode=()=>['auto','prefer'].includes(S().app.audioSource)?S().app.audioSource:'current';
  const hasTiming=t=>!!(lib.lyrics[t.id]?.user || lib.lyrics[t.id]?.picked || lib.offsets[t.id] != null || lib.stretch?.[t.id] != null || localStorage.getItem('pulse.lyricStudio.'+encodeURIComponent(t.id)) || typeof fixDrafts !== 'undefined' && fixDrafts.has(t.id));
  function cancel(){if(session){clearTimeout(session.timer);if(session.loaded)audio.removeEventListener('loadedmetadata',session.loaded);pulse.audius.cancel(session.key).catch(()=>{});}session=null;}
- function sourceButton(){
-  let el=$('audiusSource');if(!el){el=document.createElement('button');el.id='audiusSource';el.className='ad-source';el.type='button';el.addEventListener('click',picker);const host=$('bar');host?.append(el);}
-  const t=curTrack(),ad=session?.candidate;
-  el.hidden=!t||t.id.startsWith('local-')||!!off[t.id];
-  el.innerHTML=ico('music')+`<span>${ad||native(t)?'Audius':translateUiText('Текущий источник')}</span>`;
-  el.title=translateUiText('Источник звука');el.setAttribute('aria-label',el.title);
+ function sourceControl(){
+  const track=curTrack(),ad=session?.candidate,disabled=!track||track.id.startsWith('local-')||!!off[track.id];
+  return `<button type="button" id="audiusSource" class="btn sm" data-ad-source-open${disabled?' disabled':''}>${ico('music')}<span>${ad||native(track)?'Audius':translateUiText('Текущий источник')}</span></button>`;
  }
+ function sourceButton(){
+  const el=$('audiusSource');if(!el)return;
+  const track=curTrack(),ad=session?.candidate;el.disabled=!track||track.id.startsWith('local-')||!!off[track.id];
+  el.innerHTML=ico('music')+`<span>${ad||native(track)?'Audius':translateUiText('Текущий источник')}</span>`;
+ }
+
  function fail(s){
   if(session!==s||s.tok!==loadTok)return;
   clearTimeout(s.timer);setLoading(false);pulse.audius.cancel(s.key).catch(()=>{});
@@ -92,8 +95,8 @@
   }
  },0);});
  const legal={terms:'https://audius.co/documents/ApiTerms.pdf',privacy:'https://audius.co/privacy',license:'https://audius.org/open-music-license.pdf'};
- document.addEventListener('click',e=>{const b=e.target.closest('[data-ad-legal]');if(b&&legal[b.dataset.adLegal])pulse.openUrl(legal[b.dataset.adLegal]);});
- const oldTab=clientTab;clientTab=function(){const tab=oldTab();tab.rows.push(grp('Audius'),R('Источник звука','Audius — только уверенные совпадения. При сомнении используется прежний источник.',sel('app.audioSource',[['current','Текущий источник'],['auto','Автоматически'],['prefer','Предпочитать Audius']]),'audius звук источник'),R('Audius — прямой звук без входа','Публичные треки, исполнители и плейлисты. Лайки и плейлисты сохраняются только в Pulse. Скачивание отключено.',''),R('Условия Audius','',`<button class="btn sm" data-ad-legal="terms">API Terms</button><button class="btn sm" data-ad-legal="privacy">Privacy Policy</button><button class="btn sm" data-ad-legal="license">Open Music License</button>`));return tab;};
+ document.addEventListener('click',e=>{const source=e.target.closest('[data-ad-source-open]');if(source&&!source.disabled){picker();return;}const b=e.target.closest('[data-ad-legal]');if(b&&legal[b.dataset.adLegal])pulse.openUrl(legal[b.dataset.adLegal]);});
+ const oldTab=clientTab;clientTab=function(){const tab=oldTab();tab.rows.push(grp('Audius'),R('Источник текущего трека','Выбор записи, переход к оригиналу и сброс соответствия доступны во время воспроизведения.',sourceControl(),'источник запись audius'),R('Источник звука','Audius — только уверенные совпадения. При сомнении используется прежний источник.',sel('app.audioSource',[['current','Текущий источник'],['auto','Автоматически'],['prefer','Предпочитать Audius']]),'audius звук источник'),R('Audius — прямой звук без входа','Публичные треки, исполнители и плейлисты. Лайки и плейлисты сохраняются только в Pulse. Скачивание отключено.',''),R('Условия Audius','',`<button class="btn sm" data-ad-legal="terms">API Terms</button><button class="btn sm" data-ad-legal="privacy">Privacy Policy</button><button class="btn sm" data-ad-legal="license">Open Music License</button>`));return tab;};
  const oldChanged=clChanged;clChanged=function(path){if(path==='app.audioSource'){prefetchGeneration++;if(prefetchKey)pulse.audius.cancel(prefetchKey).catch(()=>{});save();return true;}return oldChanged(path);};
  const oldHome=PAGES.home.load;PAGES.home.load=async function(r,force){if(CL()!=='ad')return oldHome(r,force);const d=await cached('ad:home',()=>ytm('feed','FEmusic_home'),force);if(d.error)return emptyHtml('alert','Audius недоступен — попробуй другой трек','');return `<h1 class="pg-title">Audius</h1>`+clGreet()+shelves((d.shelves||[]).map(s=>({...s,list:false,items:s.items.slice(0,16)})));};
  const oldExplore=PAGES.explore.load;PAGES.explore.load=async function(r,force){if(CL()!=='ad')return oldExplore(r,force);const d=await cached('ad:explore',()=>ytm('feed','FEmusic_explore'),force);return shelves(d.shelves||[]);};

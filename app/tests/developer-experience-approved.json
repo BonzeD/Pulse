@@ -1,0 +1,312 @@
+{
+  "main.js": {
+    "sha256": "42a275d098f9cabb7a3334bc56ce276bb1fc2f45996990b6bc231a2f8d15601d",
+    "originalSha256": "d513eb37d0e74681d7b26883b88c0729eb4d3caff02648fbbab591134f04444d",
+    "patches": [
+      {
+        "from": 677,
+        "to": 680,
+        "original": []
+      }
+    ]
+  },
+  "preload.js": {
+    "sha256": "7b8d5dfff3f0159161e27816c2b0f6c7f41d5d8f6fff34456406275f5c688855",
+    "originalSha256": "9008fed2a6114ea7627fa6acd019ceed9c494ec3b4a054a3548c89f27ce4c6f7",
+    "patches": [
+      {
+        "from": 2,
+        "to": 3,
+        "original": []
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "bd97ba72ba1561038f293ff015cf68295c92b08dd2445c155a0d87248bb35c6d",
+    "originalSha256": "9ef7a641a4f1b16a042861c1e0ce36c3be1d6398d9e6d2b60f7485f9e580ad8e",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs\",\n"
+        ]
+      },
+      {
+        "from": 41,
+        "to": 43,
+        "original": [
+          "    \"test:setup-debug\": \"node tests/setup-debug-ui.cjs\"\n"
+        ]
+      },
+      {
+        "from": 49,
+        "to": 51,
+        "original": []
+      }
+    ]
+  },
+  "renderer/audius-locales.js": {
+    "sha256": "a0161c02e700f31a450d949720f14b683875ac35599e1c7516f46e66d29bf605",
+    "originalSha256": "a8e5e05ef56287e2488c54018eb28cb7b89843debfe6ccdea9e6b0fa11765654",
+    "patches": [
+      {
+        "from": 2,
+        "to": 5,
+        "original": []
+      },
+      {
+        "from": 29,
+        "to": 32,
+        "original": []
+      },
+      {
+        "from": 56,
+        "to": 59,
+        "original": []
+      }
+    ]
+  },
+  "renderer/audius.js": {
+    "sha256": "8bc92cfa659f781b29449df7e80adfaa9282ffbad5124cfd9542571ccb31509d",
+    "originalSha256": "c8b1a2dcb8e81e6549314f416cfe9b456dc97008d68feefb4f80226851d52fc4",
+    "patches": [
+      {
+        "from": 9,
+        "to": 13,
+        "original": []
+      },
+      {
+        "from": 14,
+        "to": 17,
+        "original": [
+          "  let el=$('audiusSource');if(!el){el=document.createElement('button');el.id='audiusSource';el.className='ad-source';el.type='button';el.addEventListener('click',picker);const host=$('bar');host?.append(el);}\n",
+          "  const t=curTrack(),ad=session?.candidate;\n",
+          "  el.hidden=!t||t.id.startsWith('local-')||!!off[t.id];\n",
+          "  el.innerHTML=ico('music')+`<span>${ad||native(t)?'Audius':translateUiText('Текущий источник')}</span>`;\n",
+          "  el.title=translateUiText('Источник звука');el.setAttribute('aria-label',el.title);\n"
+        ]
+      },
+      {
+        "from": 18,
+        "to": 19,
+        "original": []
+      },
+      {
+        "from": 97,
+        "to": 99,
+        "original": [
+          " document.addEventListener('click',e=>{const b=e.target.closest('[data-ad-legal]');if(b&&legal[b.dataset.adLegal])pulse.openUrl(legal[b.dataset.adLegal]);});\n",
+          " const oldTab=clientTab;clientTab=function(){const tab=oldTab();tab.rows.push(grp('Audius'),R('Источник звука','Audius — только уверенные совпадения. При сомнении используется прежний источник.',sel('app.audioSource',[['current','Текущий источник'],['auto','Автоматически'],['prefer','Предпочитать Audius']]),'audius звук источник'),R('Audius — прямой звук без входа','Публичные треки, исполнители и плейлисты. Лайки и плейлисты сохраняются только в Pulse. Скачивание отключено.',''),R('Условия Audius','',`<button class=\"btn sm\" data-ad-legal=\"terms\">API Terms</button><button class=\"btn sm\" data-ad-legal=\"privacy\">Privacy Policy</button><button class=\"btn sm\" data-ad-legal=\"license\">Open Music License</button>`));return tab;};\n"
+        ]
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "86a63d904f9eb3a88def368481470a661ad60369beac6f3d338c8e71eaf3aa84",
+    "originalSha256": "8427fc7179d0685d15689ab4b49c2000e3acb082340a66b75352ea9b3633a0d6",
+    "patches": [
+      {
+        "from": 374,
+        "to": 375,
+        "original": []
+      }
+    ]
+  },
+  "renderer/prism-live.js": {
+    "sha256": "91c1456ca4ae1119979ace1ad05787af333b586d72524fb5730621836fc2dba4",
+    "originalSha256": "a7bcfee12fc35f2ac7895781dc2100fb76aea89cb5277e394673f1da7f98144a",
+    "patches": [
+      {
+        "from": 12,
+        "to": 13,
+        "original": [
+          "  let host=null,art=null,model=null,focusBefore=null,releaseTimer=0,closing=false;\n"
+        ]
+      },
+      {
+        "from": 29,
+        "to": 38,
+        "original": [
+          "    const state=model.step(fr,dt);status(state.signal?'live':'wait');return state;\n"
+        ]
+      },
+      {
+        "from": 60,
+        "to": 62,
+        "original": [
+          "    if(calm()||colors.matches){host.classList.add('sp-prism-fallback');status(calm()?'calm':'wait');return;}\n",
+          "    try{art=window.PulsePrismArt(host.querySelector('canvas'),host,{live:true,sample,onCalm:makeArt,onLoss:()=>status('wait')});}\n"
+        ]
+      },
+      {
+        "from": 76,
+        "to": 77,
+        "original": [
+          "    host.remove();host=null;model=null;closing=false;document.body.classList.remove('prism-live');\n"
+        ]
+      },
+      {
+        "from": 96,
+        "to": 97,
+        "original": [
+          "    host.innerHTML='<div class=\"sp-prism-static\"></div><canvas class=\"sp-prism\" aria-hidden=\"true\"></canvas><div class=\"sp-vig\"></div><div class=\"sp-grain\"></div><button type=\"button\" class=\"sp-live-back\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M14 6l-6 6 6 6\"/></svg><span></span><kbd>Esc</kbd></button><div class=\"sp-core\"><p class=\"sp-live-eyebrow\">PRISM / LIVE</p><div class=\"sp-word\" aria-label=\"Pulse\" data-i18n-skip><b>P</b><b>u</b><b>l</b><b>s</b><b>e</b></div><div class=\"sp-signal\" aria-hidden=\"true\"><i></i></div><p class=\"sp-live-status\" data-i18n-skip></p></div>';\n"
+        ]
+      },
+      {
+        "from": 98,
+        "to": 99,
+        "original": [
+          "    document.body.appendChild(host);document.body.classList.add('prism-live');opened++;\n"
+        ]
+      }
+    ]
+  },
+  "renderer/setup-debug.css": {
+    "sha256": "5bbacebec4db1a4ffe13ddbbfee6e87b789ca887b4280359e6564a7fede9edd0",
+    "originalSha256": "8ff3b6f32f6cf38eba25c2bd94c06024220fea01f70d2c2f5ca8f0336b2e74fd",
+    "patches": [
+      {
+        "from": 0,
+        "to": 2,
+        "original": [
+          "/* Deliberately scoped: never changes player, editor or installer styling. */\n",
+          ".pulse-tools{position:fixed;inset:0;z-index:100002;display:grid;place-items:center;padding:24px;background:#08090edd;color:#f4f3fa;font:400 16px/1.5 system-ui,sans-serif;-webkit-app-region:no-drag}\n"
+        ]
+      },
+      {
+        "from": 3,
+        "to": 13,
+        "original": [
+          ".pulse-tools .pt-panel{width:min(760px,100%);max-height:calc(100dvh - 48px);overflow:auto;background:#171820;border:1px solid #484b5e;border-radius:12px;padding:32px;overscroll-behavior:contain;box-shadow:0 16px 64px #0005}\n",
+          ".pulse-tools h1{font-size:30px;line-height:1.2;letter-spacing:-.035em;margin:20px 0 12px}.pulse-tools h2{font-size:20px;margin:24px 0 12px}.pulse-tools p{color:#bcbecf;margin:0 0 20px}.pulse-tools small{font-size:14px;color:#bcbecf}\n",
+          ".pulse-tools .pt-top{display:flex;align-items:center;justify-content:space-between;gap:16px}.pulse-tools .pt-label{font-size:14px;letter-spacing:.14em;color:#c6bcff}.pulse-tools .pt-progress{display:flex;gap:6px;margin:24px 0}.pulse-tools .pt-progress i{height:3px;flex:1;background:#414456;border-radius:2px}.pulse-tools .pt-progress i.on{background:#c8b9ff}\n",
+          ".pulse-tools button{font:inherit;line-height:1.35;min-height:44px;border-radius:8px;border:1px solid #747a94;padding:10px 16px;color:#f4f3fa;background:#232630;cursor:pointer;text-align:center;transition:background .16s,border-color .16s}.pulse-tools button:hover{background:#343849}.pulse-tools button:focus-visible,.pulse-tools input:focus-visible{outline:2px solid #ded4ff;outline-offset:3px}.pulse-tools button:disabled{opacity:.55;cursor:not-allowed}.pulse-tools button.pt-primary{background:#d3c5ff;border-color:#d3c5ff;color:#1b1234;font-weight:650}.pulse-tools button.pt-primary:hover{background:#e2d8ff}\n",
+          ".pulse-tools .pt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pulse-tools .pt-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:16px;gap:6px}.pulse-tools .pt-card[aria-pressed=true]{border:2px solid #c8b9ff;padding:15px;background:#302940}.pulse-tools .pt-card[aria-pressed=true] b::after{content:' ✓';color:#e3daff}.pulse-tools .pt-footer{display:flex;justify-content:space-between;gap:12px;margin-top:32px;flex-wrap:wrap}.pulse-tools .pt-footer>div{display:flex;gap:8px}.pulse-tools .pt-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;border-bottom:1px solid #363949;padding:12px 0}.pulse-tools .pt-row>span{min-width:0}.pulse-tools label.pt-row{cursor:pointer}.pulse-tools input[type=checkbox]{accent-color:#c8b9ff;width:22px;height:22px;flex-shrink:0}.pulse-tools .pt-note{padding:12px 16px;border:1px solid #575166;background:#242130;border-radius:8px;margin-top:16px;font-size:14px;color:#d8d2e7}.pulse-tools .pt-error{color:#ffbdc8;border-color:#985667}.pulse-tools .pt-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.pulse-tools .pt-tabs button[aria-selected=true]{background:#373044;border-color:#c8b9ff}.pulse-tools .pt-results{margin:16px 0;display:grid;gap:8px}.pulse-tools .pt-result{padding:12px;border:1px solid #44485b;border-radius:8px;font-size:14px;overflow-wrap:anywhere}.pulse-tools .pt-result b{display:block}.pulse-tools .pt-result[data-state=pass]{border-color:#5f947f}.pulse-tools .pt-result[data-state=fail]{border-color:#b46e7d}.pulse-tools pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 ui-monospace,Consolas,monospace;color:#d2d6e4}.pulse-tools .pt-empty{padding:24px 0;color:#bcbecf}\n"
+        ]
+      },
+      {
+        "from": 14,
+        "to": 22,
+        "original": [
+          "@media(max-width:540px){.pulse-tools{padding:12px}.pulse-tools .pt-panel{padding:20px;max-height:calc(100dvh - 24px)}.pulse-tools h1{font-size:26px}.pulse-tools .pt-grid{grid-template-columns:1fr}.pulse-tools .pt-footer{gap:16px;margin-top:24px}.pulse-tools .pt-footer>div{flex:1;justify-content:flex-end}.pulse-tools .pt-row{align-items:flex-start}.pulse-tools input{margin-top:6px}}\n",
+          "@media(prefers-reduced-motion:reduce){.pulse-tools *{transition:none!important;animation:none!important}}\n",
+          "@media(forced-colors:active){.pulse-tools,.pulse-tools .pt-panel{background:Canvas;color:CanvasText;border-color:CanvasText}.pulse-tools p,.pulse-tools small,.pulse-tools .pt-label,.pulse-tools pre{color:CanvasText}.pulse-tools button,.pulse-tools button.pt-primary,.pulse-tools .pt-card[aria-pressed=true]{background:ButtonFace;color:ButtonText;border-color:ButtonText}.pulse-tools .pt-card[aria-pressed=true]{outline:2px solid Highlight}.pulse-tools .pt-note,.pulse-tools .pt-result{background:Canvas;color:CanvasText;border-color:CanvasText}.pulse-tools .pt-progress i.on{background:Highlight;forced-color-adjust:none}}\n",
+          ".pulse-tools h1[tabindex=\"-1\"]:focus{outline:none!important}\n"
+        ]
+      }
+    ]
+  },
+  "renderer/setup-debug.js": {
+    "sha256": "8c12c777b0ce74e3bed6909c63433ddfdff0ceaf294421dd739aec447f163d87",
+    "originalSha256": "48eb07c6f6aedb528624a1af6a316b1ca386e578de1c0ec2ec42ace0eed38d08",
+    "patches": [
+      {
+        "from": 36,
+        "to": 37,
+        "original": [
+          " const cards=(key,items)=>`<div class=\"pt-grid\">${items.map(([value,title,desc])=>`<button type=\"button\" class=\"pt-card\" data-choice=\"${key}\" data-value=\"${h(value)}\" aria-pressed=\"${draft[key]===value}\"><b>${h(title)}</b>${desc?`<small>${h(desc)}</small>`:''}</button>`).join('')}</div>`;\n"
+        ]
+      },
+      {
+        "from": 38,
+        "to": 39,
+        "original": [
+          " let step=0,draft={},graphics='current',graphicsOriginal={},busy=false,note='',accountState=null,fresh=false,waiting=null;\n"
+        ]
+      },
+      {
+        "from": 40,
+        "to": 41,
+        "original": [
+          "  if(!mount('pulseWelcome',t('setup')))return false;kind='welcome';step=0;note='';busy=false;accountState=null;fresh=options.fresh===true;draft=M.draft(S());graphicsOriginal=M.validate(draft);graphics='current';\n"
+        ]
+      },
+      {
+        "from": 53,
+        "to": 58,
+        "original": [
+          "  overlay.setAttribute('aria-label',t('setup'));overlay.innerHTML=`<div class=\"pt-panel\"><div class=\"pt-top\"><b class=\"pt-label\">PULSE / SETUP</b><small>${step+1} / 5</small></div><div class=\"pt-progress\" aria-hidden=\"true\">${Array.from({length:5},(_,i)=>`<i class=\"${i<=step?'on':''}\"></i>`).join('')}</div><h1 tabindex=\"-1\">${h(t(titles[step]))}</h1><p>${h(t(descs[step]))}</p>${body}${note?`<div role=\"status\" class=\"pt-note pt-error\">${h(note)}</div>`:''}<footer class=\"pt-footer\">${button('later','later','',busy)}<div>${step>0?button('back','back','',busy):''}${button(busy?'busy':step===4?'finish':'next',step===4?'finish':'next','pt-primary',busy)}</div></footer></div>`;\n"
+        ]
+      },
+      {
+        "from": 92,
+        "to": 92,
+        "original": [
+          " let tab='actions',results=[],running=false;\n",
+          " const actionList=()=>[\n",
+          "  ['reopen',()=>welcomeOpen()],['prism',()=>window.PulsePrism.open()],['home',()=>go({r:'home'})],['library',()=>go({r:'library'})],['downloads',()=>go({r:'downloads'})],\n",
+          "  ['player',()=>openPP(),true],['lyrics',()=>lyStageOpen(true),true],['immersive',()=>PulseImmersion.open(),true],['visual',()=>{openPP();setMode('visual');},true],['cover',()=>{openPP();setMode('cover');},true],\n",
+          "  ['play',()=>toggle(),true],['nextTrack',()=>next(),true],['prevTrack',()=>prev(),true],\n",
+          "  ...['settings','accounts','audio','editor','plugins','shortcuts','about'].map(x=>[x,()=>dsOpenSetting(({settings:'app',shortcuts:'keys'})[x]||x)]),\n",
+          "  ...['client','sync','look','ui','ly','viz','dj','wave','widget','wall','discord','cfg'].map(x=>['section:'+x,()=>dsOpenSetting(x)]),\n",
+          "  ['full',()=>pulse.win('fs')],['widgetAction',()=>pulse.win('widget')],['toast',()=>toast(t('toast'))]\n",
+          " ];\n"
+        ]
+      },
+      {
+        "from": 98,
+        "to": 98,
+        "original": [
+          " function debugOpen(){if(!mount('pulseDebug',t('debug')))return false;kind='debug';tab='actions';running=false;note='';renderDebug();focus();return true;}\n",
+          " function renderDebug(){\n",
+          "  if(kind!=='debug'||!overlay)return;let body='';\n",
+          "  if(tab==='actions')body=`<div class=\"pt-grid\">${actionList().map(([key,_fn,track],i)=>`<button type=\"button\" class=\"pt-card\" data-debug-action=\"${i}\"${track&&!curTrack()?' disabled':''}><b>${h(t(key))}</b>${track&&!curTrack()?`<small>${h(t('requiresTrack'))}</small>`:''}</button>`).join('')}</div>`;\n",
+          "  if(tab==='tests')body=button(running?'busy':'run','run','pt-primary',running)+`<div class=\"pt-results\" aria-live=\"polite\">${results.length?results.map(r=>`<div class=\"pt-result\" data-state=\"${r.state}\"><b>${h(t(r.name))} · ${h(t(r.state))}</b>${h(r.detail||'')}</div>`).join(''):`<p class=\"pt-empty\">${h(t('empty'))}</p>`}</div>`;\n",
+          "  if(tab==='status')body=button('refresh','refresh')+`<pre>${h(JSON.stringify(snapshot(),null,2))}</pre>`;\n",
+          "  overlay.innerHTML=`<div class=\"pt-panel\"><div class=\"pt-top\"><b class=\"pt-label\">PULSE / DEBUG</b>${button('close','close')}</div><h1 tabindex=\"-1\">${h(t('debug'))}</h1><p>${h(t('debugDesc'))}</p><div class=\"pt-tabs\" role=\"tablist\" aria-label=\"${h(t('debug'))}\">${['actions','tests','status'].map(x=>`<button type=\"button\" role=\"tab\" aria-selected=\"${tab===x}\" data-debug-tab=\"${x}\">${h(t(x))}</button>`).join('')}</div>${body}<div class=\"pt-note\">${h(t('nativeNote'))}</div>${note?`<div class=\"pt-note\" role=\"status\">${h(note)}</div>`:''}<footer class=\"pt-footer\">${button('copy','copy')}</footer></div>`;\n",
+          " }\n",
+          " async function runChecks(){\n",
+          "  if(running||kind!=='debug')return;running=true;results=[];const generation=++checkGeneration;renderDebug();\n",
+          "  const add=(name,state,detail='')=>{if(generation!==checkGeneration||kind!=='debug')return;results.push({name,state,detail});renderDebug();};\n",
+          "  const check=(name,fn)=>{try{add(name,fn()?'pass':'fail');}catch{add(name,'fail');}};\n",
+          "  check('structure',()=>!!S().app&&!!S().perf&&Array.isArray(S().audio.eq)&&S().audio.eq.length===10);\n",
+          "  check('queue',()=>Array.isArray(lib.queue?.tracks)&&Number.isInteger(lib.queue.idx)&&(lib.queue.tracks.length===0?lib.queue.idx===-1:lib.queue.idx>=0&&lib.queue.idx<lib.queue.tracks.length));\n",
+          "  check('locales',()=>!!window.PulseI18n&&!!window.PulseWelcome&&!!window.PulsePrism&&!!window.MediaLibrary);\n",
+          "  check('native',()=>typeof pulse.getLibrary==='function'&&typeof pulse.win==='function');\n",
+          "  // Query existing probe, never allocate another graphics context in a check.\n",
+          "  try{add('gpuTest',typeof PulseGPU!=='undefined'&&PulseGPU.supported()?'pass':'skip');}catch{add('gpuTest','skip');}\n",
+          "  const snap=snapshot();add('signal',snap.signalPresent?'pass':'skip',snap.signalPresent?'':t('noSignal'));\n",
+          "  try{const p=await deadline(pulse.getLibrary());add('storage',p===null||p&&typeof p==='object'?'pass':'fail');}catch{add('storage','fail');}\n",
+          "  if(generation===checkGeneration&&kind==='debug'){running=false;renderDebug();}\n",
+          " }\n",
+          " async function copyReport(){try{const report={pulseDiagnostics:1,...snapshot(),checks:results.map(({name,state})=>({name,state}))};const result=await pulse.copyText(JSON.stringify(report,null,2));note=t(result?.ok?'copied':'copyFail');}catch{note=t('copyFail');}renderDebug();}\n"
+        ]
+      },
+      {
+        "from": 102,
+        "to": 103,
+        "original": [
+          "  if(el.dataset.debugTab){tab=el.dataset.debugTab;renderDebug();overlay.querySelector(`[data-debug-tab=\"${tab}\"]`)?.focus();return;}\n",
+          "  if(el.dataset.debugAction!==undefined){const a=actionList()[+el.dataset.debugAction];if(!a||a[2]&&!curTrack())return;unmount();try{const r=a[1]();if(r===false)toast(t('unknown'));else toast(t('launched'));}catch{toast(t('fail'));}return;}\n",
+          "  const action=el.dataset.pt;if(action==='close'){unmount();return;}if(action==='copy'){copyReport();return;}if(action==='refresh'){renderDebug();return;}if(action==='run'){runChecks();return;}\n"
+        ]
+      },
+      {
+        "from": 107,
+        "to": 109,
+        "original": [
+          " window.PulseDebug={open:debugOpen,close:()=>{if(kind==='debug')unmount();},active:()=>kind==='debug',snapshot};\n"
+        ]
+      },
+      {
+        "from": 110,
+        "to": 111,
+        "original": [
+          " window.addEventListener('pulse-language',()=>{if(kind==='debug')renderDebug();});\n"
+        ]
+      }
+    ]
+  },
+  "renderer/splash.css": {
+    "sha256": "4fb7713269fc07fc8078adf30bc76c8241f48c3b2c867d25b66a8b7cbc7d9500",
+    "originalSha256": "903114eae2ffff1226947ef860223d1ea6477ef4e69e941f131649de6e1b0054",
+    "patches": [
+      {
+        "from": 72,
+        "to": 80,
+        "original": []
+      }
+    ]
+  }
+}

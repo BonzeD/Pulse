@@ -1,5 +1,8 @@
 // Owned UI strings only. Never translate recording metadata or lyrics.
 Object.assign(window.PulseEnglish,{
+ "Источник текущего трека": "Current track source",
+ "Выбор записи, переход к оригиналу и сброс соответствия доступны во время воспроизведения.": "Choose a recording, open the original or reset a match while a track is selected.",
+
  "YouTube Music, Apple Music, Spotify или Audius — чей каталог открывать в Pulse": "Choose which catalog to open in Pulse: YouTube Music, Apple Music, Spotify or Audius",
  "Условия Audius": "Audius terms",
  "Audius — прямой звук без входа": "Audius — direct audio, no sign-in",
@@ -24,6 +27,9 @@ Object.assign(window.PulseEnglish,{
  "Популярные плейлисты": "Trending playlists"
 });
 Object.assign(window.PulseJapanese,{
+ "Источник текущего трека": "現在の曲のソース",
+ "Выбор записи, переход к оригиналу и сброс соответствия доступны во время воспроизведения.": "曲を選択すると、録音の選択、オリジナルの表示、一致のリセットができます。",
+
  "YouTube Music, Apple Music, Spotify или Audius — чей каталог открывать в Pulse": "Pulse で開くカタログ：YouTube Music、Apple Music、Spotify、Audius",
  "Условия Audius": "Audius 利用規約",
  "Audius — прямой звук без входа": "Audius — ログイン不要の直接再生",
@@ -48,6 +54,9 @@ Object.assign(window.PulseJapanese,{
  "Популярные плейлисты": "人気のプレイリスト"
 });
 Object.assign(window.PulseUkrainian,{
+ "Источник текущего трека": "Джерело поточного треку",
+ "Выбор записи, переход к оригиналу и сброс соответствия доступны во время воспроизведения.": "Вибір запису, перехід до оригіналу й скидання відповідності доступні для вибраного треку.",
+
  "YouTube Music, Apple Music, Spotify или Audius — чей каталог открывать в Pulse": "YouTube Music, Apple Music, Spotify або Audius — чий каталог відкривати в Pulse",
  "Условия Audius": "Умови Audius",
  "Audius — прямой звук без входа": "Audius — прямий звук без входу",

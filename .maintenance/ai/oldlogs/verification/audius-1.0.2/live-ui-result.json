@@ -1,0 +1,29 @@
+{
+  "probes": [
+    {
+      "ms": 2454.899999999907,
+      "src": "/audius/audio/mzXmz1",
+      "clock": 0.033387,
+      "signal": true
+    },
+    {
+      "ms": 790.7999999998137,
+      "src": "/audius/audio/mzXmz1",
+      "clock": 0.029333,
+      "signal": true
+    }
+  ],
+  "controls": {
+    "time": 22.283753,
+    "rate": 0.5,
+    "paused": false
+  },
+  "identity": {
+    "id": "ad:mzXmz1",
+    "liked": true,
+    "queued": false
+  },
+  "artistTracks": 6,
+  "playlistTracks": 65,
+  "errors": []
+}

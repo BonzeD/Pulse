@@ -1,0 +1,19 @@
+{
+  "originalArchive": "Pulse-1.0.2-source.zip",
+  "missingOriginalFiles": [],
+  "changedOriginalFiles": [
+    "README.md",
+    "app/main.js",
+    "app/package.json",
+    "app/preload.js",
+    "app/renderer/app.js",
+    "app/renderer/clients.js",
+    "app/renderer/index.html",
+    "app/tests/graphics-102-original.cjs",
+    "app/tests/regression.cjs"
+  ],
+  "historicalBaselinesChanged": [],
+  "version": "1.0.2",
+  "windowsBuildCreated": false,
+  "githubPublished": false
+}

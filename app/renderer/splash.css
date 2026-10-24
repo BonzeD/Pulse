@@ -70,3 +70,11 @@ body.prism-live #fpsMeter{display:none}
 @media(prefers-reduced-motion:reduce){:is(#splash,#prismLive)[data-style="prism"] .sp-word{animation:none}}
 @media(forced-colors:active){:is(#splash,#prismLive)[data-style="prism"] .sp-word{background:none;animation:none}:is(#splash,#prismLive)[data-style="prism"] .sp-word b:nth-child(n){color:CanvasText}}
 #prismLive .sp-word{pointer-events:auto;user-select:none;-webkit-app-region:no-drag}
+
+/* Cava-inspired miniature: uses the existing Prism envelopes, never fake bars. */
+#prismLive .sp-live-status{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0;padding:0}
+#prismLive .sp-mini-spectrum{width:166px;height:28px;display:flex;align-items:stretch;gap:3px;contain:layout paint;opacity:.85}
+#prismLive .sp-mini-spectrum i{flex:1;min-width:0;transform-origin:bottom;transform:scaleY(.0714);border-radius:1px;background:linear-gradient(0deg,rgb(var(--prism-ink3,198,220,230)),rgb(var(--prism-ink1,243,220,231)));mask-image:repeating-linear-gradient(to top,#000 0px,#000 2px,transparent 2px,transparent 3px)}
+#prismLive.sp-calm .sp-mini-spectrum i{transform:scaleY(.0714)!important}
+@media(prefers-reduced-motion:reduce){#prismLive .sp-mini-spectrum i{transform:scaleY(.0714)!important}}
+@media(forced-colors:active){#prismLive .sp-mini-spectrum i{background:CanvasText;mask-image:none;forced-color-adjust:none}}

@@ -1,0 +1,18 @@
+{
+  "restoredExactlyFrom": "Pulse-1.0.0-source-fix1.zip",
+  "restoredFiles": [
+    "renderer/app.js",
+    "renderer/viz.js"
+  ],
+  "unchangedFix2Files": [
+    "build/installer.nsi",
+    "build/update-shutdown.nsh",
+    "renderer/motion.css",
+    "renderer/editor.js",
+    "renderer/studio.css",
+    "renderer/lystage.js",
+    "renderer/gpu.js"
+  ],
+  "removedWorker": true,
+  "version": "1.0.0"
+}

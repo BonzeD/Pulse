@@ -1,0 +1,10 @@
+{
+  "runtimeFiles": 226,
+  "byteExact": true,
+  "version": "1.0.0",
+  "installerOnlyFiles": 132,
+  "installerOnlyPrefixes": [
+    "$PLUGINSDIR/",
+    "Uninstall Pulse.exe"
+  ]
+}

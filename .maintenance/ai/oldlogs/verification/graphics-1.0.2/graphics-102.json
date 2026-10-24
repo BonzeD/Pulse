@@ -1,0 +1,47 @@
+{
+  "ownedGpuContextsReleased": 1,
+  "sharpPixelIdentical": [
+    "ring",
+    "pulse",
+    "blob",
+    "sun",
+    "bars",
+    "mirror",
+    "wave",
+    "particles",
+    "warp",
+    "tunnel",
+    "grid",
+    "aurora",
+    "spiral",
+    "kaleido",
+    "dots",
+    "radial",
+    "scope",
+    "spectro",
+    "rays",
+    "hex",
+    "fire",
+    "joy",
+    "stars",
+    "vinyl",
+    "mosaic",
+    "city",
+    "helix",
+    "coverfield"
+  ],
+  "finiteGeometryCalls": 6388,
+  "shortWaveLengths": [
+    1,
+    2,
+    8,
+    16,
+    24
+  ],
+  "zeroHeightSafe": true,
+  "gridAllocations": {
+    "before": 28,
+    "after": 2
+  },
+  "lifecycleReleased": true
+}

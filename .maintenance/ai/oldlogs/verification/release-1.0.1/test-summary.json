@@ -1,0 +1,67 @@
+{
+  "version": "1.0.1",
+  "published": false,
+  "runtimePlatform": "Linux/Chromium (SwiftShader), not Windows",
+  "homeClients": 3,
+  "homeLanguages": [
+    "ru",
+    "en",
+    "ja",
+    "uk"
+  ],
+  "headingsPerCombination": 17,
+  "chipsPerCombination": 9,
+  "viewportWidths": [
+    1366,
+    390
+  ],
+  "gpuTransitions": [
+    "WebGL",
+    "Canvas",
+    "WebGL",
+    "Canvas",
+    "WebGL"
+  ],
+  "canvasPresets": 28,
+  "canvasPixelIdentical": true,
+  "effectChecks": 280,
+  "effectChanges": 280,
+  "liveAccountChecked": false,
+  "windowsRuntimeChecked": false,
+  "preciseTimecode": {
+    "formats": [
+      "m:ss",
+      "mm:ss.xx",
+      "hh:mm:ss.xx"
+    ],
+    "click": true,
+    "keyboard": [
+      "Enter",
+      "Space"
+    ],
+    "playerModes": [
+      "main",
+      "expanded",
+      "lyrics"
+    ],
+    "preferencePersists": true,
+    "changesTransport": false,
+    "newTimersOrRAF": false
+  },
+  "publicAppleCatalogChecks": {
+    "storefront": "ua",
+    "requestedLanguages": [
+      "ja-JP",
+      "en-US",
+      "uk-UA",
+      "ru-RU"
+    ],
+    "statuses": [
+      200,
+      200,
+      200,
+      200
+    ],
+    "authenticatedUser": false
+  }
+}
