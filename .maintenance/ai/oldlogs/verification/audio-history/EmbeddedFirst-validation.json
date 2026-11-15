@@ -1,0 +1,34 @@
+{
+  "tests": {
+    "total": 593,
+    "passed": 592,
+    "failed": 0,
+    "skipped": 1
+  },
+  "embeddedFirstTests": 25,
+  "localRendererScenarios": [
+    "embedded-first",
+    "audio-engine",
+    "background",
+    "direct-stream",
+    "session-stream",
+    "adaptive-stream",
+    "startup-latency",
+    "reliability"
+  ],
+  "nativeWindowsExecution": false,
+  "liveYouTubePlaybackTested": false,
+  "package": {
+    "kind": "portable-package-validation",
+    "firstPartyFilesCompared": 246,
+    "resourcesCompared": 7,
+    "electronPayload": "Windows x64",
+    "diagnosticsVersion": 2,
+    "build": "EmbeddedFirst-AudioDiagnostics2",
+    "nativeWindowsExecution": false,
+    "unsigned": true,
+    "portablePayloadFilesCompared": 226,
+    "portableSha256": "d1e4fdb17855a8d822d200d1d016fb80df25b0d40e61825d31996f2c29e11a91",
+    "portableBytes": 202138830
+  }
+}

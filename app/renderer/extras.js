@@ -351,7 +351,7 @@ function accTab() {
   const grid = (s) => {
     const L = [...(accmS[s].list || [])].sort((x, y) => (y.active - x.active) || ((y.used || 0) - (x.used || 0)));
     const cards = L.map((a) => `<div class="acc-card ${a.active ? 'on' : ''}" ${a.active ? '' : `data-sact="cx:x.accsw:${s}|${a.id}" title="Переключиться на этот аккаунт"`}>
-      ${accAva(a)}<b data-i18n-skip>${esc(a.name)}</b><span>${a.active ? '<i class="acc-dot"></i>Сейчас активен' : 'Был активен ' + fmtDate(a.used)}</span>
+      ${accAva(a)}<b data-i18n-skip>${esc(a.name)}</b><span>${a.active ? (s==='yt'&&!account?'Сохранённый аккаунт':'<i class="acc-dot"></i>Сейчас активен') : 'Был активен ' + fmtDate(a.used)}</span>
       <div class="acc-tools"><button class="ib sm" data-sact="cx:x.accren:${s}|${a.id}" title="Переименовать">${ico('edit')}</button><button class="ib sm" data-sact="cx:x.accdel:${s}|${a.id}" title="${a.active ? 'Выйти и убрать' : 'Убрать из списка'}">${ico('trash')}</button></div>
       ${a.active ? '' : `<em class="acc-go">${ico('swap')}Переключиться</em>`}</div>`).join('');
     const add = `<div class="acc-card add" data-sact="cx:x.accadd:${s}" title="Войти в ещё один аккаунт ${accSvcName(s)}"><span class="acc-av ava plus">${ico('plus')}</span><b>Добавить аккаунт</b><span>Текущий вход сохранится</span></div>`;
@@ -369,7 +369,7 @@ function accTab() {
 // после смены аккаунта — сбрасываем всё, что было взято из прежнего
 function accAfter(s) {
   cache.clear();
-  if (s === 'yt') { account = null; accLists = null; lib.accCache = null; save(); }
+  if (s === 'yt') { ++accountRefreshSeq;accountState={verified:false,state:'signed-out'};account = null; accLists = null; lib.accCache = null; save(); }
   else if (typeof svcLists !== 'undefined') { svcLists[s] = null; svcSt[s] = { user: false }; if (typeof svcListsSave === "function") svcListsSave(); }
 }
 async function accSwitch(id, s = 'yt') {
@@ -416,7 +416,8 @@ renderAccBtn = function () {
   const b = $('accBtn'); if (!b) return; const s = CL(), cur = accCur(s);
   b.classList.toggle('out', !cur); b.dataset.svc = s;
   b.innerHTML = cur ? (cur.photo ? `<img src="${esc(cur.photo)}" referrerpolicy="no-referrer" />` : `<span class="ava">${esc((cur.name || '?')[0].toUpperCase())}</span>`) : `${ico(s === 'yt' ? 'google' : accSvcIco(s))}<span>Войти</span>`;
-  b.title = cur ? `${cur.name} — ${accSvcName(s)}` : `Войти в ${accSvcName(s)}`;
+  b.title = cur ? `${cur.name} — ${accSvcName(s)}` : s==='yt'&&accountState.state!=='signed-out'?accountStatusLabel():`Войти в ${accSvcName(s)}`;
+  b.setAttribute('aria-label',b.title);if(s==='yt'){b.dataset.auth=accountState.state;if(!cur&&accountState.state!=='signed-out')b.innerHTML=`${ico('google')}<span>${accountStatusLabel()}</span>`;}
 };
 // меню аватарки: аккаунты открытого сервиса
 function accPopClose() { const p = $('accPop'); if (p) { if (window.PulseMotion) PulseMotion.remove(p,'account'); else p.remove(); } }
@@ -425,12 +426,13 @@ $('accBtn').onclick = async (e) => {
   e.stopPropagation(); if ($('accPop')) return accPopClose();
   const btn = e.currentTarget, s = CL(); await accmRefresh(true, s);
   const others = (accmS[s].list || []).filter((a) => !a.active), cur = accCur(s);
-  if (!cur && !others.length) return accLogin(s);
+  if (!cur && !others.length && !(s==='yt'&&accountState.state!=='signed-out')) return accLogin(s);
   hideMenu();
   const cfgs = cfgList().slice(0, 4);
   window.PulseMotion?.flush('account');
   const p = document.createElement('div'); p.id = 'accPop'; p.className = 'acc-pop';
-  p.innerHTML = `${cur ? `<div class="ap-me">${accAva(cur, 'big')}<div><b>${esc(cur.name)}</b><span><i class="acc-dot"></i>${accSvcName(s)} · активен</span></div></div>` : `<div class="ap-me out"><span class="acc-av ava big">?</span><div><b>Не выполнен вход</b><span>${accSvcName(s)}: выбери аккаунт или войди</span></div></div>`}
+  p.innerHTML = `${cur ? `<div class="ap-me">${accAva(cur, 'big')}<div><b>${esc(cur.name)}</b><span><i class="acc-dot"></i>${accSvcName(s)} · активен</span></div></div>` : `<div class="ap-me out"><span class="acc-av ava big">?</span><div><b>${s==='yt'&&accountState.state!=='signed-out'?accountStatusLabel():'Не выполнен вход'}</b><span>${accSvcName(s)}: выбери аккаунт или войди</span></div></div>`}
+    ${s==='yt'&&!cur&&accountState.state!=='signed-out'?`<button class="ap-it" data-ap="check">${ico('refresh')}Проверить вход</button><button class="ap-it" data-ap="signin">${ico('google')}Войти</button>`:''}
     ${others.length ? `<div class="ap-h">Переключиться</div>${others.map((a) => `<button class="ap-acc" data-ap="sw:${a.id}">${accAva(a)}<span><b data-i18n-skip>${esc(a.name)}</b><em>${fmtDate(a.used)}</em></span><i class="ap-del" data-ap="del:${a.id}" title="Убрать из списка">${ico('x')}</i></button>`).join('')}` : ''}
     <button class="ap-acc add" data-ap="add"><span class="acc-av ava plus">${ico('plus')}</span><span><b>Добавить аккаунт ${accSvcName(s)}</b><em>${cur ? 'Текущий вход сохранится' : 'Войти'}</em></span></button>
     ${cfgs.length ? `<div class="ap-h">Конфиги</div><div class="ap-cfg">${cfgs.map((c) => `<button class="chip ${lib.cfgActive === c.id ? 'on' : ''}" data-ap="cfg:${c.id}">${esc(c.name)}</button>`).join('')}</div>` : ''}
@@ -446,6 +448,8 @@ $('accBtn').onclick = async (e) => {
     const el = ev.target.closest('[data-ap]'); if (!el) return; ev.stopPropagation();
     const [cmd, arg] = el.dataset.ap.split(':'); accPopClose();
     if (cmd === 'del') { const a = (accmS[s].list || []).find((x) => x.id === arg); if (!a || !confirm(`Убрать «${a.name}» из списка? Чтобы вернуть — войти заново.`)) return; accSet(s, await pulse.accounts.remove(arg, s).catch(() => null)); toast('Аккаунт убран', 'trash'); if (route().r === 'settings') rerenderSettings(); return; }
+    if(cmd==='check')return refreshAccount();
+    if(cmd==='signin')return accLogin(s);
     if (cmd === 'sw') return accSwitch(arg, s);
     if (cmd === 'add') return cur || others.length ? accAdd(s) : accLogin(s);
     if (cmd === 'cfg') return cfgApply(arg);
@@ -455,7 +459,7 @@ $('accBtn').onclick = async (e) => {
     if (cmd === 'logout') {
       if (!confirm(`Выйти из аккаунта ${accSvcName(s)}? Он пропадёт из списка аккаунтов.`)) return;
       const id = accmS[s].active; if (id && pulse.accounts) accSet(s, await pulse.accounts.remove(id, s).catch(() => null));
-      if (s === 'yt') { await pulse.account.logout(); account = null; accLists = null; lib.accCache = null; }
+      if (s === 'yt') { ++accountRefreshSeq;accountState={verified:false,state:'signed-out'};await pulse.account.logout(); account = null; accLists = null; lib.accCache = null; }
       else { await pulse.svc.logout(s).catch(() => {}); svcSt[s] = { user: false }; svcLists[s] = null; if (typeof svcListsSave === "function") svcListsSave(); }
       cache.clear(); renderAccBtn(); renderSide(); renderRoute(true); toast(`Вы вышли из ${accSvcName(s)}`, 'logout');
     }
@@ -507,7 +511,7 @@ async function extraAct(a, el) {
 // ================= КАДР / ТАЙМЕРЫ =================
 let dcTickAt = 0;
 function extFrame(now, f, wv, bt, tempo, ht, hidden) {
-  pvCleanup();
+  if(!hidden)pvCleanup();
   if (!hidden && route().r === 'settings' || (!hidden && (pops.ly || pops.viz))) pvFrame(now, f, wv, bt, tempo);
   if (now - dcTickAt > 1000) { dcTickAt = now; if (S().discord.on) { discordTick(false); const pv = document.getElementById('pvDiscord'); if (pv && !hidden && visible(pv)) updPreview('pvDiscord', discordPreview); } }
 }

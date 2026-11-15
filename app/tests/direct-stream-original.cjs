@@ -1,0 +1,3 @@
+'use strict';
+const crypto=require('crypto'),approved=require('./direct-stream-approved.json');
+module.exports=(name,source)=>{source=require('./background-original.cjs')(name,source);const record=approved[name];if(!record||crypto.createHash('sha256').update(source).digest('hex')!==record.sha256)return source;const lines=source.toString().match(/[^\n]*\n|[^\n]+$/g)||[];for(const p of [...record.patches].reverse())lines.splice(p.from,p.to-p.from,...p.original);const original=lines.join('');if(crypto.createHash('sha256').update(original).digest('hex')!==record.originalSha256)throw Error('Direct-stream inverse mismatch: '+name);return original;};

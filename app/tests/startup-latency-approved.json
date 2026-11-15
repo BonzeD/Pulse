@@ -1,0 +1,98 @@
+{
+  "offline.js": {
+    "sha256": "b054cf3ea731e23bf0cf9deece44c83048fa0f6d9bf0bab32402f506492f3a98",
+    "originalSha256": "edfaa5b4893c2106edb553444ff6af93269bd89b8c1c6e56118ea1e124e23e15",
+    "patches": [
+      {
+        "from": 226,
+        "to": 227,
+        "original": [
+          "const {firstAvailable} = require('./stream-race');\n"
+        ]
+      },
+      {
+        "from": 259,
+        "to": 260,
+        "original": [
+          "async function backupResolve(id,ent){\n"
+        ]
+      },
+      {
+        "from": 262,
+        "to": 265,
+        "original": [
+          " try{if(warming&&foregroundBackups)throw Error('Foreground audio has priority');if(ent.controller.signal.aborted)throw Error('Audio preparation cancelled');const end=audioTrace.begin('backup',{id,source:'yt',prefetch:ent.low});let r;\n",
+          "  try{r=await ytdlpResolve(id,ent.controller.signal);end({outcome:'ok'});}catch(e){end({outcome:ent.controller.signal.aborted?'cancelled':'error'});throw e;}\n",
+          "  if(!await probeAudio(r.url,r.ua,ent.controller.signal,{id,engine:'backup',source:'yt',prefetch:ent.low}))throw Error('YouTube не отдал рабочий аудиопоток');streamPolicy.backupSuccess();return {...r,verified:3};\n"
+        ]
+      },
+      {
+        "from": 325,
+        "to": 326,
+        "original": [
+          "async function fastResolve(id) {\n"
+        ]
+      },
+      {
+        "from": 341,
+        "to": 344,
+        "original": [
+          "  const result = await firstAvailable(candidates.map(ci=>run(ci,false)));\n",
+          "  if (result) return result;\n",
+          "  return retry.size ? firstAvailable([...retry].map(ci=>run(ci,true))) : null;\n"
+        ]
+      },
+      {
+        "from": 345,
+        "to": 347,
+        "original": [
+          "// 2.0.4: последний запасной путь — yt-dlp (с куками входа, если ты вошёл в YouTube). Запускается ТОЛЬКО когда все\n",
+          "// быстрые клиенты не справились, поэтому обычные треки по-прежнему стартуют за доли секунды.\n"
+        ]
+      },
+      {
+        "from": 382,
+        "to": 383,
+        "original": [
+          "  if (c && c.p) { if (!low) {c.low=false;c.warm=false;} return c.p; }\n"
+        ]
+      },
+      {
+        "from": 387,
+        "to": 394,
+        "original": [
+          "  const p = ((directRejected.get(id)||0)>=2&&!low?Promise.resolve(null):fastResolve(id)).then(async r => {\n",
+          "    if(r || (ent.low&&!ent.warm))return r;\n",
+          "    return backupResolve(id,ent);\n",
+          "  }).then((r) => {\n"
+        ]
+      }
+    ]
+  },
+  "stream-race.js": {
+    "sha256": "3b68091551d1683daa49a91834068f29615cd76a3bb06bb1e37be333dff6c0ce",
+    "originalSha256": "1364e3d2abc33558a4bc822b976cc1c5fde5e30332927fcef8c9b4b7fdec1955",
+    "patches": [
+      {
+        "from": 11,
+        "to": 63,
+        "original": [
+          "module.exports={firstAvailable};\n"
+        ]
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "2b8ee0af89d1f927e127efc27eae3ac4068f1ec98982ba4020232f3e395f137d",
+    "originalSha256": "7c99f95cd9bfc09d5d54b9529dd3823ad5a45a78aaa18664ca25cee99778ef37",
+    "patches": [
+      {
+        "from": 11,
+        "to": 13,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs tests/adaptive-audio.cjs\",\n"
+        ]
+      }
+    ]
+  }
+}

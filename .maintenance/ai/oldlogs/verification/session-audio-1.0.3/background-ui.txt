@@ -1,0 +1,1 @@
+PASS full application: opt-in audio log with real WAV/media events, redacted copy/save, all 4 locales at 390px; native hide parks main RAF without stopping audio/context, delayed graphics/cache release and foreground restore. Local Chromium fixture, not Windows CPU/RAM benchmark.

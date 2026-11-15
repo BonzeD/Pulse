@@ -1,0 +1,20 @@
+=== embedded-first-ui ===
+PASS EmbeddedFirst full renderer: mocked YouTube API; embed first, zero speculative direct calls, visual modes preserve engine, pause/play, seek fallback, stale resolver isolation, transport toggle during service mapping. NOT a live YouTube latency test.
+=== audio-engine-ui ===
+PASS audio engine full renderer: actual WAV -> existing media element -> single AudioContext/analyser, pause during resolver, real transport toggle, no duplicate resolve, offline pause/.4s resume, pending seek, latest-track wins and metadata-listener cleanup. Local fixture only, not real YouTube/Windows latency.
+=== background-ui ===
+PASS full application: opt-in audio log with real WAV/media events, redacted copy/save, all 4 locales at 390px; native hide parks main RAF without stopping audio/context, delayed graphics/cache release and foreground restore. Local Chromium fixture, not Windows CPU/RAM benchmark.
+=== direct-stream-ui ===
+PASS actual HTTP player API fixture → validated third CDN candidate → real proxy → Chromium audio decoder/AudioContext/analyser, pause and seek. First two candidates reject with 403. No iframe or media-route interception. Not a live YouTube/Windows proof.
+=== session-stream-ui ===
+PASS normal range validation: real HTTP proxy → Chromium decoder/analyser, pause and seek. Local synthetic fixtures, not live YouTube.
+PASS same-request backup: real HTTP proxy → Chromium decoder/analyser, pause and seek. Local synthetic fixtures, not live YouTube.
+=== reliability-ui ===
+PASS 403 first backup -> renewed compatible file: actual local HTTP, Chromium decoding/analyser, finite duration, pause and seek.
+PASS selected media headers -> real decoder: actual local HTTP, Chromium decoding/analyser, finite duration, pause and seek.
+PASS reject malformed 206 direct response -> consistent alternate: actual local HTTP, Chromium decoding/analyser, finite duration, pause and seek.
+PASS reject DVR direct fragment -> yt-dlp song file: actual local HTTP, Chromium decoding/analyser, finite duration, pause and seek.
+=== file-video-ui ===
+Passed full-app video playback, pause/resume, seek, shared volume, fullscreen command, mode switching, rounded glow, audio-only/downloaded/offline cases, compatibility conversion, stale-load checks, adaptive shared dropdowns, language changes, disabled/grouped/long options, dialog top layer and audio/video download submenus.
+=== developer-experience-ui ===
+PASS developer experience UI: draft/rollback/preservation, optional auth, settings source, real audio mini spectrum, opt-in tools + cancellation/cleanup, localized companion UI, 390/620/1366, reduced motion/forced colors. Not native Windows E2E.

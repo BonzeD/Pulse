@@ -1,0 +1,1 @@
+PASS release polish full renderer: actual MediaSession/IPC callback wiring with mocked YouTube, pending system play/pause, stable buffering deadline, native iframe pause cancellation, explicit retry after total failure, late PLAYING rejection, 390px layout. Not native Windows/live YouTube proof.

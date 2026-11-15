@@ -1,0 +1,1 @@
+PASS Atlas real renderer: empty/populated maps, artist search, shortest route, playlist save, playback delegation, swap, 390px/reduced motion, navigation, single/disconnected states. Synthetic media/IPC, not Windows or live-service proof.

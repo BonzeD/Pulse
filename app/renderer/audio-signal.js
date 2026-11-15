@@ -2,7 +2,7 @@
 (() => {
   const origins = new Set(['https://www.youtube.com','https://www.youtube-nocookie.com']);
   let token = '', active = false, pending = false, lastTry = 0, sample = null, lastAt = 0, status = 'idle';
-  const wanted = () => engine === 'yt' && playing && !window.pulseWinHidden;
+  const wanted = () => engine === 'yt' && playing && (!window.pulseWinHidden || window.pulseWidgetVisible);
   window.addEventListener('message', e => {
     const frame = document.getElementById('ytPlayer'), d = e.data;
     if (!active || !origins.has(e.origin) || !frame || e.source !== frame.contentWindow || !d || d.type !== 'pulse-audio-spectrum' || d.token !== token) return;

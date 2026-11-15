@@ -55,6 +55,8 @@ window.PulseImmersion = (() => {
     slow = performance.now() - start > 25 ? slow + 1 : Math.max(0, slow - 1);
     if (quality === 'auto' && slow > 60) eco = true;
   }
+  let releaseTimer=0;
+  function visibility(){clearTimeout(releaseTimer);releaseTimer=0;if(hidden()){stop();if(active())releaseTimer=setTimeout(()=>{releaseTimer=0;if(hidden()&&scene){scene.destroy();scene=null;if(canvas){canvas.width=1;canvas.height=1;}}},15000);}else start();}
   let gpuAllowed = true;
   function setGpu(enabled) {
     if (gpuAllowed === enabled) return;
@@ -74,7 +76,7 @@ window.PulseImmersion = (() => {
     if (!raf) raf = requestAnimationFrame(tick);
   }
   function detach() {
-    stop(); token++; scene?.destroy(); scene = null; canvas?.remove(); error?.remove();
+    clearTimeout(releaseTimer);releaseTimer=0;stop(); token++; scene?.destroy(); scene = null; canvas?.remove(); error?.remove();
     canvas = stage = error = null; track = null; contextLost = false;
   }
   function attach(st) {
@@ -101,9 +103,8 @@ window.PulseImmersion = (() => {
     if (lys.on) lysApply(); else lyStageOpen(true);
   }
   const close = () => { if (active()) lyStageOpen(false); };
-  document.addEventListener('visibilitychange', () => { if (hidden()) stop(); else start(); });
-  window.addEventListener('pulse-prism-visibility', () => { if (hidden()) stop(); else start(); });
-  // Electron can hide/minimize without changing document.visibilityState.
-  setInterval(() => { if (hidden()) stop(); else if (active() && !raf) start(); }, 600);
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pulse-prism-visibility',visibility);
+  window.addEventListener('pulse-window-visibility',visibility);
   return {open, close, attach, detach, configure, setGpu, active, stats:() => ({active:active(), world, quality, eco, reduced, contextLost, draws:frames, travel, ambient, raf:!!raf, renderer:scene?.stats?.() || null})};
 })();

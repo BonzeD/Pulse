@@ -46,7 +46,7 @@ window.MediaLibrary=(()=>{
   }
   try{await load();node('media-title').focus();}catch(e){d.close();toast(e.message,'alert');}
  }
- function localMenu(t,x,y,ctx){const items=[['play','Играть следующим',()=>playNextUp(t)],['queue','Добавить в очередь',()=>playNextUp(t,true)],'-',['edit','Редактировать метаданные…',()=>open(t)],['plus','Добавить в плейлист…',()=>addToModal([t])]];
+ function localMenu(t,x,y,ctx){const items=[['play','Играть следующим',()=>playNextUp(t)],['queue','Добавить в очередь',()=>playNextUp(t,true)],'-',['edit','Редактировать метаданные…',()=>open(t)],['plus','Добавить в плейлист…',()=>addToModal([t])],['sparkle','Добавить в Атлас…',()=>window.PulseAtlas?.trackDialog(t)]];
   if(ctx?.local&&ctx.local!=='__local')items.push(['x','Убрать из плейлиста',()=>{const p=lib.playlists.find(p=>p.id===ctx.local);if(p){p.tracks=p.tracks.filter(x=>x.id!==t.id);save();renderRoute(true);}}]);
   items.push('-',['trash','Удалить локальную копию',async()=>{if(curTrack()?.id===t.id)return toast('Сначала переключи трек');if(!confirm('Удалить копию из Pulse? Исходный файл останется на месте.'))return;try{const r=check(await api().remove(t.id));const active=curTrack()?.id;lib.queue.tracks=lib.queue.tracks.filter(x=>x.id!==t.id);lib.queue.idx=active?lib.queue.tracks.findIndex(x=>x.id===active):-1;for(const p of lib.playlists)p.tracks=p.tracks.filter(x=>x.id!==t.id);delete lib.known[t.id];apply(r);refresh();}catch(e){toast(e.message,'alert');}}]);showMenu(x,y,items);
  }

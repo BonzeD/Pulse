@@ -1,0 +1,388 @@
+{
+  "audio-diagnostics.js": {
+    "sha256": "b42cdd4308aab512405d54ff09d8352d260bc53c3b2392f91e86cdde89d1f987",
+    "originalSha256": "449106d90af8d5f9204dca302b5e7f1aa093de86816d172fe91bf00427603a88",
+    "patches": [
+      {
+        "from": 1,
+        "to": 4,
+        "original": [
+          "// Opt-in audio-only flight recorder. Never accepts arbitrary text or persists automatically.\n",
+          "const LIMIT=240,MAX_BYTES=48000,MAX_MS=10*60*1000;\n",
+          "const STAGES=new Set(['mapping','capture','load','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','resolve','cache','player-api','probe','backup','stream','upstream','first-byte','fallback']);\n"
+        ]
+      },
+      {
+        "from": 5,
+        "to": 29,
+        "original": [
+          "const OUTCOMES=new Set(['start','end','ok','error','cancelled','timeout','denied','miss','hit','pending','stop','limit','clear']);\n"
+        ]
+      },
+      {
+        "from": 31,
+        "to": 32,
+        "original": [
+          " function state(){return {active,events:rows.length,dropped,maxEvents:LIMIT,maxDurationSeconds:MAX_MS/1000};}\n"
+        ]
+      },
+      {
+        "from": 34,
+        "to": 41,
+        "original": [
+          " function event(stage,d={}){if(!active||!STAGES.has(stage)||!d||typeof d!=='object')return;const e={n:++seq,atMs:Math.max(0,Math.round((now()-started)*10)/10),stage};const ref=track(d.id);if(ref)e.track=ref;\n",
+          "  for(const k of ['load','operation','elapsedMs','status','client','bytes','readyState','networkState','position','duration','code','formats'])if(Number.isFinite(d[k]))e[k]=Math.max(0,Math.min(1e9,Math.round(d[k]*100)/100));\n",
+          "  for(const k of ['source','engine'])if(SOURCES.has(d[k]))e[k]=d[k];if(OUTCOMES.has(d.outcome))e.outcome=d.outcome;for(const k of ['autoplay','prefetch'])if(typeof d[k]==='boolean')e[k]=d[k];\n"
+        ]
+      },
+      {
+        "from": 47,
+        "to": 49,
+        "original": [
+          " function read(){return {pulseAudioLog:1,created,...state(),note:'Relative times in ms. Track labels are local to this capture. No track names, URLs, cookies, tokens or file paths.',events:rows.map(x=>({...x}))};}\n",
+          " function begin(stage,data={}){if(!active)return ()=>{};const capture=generation,op=++operation,t=now();event(stage,{...data,operation:op,outcome:'start'});let done=false;return result=>{if(done||!active||generation!==capture)return;done=true;event(stage,{...data,...result,operation:op,elapsedMs:now()-t,outcome:result?.outcome||'end'});};}\n"
+        ]
+      },
+      {
+        "from": 52,
+        "to": 53,
+        "original": [
+          "const recorder=create();module.exports={...recorder,create};\n"
+        ]
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "f716502efa3708bfa009db5d0f632d714168a8da1481506caff4760e754ff5c1",
+    "originalSha256": "b054cf3ea731e23bf0cf9deece44c83048fa0f6d9bf0bab32402f506492f3a98",
+    "patches": [
+      {
+        "from": 69,
+        "to": 70,
+        "original": [
+          "async function ytdlpPath() {\n"
+        ]
+      },
+      {
+        "from": 72,
+        "to": 74,
+        "original": [
+          "  if (process.platform === 'win32') for (const f of fast) if (ytdRuntime.complete(path.dirname(f))) { if(!ytdHealth.has(f))ytdHealth.set(f,ytdRuntime.probe(f)); if(await ytdHealth.get(f))return f; }\n",
+          "  if (process.platform !== 'win32') return 'yt-dlp';\n"
+        ]
+      },
+      {
+        "from": 79,
+        "to": 82,
+        "original": [
+          "      const r = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe');\n",
+          "      if (!r.ok) throw new Error('yt-dlp download failed');\n",
+          "      fs.writeFileSync(exe, Buffer.from(await r.arrayBuffer()));\n"
+        ]
+      },
+      {
+        "from": 84,
+        "to": 86,
+        "original": [
+          "  if(!await ytdRuntime.probe(exe))throw Error('Не удалось запустить загрузчик Pulse. Обнови Pulse из нового полного установщика: встроенный Python повреждён или заблокирован системой');\n",
+          "  return exe;\n"
+        ]
+      },
+      {
+        "from": 260,
+        "to": 261,
+        "original": [
+          " const warming=ent.low&&ent.warm;let release;\n"
+        ]
+      },
+      {
+        "from": 262,
+        "to": 265,
+        "original": [
+          " try{if(warming&&foregroundBackups)throw Error('Foreground audio has priority');if(signal.aborted)throw Error('Audio preparation cancelled');const end=audioTrace.begin('backup',{id,source:'yt',prefetch:ent.low});let r;\n",
+          "  try{r=await ytdlpResolve(id,signal);end({outcome:'ok'});}catch(e){end({outcome:signal.aborted?'cancelled':'error'});throw e;}\n",
+          "  if(!await probeAudio(r.url,r.ua,signal,{id,engine:'backup',source:'yt',prefetch:ent.low}))throw Error('YouTube не отдал рабочий аудиопоток');streamPolicy.backupSuccess();return {...r,verified:3};\n"
+        ]
+      },
+      {
+        "from": 283,
+        "to": 285,
+        "original": [
+          "async function probeAudio(url, ua, signal, traceData={},onStatus) {\n",
+          "  const end=audioTrace.begin('probe',traceData);let outcome='error';\n"
+        ]
+      },
+      {
+        "from": 290,
+        "to": 291,
+        "original": [
+          "    if (![200,206].includes(response.status) || !/^(audio\\/|video\\/|application\\/octet-stream$)/.test(type) || !response.body) return false;\n"
+        ]
+      },
+      {
+        "from": 293,
+        "to": 296,
+        "original": [
+          "    const valid=!chunk.done && chunk.value?.byteLength > 0;outcome=valid?'ok':'error';return valid;\n",
+          "  } catch { return false; }\n",
+          "  finally { onStatus?.(response?.status);end({outcome:signal?.aborted?'cancelled':outcome,status:response?.status});if(reader)await reader.cancel().catch(()=>{});else await response?.body?.cancel().catch(()=>{}); }\n"
+        ]
+      },
+      {
+        "from": 297,
+        "to": 300,
+        "original": [
+          "async function tryClient(ci, id, fresh, signal) {\n",
+          "  const end=audioTrace.begin('player-api',{id,client:ci,source:'yt'});\n",
+          "  try{return await tryClientObserved(ci,id,fresh,signal,end);}catch(e){end({outcome:signal?.aborted?'cancelled':'error'});throw e;}\n"
+        ]
+      },
+      {
+        "from": 308,
+        "to": 309,
+        "original": [
+          "  if (!r.ok) throw new Error('net');\n"
+        ]
+      },
+      {
+        "from": 320,
+        "to": 321,
+        "original": [
+          "  if (!await probeAudio(f.url, C.ua, signal,{id,client:ci,source:'yt'},status=>probeStatus=status)) {if(!signal?.aborted&&[401,403,410].includes(probeStatus))streamPolicy.reject(ci,id);return null;}\n"
+        ]
+      },
+      {
+        "from": 325,
+        "to": 326,
+        "original": [
+          "async function fastResolve(id, signal) {\n"
+        ]
+      },
+      {
+        "from": 330,
+        "to": 331,
+        "original": [
+          "      const r = await tryClient(ci, id, fresh, signal);\n"
+        ]
+      },
+      {
+        "from": 340,
+        "to": 342,
+        "original": [
+          "  const candidates = CLIENTS.map((_,ci)=>ci).filter(ci=>!bad.has(ci)&&!streamPolicy.blocked(ci)&&Date.now()>=clientDown[ci]);\n"
+        ]
+      },
+      {
+        "from": 348,
+        "to": 383,
+        "original": [
+          "function ytdlpResolve(id, signal) {\n",
+          "  return ytdlpPath().then((exe) => new Promise((res, rej) => {\n",
+          "    const bundledEjs = /[\\\\/](ytd|yt-dlp)[\\\\/]yt-dlp\\.exe$/i.test(exe);\n",
+          "    if(signal?.aborted)return rej(new Error('Audio preparation cancelled'));\n",
+          "    const pr = spawn(exe, [...acc().cookieArgs(), '-g', '-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings', '--socket-timeout', '10', '--retries', '2',\n",
+          "      '--js-runtimes', `node:${process.execPath}`, ...(bundledEjs ? [] : ['--remote-components', 'ejs:github']), `https://www.youtube.com/watch?v=${id}`],\n",
+          "    { windowsHide: true, env: ytdRuntime.environment() });\n",
+          "    ytdRun++; let out = '', err = '', done = false;\n",
+          "    const to = setTimeout(() => { if(done)return; try { pr.kill(); } catch {} fin(); rej(new Error('Истекло время получения аудиопотока')); }, 30000);\n",
+          "    pr.stdout.on('data', (b) => { out = (out + b).slice(-65536); }); pr.stderr.on('data', (b) => { err = (err + b).slice(-65536); });\n",
+          "    const fin = () => { done = true; ytdRun--; clearTimeout(to);signal?.removeEventListener('abort',abort); ytdSwap(); };\n",
+          "    const abort=()=>{if(done)return;try{pr.kill();}catch{}fin();rej(new Error('Audio preparation cancelled'));};\n",
+          "    signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();\n",
+          "    pr.on('error', (e) => { if (!done) { fin(); rej(e); } });\n",
+          "    pr.on('close', () => {\n",
+          "      if (done) return; fin();\n",
+          "      const url = out.trim().split(/\\r?\\n/).find((l) => l.startsWith('http'));\n",
+          "      if (url) return res({ url, exp: +((url.match(/[?&]expire=(\\d+)/) || [])[1] || 0) * 1000 || Date.now() + 3 * 3600e3, ua: UA });\n",
+          "      rej(new Error(/not a bot|Sign in to confirm/i.test(err) ? 'YouTube просит подтвердить, что ты не бот — войди в аккаунт YouTube в Pulse'\n",
+          "        : /age|inappropriate/i.test(err) ? 'Трек с ограничением по возрасту — войди в аккаунт YouTube'\n",
+          "        : /Private|unavailable|removed|not available/i.test(err) ? 'Видео недоступно на YouTube' : 'YouTube не отдал звук этого трека'));\n"
+        ]
+      },
+      {
+        "from": 384,
+        "to": 385,
+        "original": [
+          "  }));\n"
+        ]
+      },
+      {
+        "from": 386,
+        "to": 387,
+        "original": []
+      },
+      {
+        "from": 389,
+        "to": 390,
+        "original": [
+          "  const promise=resolveStreamObserved(id,low,warm);promise.then(()=>end({outcome:'ok'}),()=>end({outcome:'error'}));return promise;\n"
+        ]
+      },
+      {
+        "from": 391,
+        "to": 392,
+        "original": [
+          "function resolveStreamObserved(id, low, warm=false) {\n"
+        ]
+      },
+      {
+        "from": 398,
+        "to": 400,
+        "original": [
+          "  if (c && c.p) { if (!low) {c.low=false;c.warm=false;c.promote?.();} return c.p; }\n",
+          "  const ent = {low:!!low,warm,controller:new AbortController()};\n"
+        ]
+      },
+      {
+        "from": 404,
+        "to": 406,
+        "original": [
+          "    signal => (directRejected.get(id)||0)>=2&&!ent.low ? null : fastResolve(id,signal),\n",
+          "    signal => backupResolve(id,ent,signal),\n"
+        ]
+      },
+      {
+        "from": 412,
+        "to": 413,
+        "original": [
+          "    streams[id] = r;\n"
+        ]
+      },
+      {
+        "from": 421,
+        "to": 422,
+        "original": []
+      },
+      {
+        "from": 424,
+        "to": 426,
+        "original": [
+          " if(!next||!streamPolicy.canWarm())return resolveStream(id,true).then(()=>true,()=>next&&streamPolicy.canWarm()?prefetch(id,true):false);\n"
+        ]
+      },
+      {
+        "from": 430,
+        "to": 431,
+        "original": []
+      },
+      {
+        "from": 443,
+        "to": 449,
+        "original": []
+      },
+      {
+        "from": 450,
+        "to": 451,
+        "original": [
+          "  const streamEnd=audioTrace.begin('stream',{id,source:'yt'});res.once('finish',()=>streamEnd({outcome:res.statusCode>=400?'error':'ok',status:res.statusCode}));res.once('close',()=>streamEnd({outcome:res.writableFinished?(res.statusCode>=400?'error':'ok'):'cancelled',status:res.statusCode}));\n"
+        ]
+      },
+      {
+        "from": 460,
+        "to": 463,
+        "original": [
+          "      const headersEnd=audioTrace.begin('upstream',{id,source:'yt',client:entry?.ci});\n",
+          "      try { response = await upstream(url, req, entry?.ua, controller.signal);headersEnd({outcome:response.ok?'ok':'error',status:response.status}); }\n",
+          "      catch (e) {headersEnd({outcome:closed()?'cancelled':'error'}); if(closed())return; if(attempt>=2)throw e; }\n"
+        ]
+      },
+      {
+        "from": 480,
+        "to": 481,
+        "original": [
+          "    const firstByteEnd=audioTrace.begin('first-byte',{id,source:'yt'});\n"
+        ]
+      },
+      {
+        "from": 483,
+        "to": 486,
+        "original": []
+      }
+    ]
+  },
+  "dev-window.js": {
+    "sha256": "f1f1cb175bf0c23c4d0b99a85f79b743fd0d181192c7e22e874a5a9eb2df256e",
+    "originalSha256": "83e32a2d39a8ed3af36b1359600bcc4d737127e6ca202be691568bda67e3b4b2",
+    "patches": [
+      {
+        "from": 5,
+        "to": 6,
+        "original": [
+          " const rendererStages=new Set(['capture','load','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','fallback']);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "6f32be70c361ae2a273e5b6e9f383bfbb7f7b21823b9573d8029844d0237fbaf",
+    "originalSha256": "27eb072b86c7fe5598ee433203c63adbd67f71b087b36b0c4d776bcf069ed48a",
+    "patches": [
+      {
+        "from": 252,
+        "to": 253,
+        "original": [
+          "      onError: () => {\n"
+        ]
+      },
+      {
+        "from": 254,
+        "to": 255,
+        "original": [
+          "        window.PulseAudioLog?.event('media-error',{engine:'embedded'});\n"
+        ]
+      }
+    ]
+  },
+  "renderer/audio-diagnostics.js": {
+    "sha256": "7a1070b7987c8c39263a9a6e4804f7bca6b76459cd6422224bf608736a54fb67",
+    "originalSha256": "71cb46120316e6e046d76941ebf7e9e45d4aba4f85cc4ad1100c64f35c87c365",
+    "patches": [
+      {
+        "from": 6,
+        "to": 7,
+        "original": [
+          " for(const name of ['load','play','pause','seek']){const base=E[name];E[name]=function(...args){if(active){if(name==='load'){load++;id=args[0]?.id;start=performance.now();}event(name,{...(name==='load'?{id:args[0]?.id,source:source(args[0]),autoplay:!!args[1]}:{}),...(name==='seek'?{position:args[0]}:{})});}return base.apply(this,args);};}\n"
+        ]
+      }
+    ]
+  },
+  "renderer/autosync.js": {
+    "sha256": "4b198d52c2fb403791e810af17fef5754827b2b68c63b9eb5026255610bfd5fb",
+    "originalSha256": "4b071a8d73ed671e15f4d90472c2e6dff02f6f8dd11b25bb6177099c09e3e55c",
+    "patches": [
+      {
+        "from": 26,
+        "to": 27,
+        "original": [
+          "    const p = (async () => { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return new OfflineAudioContext(1, 1, 22050).decodeAudioData(await r.arrayBuffer()); })();\n"
+        ]
+      }
+    ]
+  },
+  "renderer/developer.js": {
+    "sha256": "9ef97fc00cfde53d1c3a7b730facd1685785f2d596e15d0adfbfe674afcab486",
+    "originalSha256": "e5905ef60d8f8db4acd1f52624397684302b12442b427b50d00ef111d54e292c",
+    "patches": [
+      {
+        "from": 2,
+        "to": 3,
+        "original": [
+          " const table={\"audio\":[\"Звук\", \"Audio\", \"音声\", \"Звук\"],\"audioDesc\":[\"Запустите запись, включите проблемный трек, затем остановите и сохраните лог. Только аудиособытия: получение потока, первые байты, ожидание и старт воспроизведения.\", \"Start recording, play a slow or failing track, then stop and save the log. Audio only: stream resolution, first bytes, buffering and playback start.\", \"記録を開始し、問題のある曲を再生してから停止・保存してください。音声のみ：ストリーム解決、最初のデータ、バッファリング、再生開始。\", \"Почніть запис, увімкніть проблемний трек, потім зупиніть і збережіть лог. Лише аудіоподії: отримання потоку, перші байти, очікування та початок відтворення.\"],\"audioStart\":[\"Начать запись\", \"Start recording\", \"記録開始\", \"Почати запис\"],\"audioStop\":[\"Остановить запись\", \"Stop recording\", \"記録停止\", \"Зупинити запис\"],\"audioClear\":[\"Очистить\", \"Clear\", \"消去\", \"Очистити\"],\"audioCopy\":[\"Копировать аудиолог\", \"Copy audio log\", \"音声ログをコピー\", \"Копіювати аудіолог\"],\"audioSave\":[\"Сохранить JSON…\", \"Save JSON…\", \"JSON を保存…\", \"Зберегти JSON…\"],\"audioIdle\":[\"Запись выключена\", \"Recording is off\", \"記録はオフ\", \"Запис вимкнено\"],\"audioPrivacy\":[\"Запись включается только вручную. До 10 минут и 240 событий; старые события вытесняются. Без названий треков, ссылок, токенов, cookies и путей. На диск — только по кнопке сохранения. При закрытии dev-окна запись останавливается.\", \"Recording is opt-in. Up to 10 minutes and 240 events; oldest events roll off. No track names, URLs, tokens, cookies or file paths. Nothing is saved to disk until you choose Save. Closing this window stops recording.\", \"手動でのみ記録。最大10分・240件、古いイベントは削除されます。曲名、URL、トークン、Cookie、パスは含みません。保存ボタンを押すまでディスクには書き込みません。このウィンドウを閉じると停止します。\", \"Запис лише вручну. До 10 хвилин і 240 подій; найстаріші витісняються. Без назв треків, посилань, токенів, cookies і шляхів. На диск — лише кнопкою збереження. Закриття dev-вікна зупиняє запис.\"],\"audioCount\":[\"Событий\", \"Events\", \"イベント\", \"Подій\"],\"audioDropped\":[\"Вытеснено\", \"Rolled off\", \"削除済み\", \"Витіснено\"],\"audioTiming\":[\"Относительное время — мс. T1, T2… — анонимные треки внутри записи. Это этапы загрузки, не измерение задержки звуковой карты.\", \"Times are relative milliseconds. T1, T2… identify tracks only within this capture. These are loading stages, not sound-card latency measurements.\", \"時間は記録開始からのミリ秒。T1、T2…は記録内の匿名曲ラベルです。読み込み段階の計測であり、サウンドカードの遅延計測ではありません。\", \"Час від початку запису — мс. T1, T2… — анонімні треки в межах запису. Це етапи завантаження, не вимір затримки звукової карти.\"],framesTab:['Кадры','Frames','フレーム','Кадри'],\n"
+        ]
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "39b72b993329ac970aeb2452df7905eea483a728d0e3a39028f5cde83d3816e7",
+    "originalSha256": "2b8ee0af89d1f927e127efc27eae3ac4068f1ec98982ba4020232f3e395f137d",
+    "patches": [
+      {
+        "from": 11,
+        "to": 13,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs tests/adaptive-audio.cjs tests/startup-latency.cjs\",\n"
+        ]
+      }
+    ]
+  }
+}

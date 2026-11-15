@@ -1,0 +1,33 @@
+✔ hidden iframe paused before first PLAYING retries once then falls back at a fixed deadline (1.416935ms)
+✔ repeated buffering cannot extend hidden stall deadline (0.25205ms)
+✔ real progress and seeks reset stall budget without forcing foreground (1.326694ms)
+✔ explicit pause and visible window never auto-resume or fall back (0.250078ms)
+✔ track switch receives a fresh budget and completion is handled at most once (0.253111ms)
+✔ queue projection detects in-place middle reorder/metadata changes and never mislabels index >399 (2.19918ms)
+✔ Mineradio transport uses pending-aware commands and hover cannot start direct resolution (0.560494ms)
+✔ native scene config validation persists only supported original modes (2.168697ms)
+✔ drum is sidebar only, optional, reduced-motion aware and suspends its RAF when hidden (0.516151ms)
+✔ background watchdog logs safe enums, never manipulates visual settings or selects another recording (8.32062ms)
+✔ reselecting the same still-loading shelf card issues Play, never Toggle or Pause (2.50686ms)
+✔ hidden graphics demotion does not starve the playback renderer (0.637804ms)
+✔ repeated BUFFERING cannot postpone the original fallback deadline forever (6.953976ms)
+✔ native iframe PAUSED cancels its buffer watchdog and loading indicator (4.504025ms)
+✔ late PLAYING after app pause is neither started nor recorded as accepted playback (3.269635ms)
+✔ failed paused direct resolution can be retried by explicit E.play (3.629658ms)
+✔ system PAUSE during pending iframe mapping prevents eventual autoplay (4.031033ms)
+✔ system PLAY is idempotent during pending iframe mapping (3.597927ms)
+✔ system pause during fallback prevents delayed stream start; play does not toggle pending intent (4.561606ms)
+✔ an intermediate CUED state must not disable a requested autoplay deadline (2.937487ms)
+✔ pause clears deadline identity; play creates a fresh bounded attempt (3.055579ms)
+✔ native command IPC pause works while iframe and direct resolver are still pending (4.062303ms)
+✔ negative control: delivered EmbeddedFirst has watchdog reset and pending system pause bugs (15.167268ms)
+✔ release polish has an exact reversible control and keeps version 1.0.3 (15.418713ms)
+✔ security runtime update is pinned consistently without bumping the Pulse release (1.987895ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 251.006467

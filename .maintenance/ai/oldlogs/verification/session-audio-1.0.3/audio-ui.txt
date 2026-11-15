@@ -1,0 +1,1 @@
+PASS actual HTTP player API fixture → validated third CDN candidate → real proxy → Chromium audio decoder/AudioContext/analyser, pause and seek. First two candidates reject with 403. No iframe or media-route interception. Not a live YouTube/Windows proof.

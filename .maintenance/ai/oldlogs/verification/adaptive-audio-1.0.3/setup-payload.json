@@ -1,0 +1,54 @@
+{
+  "version": "1.0.3",
+  "setupPayloadMatchesPortableAndUnpacked": true,
+  "checked": {
+    "app.asar": "bb5d8f785892a6e287af18b0a4841f61a3f6867f3308fc7519adfad1aac7ccfb",
+    "PulseMediaBridge.exe": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+    "base_library.zip": "3b7f23abfeb973dd9b737477890199cd8518946122207ece9c7af43d53509c3b"
+  },
+  "versions": {
+    "Pulse-Setup-1.0.3.exe": [
+      {
+        "CompanyName": "werxapee, Daswi",
+        "FileDescription": "Pulse Installer",
+        "FileVersion": "1.0.3",
+        "LegalCopyright": "werxapee, Daswi",
+        "ProductName": "Pulse",
+        "ProductVersion": "1.0.3"
+      }
+    ],
+    "Pulse-1.0.3-portable.exe": [
+      {
+        "CompanyName": "werxapee & Daswi",
+        "FileDescription": "Pulse — неоновый плеер-клиент для YouTube Music, Apple Music, Spotify и Audius",
+        "FileVersion": "1.0.3",
+        "LegalCopyright": "Copyright © 2026 werxapee & Daswi",
+        "ProductName": "Pulse",
+        "ProductVersion": "1.0.3"
+      }
+    ],
+    "win-unpacked/Pulse.exe": [
+      {
+        "CompanyName": "werxapee, Daswi",
+        "FileDescription": "Pulse Player",
+        "FileVersion": "1.0.3",
+        "InternalName": "Pulse",
+        "LegalCopyright": "Copyright (C) 2015 GitHub, Inc. All rights reserved.",
+        "OriginalFilename": "Pulse.exe",
+        "ProductName": "Pulse",
+        "ProductVersion": "1.0.3",
+        "SquirrelAwareVersion": "1"
+      }
+    ]
+  },
+  "files": {
+    "Pulse-Setup-1.0.3.exe": {
+      "bytes": 242012659,
+      "sha256": "614153abf7ea50ea0ded492aae7bef134f3acdf5fe36e62ccabb114377fea715"
+    },
+    "Pulse-1.0.3-portable.exe": {
+      "bytes": 223673900,
+      "sha256": "5b0fc8bb5e824b0e0a4b5fa97b7ad0a636152f41ad5365a10c2c7b02be37187e"
+    }
+  }
+}

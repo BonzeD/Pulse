@@ -24,7 +24,7 @@ const AutoSync = (() => {
   const bufs = new Map();
   function decode(url) { // общий декодер (кэш на 2 трека)
     if (bufs.has(url)) return bufs.get(url);
-    const p = (async () => { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return new OfflineAudioContext(1, 1, 22050).decodeAudioData(await r.arrayBuffer()); })();
+    const p = (async () => { const r = await fetch(url,{headers:{'X-Pulse-Audio-Purpose':'analysis'}}); if (!r.ok) throw new Error('HTTP ' + r.status); return new OfflineAudioContext(1, 1, 22050).decodeAudioData(await r.arrayBuffer()); })();
     bufs.set(url, p); p.catch(() => bufs.delete(url));
     while (bufs.size > 2) bufs.delete(bufs.keys().next().value);
     return p;

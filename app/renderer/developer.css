@@ -2,3 +2,5 @@
 /* Keep copy/status controls available while the tool workspace scrolls. */
 body{height:100dvh;display:flex;flex-direction:column;overflow:hidden}.dev-header,footer{flex-shrink:0}.dev-shell{flex:1;min-height:0;grid-template-rows:minmax(0,1fr)}main{overflow:auto;overscroll-behavior:contain}nav{overflow:auto}
 @media(max-width:760px){.dev-shell{grid-template-rows:auto minmax(0,1fr)}nav{padding-block:8px;min-height:60px}.dev-header{min-height:86px}}
+
+.audio-status{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;margin-bottom:18px}.audio-status b{color:#d8c3ff}.audio-status span{color:var(--muted,#b4b1c0)}.audio-actions{flex-wrap:wrap;justify-content:flex-start}.audio-actions button{flex:0 1 auto}#audio-events pre{max-height:420px;overflow:auto;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}

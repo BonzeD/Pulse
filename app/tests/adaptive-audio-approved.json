@@ -1,0 +1,452 @@
+{
+  "account.js": {
+    "sha256": "19685474dae5353e671b8dba53ee65e19fab32f2ed2e2b2c6e71b930741acb14",
+    "originalSha256": "380c4ca6f348030beada9bde9501e6782e877d87c3e55acf288c53e00eb9ea28",
+    "patches": [
+      {
+        "from": 276,
+        "to": 277,
+        "original": [
+          "  await accSnapshot(info); await writeCookieFile(); await flushSession(); return true;\n"
+        ]
+      },
+      {
+        "from": 484,
+        "to": 486,
+        "original": [
+          "  const j = await api('browse', { browseId: 'FEmusic_liked_playlists' });\n"
+        ]
+      },
+      {
+        "from": 508,
+        "to": 509,
+        "original": [
+          "  const cached=()=>{if(strict||epoch!==sessionEpoch)return null;const d=accRead(),a=d.list.find(x=>x.id===d.active);return a?{name:a.name,photo:a.photo||null}:null;};\n"
+        ]
+      },
+      {
+        "from": 511,
+        "to": 512,
+        "original": [
+          "  catch(e) { return e.status===401||e.status===403?null:cached(); }\n"
+        ]
+      },
+      {
+        "from": 513,
+        "to": 514,
+        "original": []
+      },
+      {
+        "from": 516,
+        "to": 517,
+        "original": [
+          "    if(n.activeAccountHeaderRenderer)active=true;\n",
+          "    if(n.accountName)name=txt(n.accountName)||name;\n",
+          "    if(n.accountPhoto?.thumbnails?.length)photo=n.accountPhoto.thumbnails.at(-1).url||photo;\n"
+        ]
+      },
+      {
+        "from": 520,
+        "to": 522,
+        "original": [
+          "  if(!name&&!active)return cached();\n",
+          "  return {name:name||'Аккаунт YouTube',photo};\n"
+        ]
+      },
+      {
+        "from": 602,
+        "to": 603,
+        "original": [
+          "module.exports = { restoreSession, flushSession, importCdpCookies, accSnapshot, accSwitch, accAddNew, accRestore, accRemove, accRename, accList, findBrowsers, loginViaBrowser, cancelViaBrowser, login, loginFromBrowser, logout, loggedIn, accountInfo, libraryPlaylists, playlistTracks, cookieArgs, writeCookieFile, api, parseTracks };\n"
+        ]
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "edfaa5b4893c2106edb553444ff6af93269bd89b8c1c6e56118ea1e124e23e15",
+    "originalSha256": "a8c26bc4e8f4d6c18c78d8d0aaf2bc4b4434a97ea4f17b10a2954bf40b63b405",
+    "patches": [
+      {
+        "from": 254,
+        "to": 268,
+        "original": []
+      },
+      {
+        "from": 283,
+        "to": 284,
+        "original": [
+          "async function probeAudio(url, ua, signal, traceData={}) {\n"
+        ]
+      },
+      {
+        "from": 295,
+        "to": 296,
+        "original": [
+          "  finally { end({outcome:signal?.aborted?'cancelled':outcome,status:response?.status});if(reader)await reader.cancel().catch(()=>{});else await response?.body?.cancel().catch(()=>{}); }\n"
+        ]
+      },
+      {
+        "from": 312,
+        "to": 314,
+        "original": [
+          "  if (st !== 'OK') return st === 'LOGIN_REQUIRED' || st === 'UNPLAYABLE' ? { retry: !fresh } : null;\n"
+        ]
+      },
+      {
+        "from": 319,
+        "to": 322,
+        "original": [
+          "  if (!await probeAudio(f.url, C.ua, signal,{id,client:ci,source:'yt'})) return null;\n"
+        ]
+      },
+      {
+        "from": 340,
+        "to": 341,
+        "original": [
+          "  const candidates = CLIENTS.map((_,ci)=>ci).filter(ci=>!bad.has(ci)&&Date.now()>=clientDown[ci]);\n"
+        ]
+      },
+      {
+        "from": 347,
+        "to": 348,
+        "original": [
+          "function ytdlpResolve(id) {\n"
+        ]
+      },
+      {
+        "from": 350,
+        "to": 351,
+        "original": []
+      },
+      {
+        "from": 357,
+        "to": 360,
+        "original": [
+          "    const fin = () => { done = true; ytdRun--; clearTimeout(to); ytdSwap(); };\n"
+        ]
+      },
+      {
+        "from": 371,
+        "to": 372,
+        "original": [
+          "function resolveStream(id, low) {\n"
+        ]
+      },
+      {
+        "from": 373,
+        "to": 374,
+        "original": [
+          "  const promise=resolveStreamObserved(id,low);promise.then(()=>end({outcome:'ok'}),()=>end({outcome:'error'}));return promise;\n"
+        ]
+      },
+      {
+        "from": 375,
+        "to": 376,
+        "original": [
+          "function resolveStreamObserved(id, low) {\n"
+        ]
+      },
+      {
+        "from": 377,
+        "to": 379,
+        "original": []
+      },
+      {
+        "from": 382,
+        "to": 386,
+        "original": [
+          "  if (c && c.p) { if (!low) c.low = false; return c.p; }\n",
+          "  const ent = { low: !!low };\n",
+          "  // предзагрузка в фоне yt-dlp не запускает (лишняя нагрузка); если трек включили — запасной путь подключится\n"
+        ]
+      },
+      {
+        "from": 388,
+        "to": 390,
+        "original": [
+          "    if (r || ent.low) return r;\n",
+          "    const backupEnd=audioTrace.begin('backup',{id,source:'yt'});let backup;try{backup=await ytdlpResolve(id);backupEnd({outcome:'ok'});}catch(e){backupEnd({outcome:'error'});throw e;}\n",
+          "    if (!await probeAudio(backup.url, backup.ua,undefined,{id,engine:'backup',source:'yt'})) throw new Error('YouTube не отдал рабочий аудиопоток');\n",
+          "    return {...backup, verified:3};\n"
+        ]
+      },
+      {
+        "from": 391,
+        "to": 392,
+        "original": []
+      },
+      {
+        "from": 397,
+        "to": 398,
+        "original": [
+          "  ent.p = p; streams[id] = ent; p.catch(() => { if (streams[id] === ent) delete streams[id]; });\n"
+        ]
+      },
+      {
+        "from": 400,
+        "to": 415,
+        "original": [
+          "const prefetch = (id) => resolveStream(id, true).then(() => true, () => false);\n"
+        ]
+      },
+      {
+        "from": 439,
+        "to": 440,
+        "original": [
+          "      if (rejected && entry?.ci != null) rejectClient(id,entry.ci);\n"
+        ]
+      },
+      {
+        "from": 445,
+        "to": 446,
+        "original": []
+      },
+      {
+        "from": 461,
+        "to": 462,
+        "original": [
+          "module.exports = { ytdlpPath, resolveStream, prefetch, proxyStream, listOffline, offlineCatalog, repairVideo, enqueue, cancel, remove, serveOffline, setNotifier, thumbKind };\n"
+        ]
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "7c99f95cd9bfc09d5d54b9529dd3823ad5a45a78aaa18664ca25cee99778ef37",
+    "originalSha256": "21111bf986a7e317ca265145a3f68c66fc4fec3efd3a28acf9cd75d7266b46d5",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs\",\n"
+        ]
+      },
+      {
+        "from": 55,
+        "to": 56,
+        "original": []
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "678444b38d31703da3d489c4f57b6ec667d7f93b6737327a202aac7b9e428077",
+    "originalSha256": "92a8376a7037e72de6558db48def7d08f4007deaa7ecd03016ebbae4054fa436",
+    "patches": [
+      {
+        "from": 375,
+        "to": 376,
+        "original": [
+          "app.on('before-quit', () => { quitting = true; acc.flushSession().catch(()=>{}); mediaBridge?.destroy(); try { svc.flush(); } catch {} if (wcfgSaveT && !resetting) { clearTimeout(wcfgSaveT); wcfgSaveT = null; const st = readStore(); st.widgetCfg = wcfg; writeStore(st); } try { discord.destroy(); } catch {} try { wallpaper.destroy(); } catch {} });\n"
+        ]
+      },
+      {
+        "from": 447,
+        "to": 448,
+        "original": [
+          "ipcHandle('yt:prefetch', async (_e, id) => { try { if (isAudius(id)) return null; return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id); } catch { return null; } });\n"
+        ]
+      }
+    ]
+  },
+  "preload.js": {
+    "sha256": "fb63f1d32bbd216cad00c38a546a018ecda11be35cc53b4fc40e27b0c25aee83",
+    "originalSha256": "108a100b01f5b6efd28220b885052247add447f529b0245a7d310ef373eabf18",
+    "patches": [
+      {
+        "from": 28,
+        "to": 29,
+        "original": [
+          "  prefetch: (id) => ipcRenderer.invoke('yt:prefetch', id),\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "27eb072b86c7fe5598ee433203c63adbd67f71b087b36b0c4d776bcf069ed48a",
+    "originalSha256": "acc3d3c37f97becc870228f1258b132fb62520e57ce14f4b0d365821d870a6ae",
+    "patches": [
+      {
+        "from": 25,
+        "to": 27,
+        "original": [
+          "let account = null, accLists = null;\n"
+        ]
+      },
+      {
+        "from": 195,
+        "to": 196,
+        "original": [
+          "  pause: () => { audioWanted=false;clearAudioStart();setLoading(false);window.PulseFileVideo?.intent(false);if(typeof djFinish==='function')djFinish();return engine==='audio'?audio.pause():ready&&player.pauseVideo(); },\n"
+        ]
+      },
+      {
+        "from": 384,
+        "to": 386,
+        "original": [
+          "  // Speculative next-track preparation never escalates to a foreground yt-dlp process.\n",
+          "  if(n&&n.id!==t.id&&!off[n.id]&&online()&&pulse.prefetch)pulse.prefetch(n.id).catch(()=>{});\n"
+        ]
+      },
+      {
+        "from": 973,
+        "to": 975,
+        "original": [
+          "  b.title = account ? `${account.name} — YouTube Music` : 'Войти в YouTube Music';\n"
+        ]
+      },
+      {
+        "from": 977,
+        "to": 983,
+        "original": [
+          "  if (!online()) { accLists = lib.accCache || null; renderSide(); return; } // офлайн: плейлисты из последней синхронизации\n",
+          "  let info = null; try { info = await pulse.account.info(); } catch {}\n",
+          "  const was = !!account; account = info && !info.error ? info : null;\n"
+        ]
+      },
+      {
+        "from": 984,
+        "to": 990,
+        "original": [
+          "  if (!account) { accLists = null; renderSide(); return; }\n",
+          "  lib.accInfo = { name: account.name };\n",
+          "  const r = await pulse.account.playlists().catch(() => null);\n",
+          "  accLists = r && !r.error ? r : lib.accCache || null;\n",
+          "  if (r && !r.error) { lib.accCache = r; save(); }\n"
+        ]
+      },
+      {
+        "from": 991,
+        "to": 993,
+        "original": [
+          "  if (!was) { cache.clear(); if (['home', 'library'].includes(route().r)) renderRoute(true); }\n",
+          "  setTimeout(() => syncAll(!was && !lib.syncAt), 1500);\n"
+        ]
+      },
+      {
+        "from": 1050,
+        "to": 1051,
+        "original": [
+          "  await refreshAccount(); toast(account ? `Вошёл как ${account.name}` : 'Вход выполнен', 'user');\n"
+        ]
+      },
+      {
+        "from": 1877,
+        "to": 1878,
+        "original": [
+          "    ['logout', 'Выйти', async () => { if (!confirm('Выйти из аккаунта?')) return; await pulse.account.logout(); account = null; accLists = null; cache.clear(); renderAccBtn(); renderSide(); renderRoute(true); toast('Вы вышли из аккаунта', 'logout'); }]]);\n"
+        ]
+      },
+      {
+        "from": 1941,
+        "to": 1942,
+        "original": [
+          "window.addEventListener('online', () => { updateNet(); refreshAccount().then(flushLikes); }); window.addEventListener('offline', updateNet);\n"
+        ]
+      },
+      {
+        "from": 2233,
+        "to": 2234,
+        "original": [
+          "      R('Аккаунт YouTube Music', account ? `Вошёл как <b data-i18n-skip>${esc(account.name)}</b>` : 'Не выполнен вход — плейлисты только на устройстве', account ? `<button class=\"btn sm\" data-sact=\"sync\">${ico('sync')}Синхронизировать</button>` : `<button class=\"btn sm acc\" data-act=\"login\">${ico('google')}Войти</button>`, 'аккаунт вход google'),\n"
+        ]
+      }
+    ]
+  },
+  "renderer/extras.js": {
+    "sha256": "035fc26753c0d2b4a03ff36abb6af96e061d9fde9e1fb33a52ed534e3dd59f14",
+    "originalSha256": "0a626d391d2649e28280174b7e250489afb08b947ff7d3ad4be30dcc3f70b6d1",
+    "patches": [
+      {
+        "from": 353,
+        "to": 354,
+        "original": [
+          "      ${accAva(a)}<b data-i18n-skip>${esc(a.name)}</b><span>${a.active ? '<i class=\"acc-dot\"></i>Сейчас активен' : 'Был активен ' + fmtDate(a.used)}</span>\n"
+        ]
+      },
+      {
+        "from": 371,
+        "to": 372,
+        "original": [
+          "  if (s === 'yt') { account = null; accLists = null; lib.accCache = null; save(); }\n"
+        ]
+      },
+      {
+        "from": 418,
+        "to": 420,
+        "original": [
+          "  b.title = cur ? `${cur.name} — ${accSvcName(s)}` : `Войти в ${accSvcName(s)}`;\n"
+        ]
+      },
+      {
+        "from": 428,
+        "to": 429,
+        "original": [
+          "  if (!cur && !others.length) return accLogin(s);\n"
+        ]
+      },
+      {
+        "from": 433,
+        "to": 435,
+        "original": [
+          "  p.innerHTML = `${cur ? `<div class=\"ap-me\">${accAva(cur, 'big')}<div><b>${esc(cur.name)}</b><span><i class=\"acc-dot\"></i>${accSvcName(s)} · активен</span></div></div>` : `<div class=\"ap-me out\"><span class=\"acc-av ava big\">?</span><div><b>Не выполнен вход</b><span>${accSvcName(s)}: выбери аккаунт или войди</span></div></div>`}\n"
+        ]
+      },
+      {
+        "from": 450,
+        "to": 452,
+        "original": []
+      },
+      {
+        "from": 461,
+        "to": 462,
+        "original": [
+          "      if (s === 'yt') { await pulse.account.logout(); account = null; accLists = null; lib.accCache = null; }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/locales-en.js": {
+    "sha256": "7b592991f002599cfa093c6f620f3eb819217a23e955646ea09b8a01273b9434",
+    "originalSha256": "6241f15504ea61ed57adc35f8aeeb74f106d14cfbf78896a741bcff2c1eb26e1",
+    "patches": [
+      {
+        "from": 1959,
+        "to": 1961,
+        "original": []
+      }
+    ]
+  },
+  "renderer/locales-ja.js": {
+    "sha256": "1cee88b23e4adeffcb6c94c01c00ae22edcf859fab1f691eb556145bcf612062",
+    "originalSha256": "040b9a7ee1afb47dbdbf35922989c08e3087edcf6d9f33f2318d648483a6c123",
+    "patches": [
+      {
+        "from": 2204,
+        "to": 2206,
+        "original": []
+      }
+    ]
+  },
+  "renderer/locales-uk.js": {
+    "sha256": "3dbd2009cbba47b65926a370526b2eec34ba307f9b656d828620584f767f319f",
+    "originalSha256": "e0f7bca370374dd188f15a2ea11ed0db22d974cc88a939b8487967a848cb9c04",
+    "patches": [
+      {
+        "from": 2206,
+        "to": 2208,
+        "original": []
+      }
+    ]
+  },
+  "renderer/ui-fixes.css": {
+    "sha256": "b97a46b458080937ddc3140d61e29516f3eb8b72b7c64789e07d2b99dda5bd1c",
+    "originalSha256": "60058452a54fbe71fd67f3de8c63823f17165f3e77a1d28082406dd85cae76d9",
+    "patches": [
+      {
+        "from": 142,
+        "to": 156,
+        "original": []
+      }
+    ]
+  }
+}

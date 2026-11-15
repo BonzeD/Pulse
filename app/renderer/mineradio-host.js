@@ -8,7 +8,7 @@
   LYS_VIS.push(['mineradio', 'Mineradio']);
   const Y = () => lyY();
   const isMr = () => (Y().vis || 'classic') === 'mineradio';
-  const want = () => !window.PulsePrism?.active() && !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит
+  const want = () => !window.PulsePrism?.active() && !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !document.hidden && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит
   const active = () => want() && MR.ready;
   window.mrActive = active;
   const win = () => { try { return MR.frame && MR.frame.contentWindow; } catch (e) { return null; } };
@@ -20,20 +20,22 @@
   function cfg() {
     const y = Y(), pm = (S().perf && S().perf.mode) || 'balanced';
     const q = y.mrQuality && y.mrQuality !== 'auto' ? y.mrQuality : pm === 'eco' ? 'eco' : pm === 'high' ? 'ultra' : 'high';
-    return { language: S().app.language || 'en', reaction: y.mrReaction == null ? 1 : +y.mrReaction, morph: y.mrMorph !== false && !document.body.classList.contains('no-anim'), preset: +y.mrPreset || 0, quality: q, fps: y.mrFps == null ? 60 : +y.mrFps, lyrics: y.mrLyrics !== false, showTitle: y.mrShowTitle !== false, shelf: y.mrShelf === false ? 'off' : 'side' };
+    return { language: S().app.language || 'en', reaction: y.mrReaction == null ? 1 : +y.mrReaction, morph: y.mrMorph !== false && !document.body.classList.contains('no-anim'), preset: +y.mrPreset || 0, quality: q, fps: y.mrFps == null ? 60 : +y.mrFps, lyrics: y.mrLyrics !== false, showTitle: y.mrShowTitle !== false, shelf: typeof y.mrShelfMode === 'string' && ['off','side','stage'].includes(y.mrShelfMode) ? y.mrShelfMode : y.mrShelf === false ? 'off' : 'side' };
   }
 
   // ---------- API для фрейма ----------
   window.PulseMR = {
-    version: '1.0.2',
+    version: '1.0.3',
     time: () => { const k = stretchK() || 1; return Math.max(0, (heard(S().ly.lag || 0) - offset()) / k); },
     dur: () => E.dur() || 0,
     playing: () => !!playing,
     track: () => tOut(curTrack()),
     queue: () => {
-      const q = lib.queue, n = q.tracks.length, sig = n + '|' + (n ? q.tracks[0].id + '|' + q.tracks[n - 1].id : '') + '|' + (q.name || '');
+      const q = lib.queue, n = q.tracks.length, visible = q.tracks.slice(0, 400);
+      // Include every displayed item and its metadata: middle reorders/edits are real changes.
+      const sig = JSON.stringify([q.name || '', n, visible.map(t => [t.id, t.title, artists(t), t.album?.name, t.dur, artOf(t,600)])]);
       if (sig !== qCache.sig) qCache = { sig, tracks: q.tracks.slice(0, 400).map(tOut) }; // 2.0.8: полке хватает 400, не копируем огромные очереди
-      return { sig, idx: Math.min(q.idx, 399), name: q.name || '', tracks: qCache.tracks };
+      return { sig, idx: q.idx >= 0 && q.idx < 400 ? q.idx : -1, name: q.name || '', tracks: qCache.tracks };
     },
     lyrics: () => { const t = curTrack(); return t && lyState.id === t.id ? { id: t.id, lines: lyState.lines, kind: lyState.kind } : { id: t ? t.id : null, lines: null, kind: null }; },
     improv: () => (S().ly || {}).lineFx === 'improv', // 2.0.9
@@ -42,8 +44,8 @@
     wave: (a) => { const s = readSpectrum(); if (!s) return false; a.fill(128); a.set(s.w.subarray(0, a.length)); return true; },
     volume: () => (lib.volume || 0) / 100,
     setVolume: (v) => setVolume(Math.round(v * 100)),
-    play: () => { if (!playing) toggle(); },
-    pause: () => { if (playing) toggle(); },
+    play: () => transportPlay(),
+    pause: () => transportPause(),
     toggle: () => toggle(),
     next: () => next(),
     prev: () => prev(),
@@ -55,14 +57,22 @@
       const t = lib.queue.tracks[i]; if (!t) return false;
       if (!off[t.id] && !online()) { toast('Нет интернета — этот трек не скачан'); return false; }
       const retry = failed(t); failedAt.delete(t.id);
-      if (i === lib.queue.idx && !retry) { if (!playing) toggle(); return true; }
+      if (i === lib.queue.idx && !retry) { if (!playing) transportPlay(); return true; }
       playIdx(i); return true;
     },
     // 2.0.12: заранее получить ссылку на звук трека очереди (полка Mineradio) — клик по нему стартует быстрее
-    prefetch: (i) => { const t = lib.queue.tracks[i]; if (!t || off[t.id] || !online() || i === lib.queue.idx || !pulse.prefetch) return; if (!window.__mrPf) window.__mrPf = new Map(); const k = window.__mrPf.get(t.id); if (k && Date.now() - k < 10 * 60e3) return; window.__mrPf.set(t.id, Date.now()); pulse.prefetch(t.id); },
+    prefetch: () => false, // Embedded-first: no hidden direct/yt-dlp resolution from shelf hover.
     like: () => { const t = curTrack(); if (t) toggleLike(t); },
     // 1.0.0 panel13: shared persisted switch for the console and Pulse settings.
     setShowTitle: (v) => { setP('ly.mrShowTitle',!!v); save(); mrSync(); if(route().r==='settings')rerenderSettings(); },
+    setSceneConfig: (patch) => {
+      const map = {preset:'mrPreset',quality:'mrQuality',lyrics:'mrLyrics',shelf:'mrShelfMode'};
+      for(const [key,value] of Object.entries(patch || {})){
+        const valid = key==='preset' ? Number.isInteger(value)&&value>=0&&value<=7 : key==='quality' ? ['eco','balanced','high','ultra'].includes(value) : key==='lyrics' ? typeof value==='boolean' : key==='shelf' ? ['off','side','stage'].includes(value) : false;
+        if(valid)setP('ly.'+map[key],value);
+      }
+      save(); if(route().r==='settings')rerenderSettings();
+    },
     cfg,
     key: (o) => document.dispatchEvent(new KeyboardEvent('keydown', { ...o, bubbles: true, cancelable: true })),
     // Pointer events do not bubble out of an iframe. Translate its CSS coordinates
@@ -103,8 +113,9 @@
     document.body.classList.toggle('mr-on', on);
     // своя сцена Pulse под Mineradio не рисуется — возвращаем цикл, когда Mineradio ушёл
     if (!on && MR.parked && typeof lys !== 'undefined' && lys.on) { MR.parked = false; cancelAnimationFrame(lys.raf); lys.raf = requestAnimationFrame(lysLoop); }
-    if (!w && !window.PulsePrism?.active() && !window.pulseWinHidden && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, 60000);
+    if (!w && (!window.PulsePrism?.active()||document.hidden||window.pulseWinHidden) && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, document.hidden||window.pulseWinHidden?15000:60000);
   }
+  document.addEventListener('visibilitychange',mrSync);
   window.mrSync = mrSync;
   window.mrConsole = () => { const fw = win(); if (fw && fw.__pulse) fw.__pulse.openConsole(); };
 
@@ -139,7 +150,7 @@
       R('Переход обложек', 'При смене трека частицы мягко расходятся и собираются в новую обложку. Без колец и вспышек.', tg('ly.mrMorph'), 'mineradio cover transition morph'),
       R('Название трека в сцене', 'Показывать название и исполнителя до первой строки или когда текста песни нет. Текст песни остаётся включённым.', tg('ly.mrShowTitle'), 'mineradio название заголовок title'),
       R('Текст песни в сцене', 'Объёмный текст Mineradio поверх визуала', tg('ly.mrLyrics'), 'mineradio текст'),
-      R('3D-полка с очередью', 'Карточки треков сбоку; клик — включить', tg('ly.mrShelf'), 'mineradio полка очередь'),
+      R('3D-полка с очередью', 'Карточки треков сбоку; клик — включить', `<div class="seg">${[['off','Выкл'],['side','Сбоку'],['stage','Сцена']].map(([v,n])=>`<button class="${cfg().shelf===v?'on':''}" data-set="ly.mrShelfMode" data-v="${v}">${n}</button>`).join('')}</div>`, 'mineradio полка очередь'),
       grp('Mineradio — производительность'),
       R('Качество графики', 'Авто — по режиму Pulse («Экономно» → Эконом)', seg('ly.mrQuality', [['auto', 'Авто'], ['eco', 'Эконом'], ['balanced', 'Баланс'], ['high', 'Высокое'], ['ultra', 'Максимум']]), 'mineradio качество графика'),
       R('Лимит кадров во время песни', '0 — как у монитора. 60 — плавно и тише для видеокарты', seg('ly.mrFps', [[30, '30'], [48, '48'], [60, '60'], [0, 'Монитор']]), 'mineradio fps кадры'),

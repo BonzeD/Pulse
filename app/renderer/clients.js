@@ -16,7 +16,7 @@ function svcListsLoad(c) {
   if (svcListsP[c]) return svcListsP[c];
   return (svcListsP[c] = pulse.svc.playlists(c).catch(() => null).then((l) => { if (l && !l.error && Array.isArray(l)) { svcLists[c] = l; svcListsSave(); } return svcLists[c]; }).finally(() => { delete svcListsP[c]; }));
 }
-const LY_SRC = [['auto', 'Все источники'], ['yt', 'YouTube Music'], ['am', 'Apple Music'], ['sp', 'Spotify'], ['lr', 'LRCLIB'], ['spicy', 'Spicy Lyrics']]; // 2.0.4: Spicy Lyrics — нужен свой ключ // 2.0.4-fix: LRCLIB — отдельный источник
+const LY_SRC = [['auto', 'Все источники'], ['yt', 'YouTube Music'], ['am', 'Apple Music'], ['sp', 'Spotify'], ['lr', 'LRCLIB'], ['spicy', 'Spicy Lyrics']]; // Spicy uses the project credential; LRCLIB is an independent source.
 const lySrcMode = () => (['yt', 'am', 'sp', 'lr', 'spicy'].includes(S().ly.src) ? S().ly.src : 'auto');
 const svcUrl = (id) => {
   const [s, k, ...r] = String(id).split(':'); const x = r.join(':');
@@ -158,21 +158,23 @@ function clChanged(path) {
   if (path === 'app.amSf') { pulse.svc.setClient(CL(), { amSf: S().app.amSf, language: S().app.language }).then(() => { cache.clear(); }); return true; }
   if (path === 'ly.src' || path === 'ly.bgVox') {
     if (path === 'ly.bgVox') for (const id in lib.lyrics) { const L = lib.lyrics[id]; if (L && L.provider === 'am' && !L.user) L.recheck = true; }
-    updVizLySrc(); const t = curTrack(); if (t) loadLyricsFor(t); return true;
+    const t = curTrack();
+    // 1.0.3: both Settings and the lyrics menu explicitly retry the chosen source.
+    if (path === 'ly.src' && t) { const L = lib.lyrics[t.id]; if (L && !L.user && L.source !== 'Свой текст') { delete L.picked; L.recheck = true; } }
+    updVizLySrc(); if (t) loadLyricsFor(t); return true;
   }
   if (path === 'ly.svcColors' || path === 'ly.credits') { lySrcDecor(); return true; }
   return false;
 }
 async function setLySrc(v) {
-  if (v === 'spicy' && !String((S().spicy || {}).key || '').trim()) { lib.setTab = 'ly'; toast('Для Spicy Lyrics нужен свой ключ — вставь его в «Текст песен → Spicy Lyrics»', 'lyrics'); if (document.body.classList.contains('pp-open') && typeof closePP === 'function') closePP(); go({ r: 'settings' }); return; }
-  S().ly.src = v; save(); updVizLySrc();
-  const t = curTrack(); if (t) { const L = lib.lyrics[t.id]; if (L && L.picked) { delete L.picked; } loadLyricsFor(t); }
+  if (!LY_SRC.some(([value]) => value === v)) return;
+  S().ly.src = v; save(); clChanged('ly.src');
   toast('Текст: ' + LY_SRC.find((x) => x[0] === v)[1], 'lyrics');
   if (route().r === 'settings') deferRerender(0);
 }
 function lySrcMenu(x, y) {
   const cur = lySrcMode();
-  const items = LY_SRC.map(([v, n]) => [v === cur ? 'check' : v === 'auto' ? 'sparkle' : CL_ICO[v] || 'lyrics', n + (v === 'am' && !svcSt.am.user ? ' · нужен вход' : v === 'sp' && !svcSt.sp.user ? ' · нужен вход' : v === 'spicy' && !String((S().spicy || {}).key || '').trim() ? ' · нужен ключ' : ''), () => setLySrc(v)]);
+  const items = LY_SRC.map(([v, n]) => [v === cur ? 'check' : v === 'auto' ? 'sparkle' : CL_ICO[v] || 'lyrics', n + (v === 'am' && !svcSt.am.user ? ' · нужен вход' : v === 'sp' && !svcSt.sp.user ? ' · нужен вход' : ''), () => setLySrc(v)]);
   items.push('-', ['tune', 'Найти другой текст…', () => openFix()]);
   showMenu(x, y, items);
   const m = $('menu'); if (m) m.style.top = Math.max(typeof menuTop === 'function' ? menuTop() : 40, y - m.offsetHeight) + 'px'; // над подписью

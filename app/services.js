@@ -135,14 +135,21 @@ async function matchOne(src) {
   matchP.set(key, p); return p;
 }
 // трек сервиса → id видео YouTube (для звука, скачивания и текста YouTube Music)
+const ytResolveP = new Map();
 async function ytFor(id) {
   if (!isSvc(id)) return id;
-  const meta = await trackMeta(id);
-  if (svcOf(id) === 'sp' && !meta.isrc && !cachedYt(id)) { const isrc = await spIsrc(id.slice(3)); if (isrc) { meta.isrc = isrc; saveSoon(); } } // 2.0.2: ISRC — для точного совпадения
-  const m = await matchOne({ key: id, ...meta });
-  if (!m) throw new Error('Этого трека нет в YouTube Music — звук взять неоткуда');
-  const a = db().alias; (a[m.id] = a[m.id] || []).includes(id) || a[m.id].push(id); saveSoon();
-  return m.id;
+  const alias = vid => { const a = db().alias; const list = a[vid] ||= []; if(!list.includes(id)){list.push(id);saveSoon();}return vid; };
+  const cached = cachedYt(id);
+  if (cached) return alias(cached); // Do not wait for metadata/ISRC on an already matched recording.
+  if (ytResolveP.has(id)) return ytResolveP.get(id);
+  const request = (async()=>{
+    const meta = await trackMeta(id);
+    if (svcOf(id) === 'sp' && !meta.isrc) { const isrc = await spIsrc(id.slice(3)); if (isrc) { meta.isrc = isrc; saveSoon(); } }
+    const m = await matchOne({ key:id, ...meta });
+    if (!m) throw new Error('Этого трека нет в YouTube Music — звук взять неоткуда');
+    return alias(m.id);
+  })().finally(()=>{if(ytResolveP.get(id)===request)ytResolveP.delete(id);});
+  ytResolveP.set(id,request);return request;
 }
 const cachedYt = (id) => { const h = db().match[id]; return h && h.id ? h.id : null; };
 const aliasesOf = (vid) => db().alias[vid] || [];

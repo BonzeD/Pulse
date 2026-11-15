@@ -45,13 +45,14 @@
     load: { configurable: true, value: function () {} }
   });
   function fakeAnalyser(smooth) {
+    var floatScratch=null;function bytes(n){if(!floatScratch||floatScratch.length!==n)floatScratch=new Uint8Array(n);return floatScratch;}
     return {
       fftSize: 2048, frequencyBinCount: 1024, smoothingTimeConstant: smooth, minDecibels: -100, maxDecibels: -30,
       get context() { return { sampleRate: H.sampleRate(), currentTime: performance.now() / 1000, state: 'running' }; },
       getByteFrequencyData: function (a) { if (!H.freq(a)) a.fill(0); },
       getByteTimeDomainData: function (a) { if (!H.wave(a)) a.fill(128); },
-      getFloatFrequencyData: function (a) { a.fill(-100); },
-      getFloatTimeDomainData: function (a) { a.fill(0); },
+      getFloatFrequencyData: function (a) { var b=bytes(a.length);if(!H.freq(b)){a.fill(this.minDecibels);return;}for(var i=0;i<a.length;i++)a[i]=this.minDecibels+b[i]/255*(this.maxDecibels-this.minDecibels); },
+      getFloatTimeDomainData: function (a) { var b=bytes(a.length);if(!H.wave(b)){a.fill(0);return;}for(var i=0;i<a.length;i++)a[i]=(b[i]-128)/128; },
       connect: function () {}, disconnect: function () {}
     };
   }
@@ -181,10 +182,11 @@
   }
 
   // ---------- 7. настройки из Pulse ----------
-  var lastCfg = '';
+  var lastCfg = '', applyingCfg = false;
   function applyCfg(c) {
     c = c || H.cfg(); W.__pulseReaction = c.reaction == null ? 1 : Math.max(0, Math.min(1.6, +c.reaction)); W.__pulseMorph = c.morph !== false; if (!W.__pulseMorph && uniforms.uPulseMorph) uniforms.uPulseMorph.value = 0; var k = JSON.stringify(c); if (k === lastCfg) { syncTitleControl(c); return; } var prev = lastCfg ? JSON.parse(lastCfg) : {}; lastCfg = k;
     if (c.language !== prev.language && W.__pulseSetLanguage) safe(function () { W.__pulseSetLanguage(c.language); safeShelfRebuild('pulse-language', true); });
+    applyingCfg = true;try {
     if (c.preset != null && c.preset !== prev.preset && fx.preset !== c.preset) { playbackVisualPreset = c.preset; safe(function () { setPreset(c.preset, { silent: true, preserveCamera: false }); }); }
     if (c.quality && c.quality !== prev.quality) safe(function () { setPerformanceQualityMode(c.quality, true); });
     if (c.fps != null) { RENDER_PLAYBACK_FPS_CAP = c.fps > 0 ? c.fps : 0; RENDER_PLAYBACK_FPS_CAP_ECO = c.fps > 0 ? Math.min(48, c.fps) : 48; }
@@ -193,7 +195,14 @@
     if (c.showTitle !== prev.showTitle) safe(function () { syncLyrics(true); });
     syncTitleControl(c);
     if (c.shelf && c.shelf !== prev.shelf && fx.shelf !== c.shelf) safe(function () { setShelfMode(c.shelf); });
+    }finally{applyingCfg=false;}
   }
+
+  var sceneChangeDepth=0;
+  [['setPreset','preset'],['setPerformanceQualityMode','quality'],['setShelfMode','shelf'],['setParticleLyricsSilently','lyrics']].forEach(function(entry){
+    var original=W[entry[0]];if(typeof original!=='function')return;
+    W[entry[0]]=function(value){var result;sceneChangeDepth++;try{result=original.apply(this,arguments);}finally{sceneChangeDepth--;}if(!sceneChangeDepth&&!applyingCfg&&H.setSceneConfig){var patch={};patch[entry[1]]=value;H.setSceneConfig(patch);lastCfg='';applyCfg();}return result;};
+  });
 
   // 1.0.0 panel13: separate from the lyric visibility switch.
   function syncTitleControl(c) {

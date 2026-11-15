@@ -12,7 +12,7 @@ test('public settings export does not include API keys, track cues or library da
 test('real downloader path selection skips an incomplete cached update and launches the complete bundle',async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'pulse-ytd-selection-'));try{
   const cur=path.join(tmp,'bin','ytd'),bundle=path.join(tmp,'resources','yt-dlp');fs.mkdirSync(cur,{recursive:true});fs.writeFileSync(path.join(cur,'yt-dlp.exe'),'MZ');fs.mkdirSync(bundle,{recursive:true});fs.cpSync('resources/yt-dlp',bundle,{recursive:true});
-  const checked=[],ctx={module:{exports:{}},__dirname:path.resolve('.'),process:{platform:'win32',resourcesPath:path.join(tmp,'resources'),env:{},execPath:'Pulse.exe'},require:n=>n==='electron'?{app:{getPath:()=>tmp}}:n==='./ytd-runtime'?{...runtime,probe:async f=>{checked.push(f);return true;}}:n==='./core-safety'?require('../core-safety'):require(n),setTimeout:()=>0,clearTimeout(){},URL,AbortSignal,Buffer,console};
+  const checked=[],ctx={module:{exports:{}},__dirname:path.resolve('.'),process:{platform:'win32',resourcesPath:path.join(tmp,'resources'),env:{},execPath:'Pulse.exe'},require:n=>n==='electron'?{app:{getPath:()=>tmp}}:n==='./ytd-runtime'?{...runtime,probe:async f=>{checked.push(f);return true;}}:n==='./audio-diagnostics'?require('../audio-diagnostics'):n==='./core-safety'?require('../core-safety'):n==='./stream-race'?require('../stream-race'):n==='./stream-policy'?require('../stream-policy'):require(n),setTimeout:()=>0,clearTimeout(){},URL,AbortSignal,Buffer,console};
   vm.runInNewContext(read('offline.js'),ctx);const exe=await ctx.module.exports.ytdlpPath();assert.equal(exe,path.join(bundle,'yt-dlp.exe'));assert.deepEqual(checked,[exe]);
  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });

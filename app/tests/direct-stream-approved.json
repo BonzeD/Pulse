@@ -1,0 +1,78 @@
+{
+  "package.json": {
+    "sha256": "c9babe8fe264aca2a31898aca9cf573c636935e4742db470531aed8887055430",
+    "originalSha256": "5a9aaf2ba2aaba25728de480349891901c654bf25ddafe37aad450a4c605198b",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs\",\n"
+        ]
+      },
+      {
+        "from": 44,
+        "to": 45,
+        "original": []
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "f72e08037c021e3703235a15ae0f2fa093a5b00bddec8aaedbbf923c4d883a91",
+    "originalSha256": "868f9f2892be5692bbd83919f4da5032a643f1443ffdd5a2839ac8b57e7cfd1a",
+    "patches": [
+      {
+        "from": 227,
+        "to": 228,
+        "original": [
+          "function loadStreams() { if (sLoaded) return; sLoaded = true; try { const o = JSON.parse(fs.readFileSync(streamsFile(), 'utf8')), now = Date.now(); for (const k of Object.keys(o).slice(-200)) if (streamId(k) && o[k]?.url && o[k].exp > now + 300e3 && !streams[k]) streams[k] = o[k]; } catch {} }\n"
+        ]
+      },
+      {
+        "from": 229,
+        "to": 230,
+        "original": [
+          "function saveStreams() { clearTimeout(saveT); saveT = setTimeout(() => { try { const o = {}; for (const k in streams) if (streams[k].url) o[k] = { url: streams[k].url, exp: streams[k].exp, ua: streams[k].ua, ci: streams[k].ci }; fs.writeFileSync(streamsFile(), JSON.stringify(o)); } catch {} }, 1500); }\n"
+        ]
+      },
+      {
+        "from": 234,
+        "to": 235,
+        "original": [
+          "// Несколько клиентов по очереди: если один сломается или не отдаст конкретный трек — пробуем следующий.\n"
+        ]
+      },
+      {
+        "from": 251,
+        "to": 266,
+        "original": []
+      },
+      {
+        "from": 282,
+        "to": 284,
+        "original": [
+          "  // Validate with the actual media request instead of blocking startup on a second 6s probe.\n"
+        ]
+      },
+      {
+        "from": 285,
+        "to": 286,
+        "original": [
+          "  return { url: f.url, exp, ua: C.ua, ci };\n"
+        ]
+      },
+      {
+        "from": 289,
+        "to": 290,
+        "original": []
+      },
+      {
+        "from": 339,
+        "to": 345,
+        "original": [
+          "  const p = fastResolve(id).then((r) => r || (ent.low ? null : ytdlpResolve(id))).then((r) => {\n"
+        ]
+      }
+    ]
+  }
+}

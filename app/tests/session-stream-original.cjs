@@ -1,0 +1,3 @@
+// Exact inverse of audio-observation and background housekeeping edits.
+const crypto=require('node:crypto'),approved=require('./session-stream-approved.json');
+module.exports=(name,source)=>{source=require("./adaptive-audio-original.cjs")(name,source);const r=approved[name];if(!r||crypto.createHash('sha256').update(source).digest('hex')!==r.sha256)return source;const lines=source.toString().match(/[^\n]*\n|[^\n]+$/g)||[];for(const p of [...r.patches].reverse())lines.splice(p.from,p.to-p.from,...p.original);const original=lines.join('');if(crypto.createHash('sha256').update(original).digest('hex')!==r.originalSha256)throw Error('Session stream inverse mismatch: '+name);return original;};

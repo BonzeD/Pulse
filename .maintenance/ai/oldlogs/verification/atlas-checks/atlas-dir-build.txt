@@ -1,0 +1,13 @@
+  • electron-builder  version=26.17.0 os=6.18.56
+  • loaded configuration  file=package.json ("build" field)
+  • executing @electron/rebuild  electronVersion=44.10.1 arch=x64 buildFromSource=false workspaceRoot=/data/release/Pulse-1.0.3/app projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=44.10.1 appOutDir=dist/win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=/data/release/Pulse-1.0.3/app/dist/win-unpacked
+  • searching for node modules  pm=npm searchDir=/data/release/Pulse-1.0.3/app
+  • duplicate dependency references  dependencies=["debug@4.4.3","token-types@6.1.2","strtok3@10.6.1","token-types@6.1.2"]
+  • updating asar integrity executable resource  executablePath=dist/win-unpacked/Pulse.exe
+  • icon set via resedit
+  • executable resource editing and code signing skipped — signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead.  exe=dist/win-unpacked/Pulse.exe

@@ -1,0 +1,3 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto'),manifest=require('./atlas-fixes-approved.json'),inverse=require('./atlas-fixes-original.cjs');
+test('cumulative Atlas music and widget changes reverse exactly to the original Planetarium source',()=>{for(const [file,row] of Object.entries(manifest)){const actual=fs.readFileSync(file);assert.equal(crypto.createHash('sha256').update(actual).digest('hex'),row.sha256,file);assert.equal(crypto.createHash('sha256').update(inverse(file,actual)).digest('hex'),row.originalSha256,file)}});

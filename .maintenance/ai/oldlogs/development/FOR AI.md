@@ -1,3 +1,90 @@
+# Active addition — Cosmos Atlas / audio rollback / setup 1.0.3
+
+This section supersedes the audio recovery, system-command, hidden-priority and portable-only instructions below. Older sections remain historical, not simultaneous requirements. Current report: [ATLAS-AUDIO-ROLLBACK-1.0.3](../verification/ATLAS-AUDIO-ROLLBACK-1.0.3.md).
+
+- Author requested audio rollback after silent/slow playback, Atlas implementation and a setup installer. Version stays 1.0.3; no publication, profile reset, graphics downgrade or removal of lyric drum/Mineradio repairs.
+- Audio baseline is the user-confirmed `Pulse-1.0.3-EmbeddedFirst-source.zip`, NOT 1.0.2. Full embedded-player block is exact against the retained fixture. Built-in YouTube remains first; direct/yt-dlp is fallback. Restore earlier system transport/timer/hidden-priority behavior, accepting its historical tradeoffs. Keep `loadTok`, source identities and existing local/Audius routes.
+- `playback-watchdog.js` and `background-playback.js` remain as historical files but MUST NOT be loaded by index.html. Do not re-enable their orchestration silently. Retained `transportPlay`/`transportPause` serve the existing Mineradio bridge only. Do not advertise the reverted global loading/pause fixes.
+- Diagnostic build: `Atlas-AudioRollback-EmbeddedFirst`. Keep improved bounded privacy-safe diagnostics/copy and Electron 44.10.1 security update.
+- Atlas in `renderer/atlas-model.js`, `atlas.js`, `atlas.css` is a manually authored local map, not an artist-recommendation graph. Saved playlists and selections become stars. Named constellations are connected graphs; reject changes that split the graph, and keep one constellation per star. Edits and positions are saved in `lib.atlasCosmos`.
+- Playback delegates to the existing queue, carries an Atlas source ID and never modifies the audio engine. Pulse's actual playing state drives visual-only pulses; it is not beat analysis. Respect reduced motion. Keep local files on the existing file path. Custom selection currently lists up to 1,000 tracks; Russian/English with English fallback.
+- Preserve drum and Mineradio bridge features, including quality preferences. Narrow Atlas navigation is a temporary drawer; never overwrite the saved mini/sidebar preference merely because the window is narrow.
+- Run root tests, Atlas UI, drum/Mineradio UI and EmbeddedFirst UI against actual current code. `release-polish.cjs` is retained as historical but is excluded from the current suite because its 13 assertions require deliberately reverted behavior; do not change its approved manifest. Atlas has a new exact inverse layer before the old control chain.
+- Setup: build Windows x64 unpacked app with `electron-builder --dir --win --x64 --publish never`, then `sh build/make-setup.sh` from app. Reuse existing installer design, generate correct 1.0.3 DPI assets, inspect payload. Do not deliver an old portable from dist as if current.
+- Linux fixture tests and cross-build payload inspection do NOT establish Windows installation, real sound, SMTC or live YouTube/background behavior. Report these limits. No patent-registration claim.
+
+---
+
+# Active addition — Drum / Mineradio / background 1.0.3
+
+- Current diagnostic tag: `DrumScene-EmbeddedFirst-AudioDiagnostics2`. See `../verification/DRUM-SCENE-BACKGROUND-1.0.3.md` and `MINERADIO-COVERAGE-1.0.3.md`.
+- Keep EmbeddedFirst, Pulse 1.0.3, Electron 44.10.1, portable only. No installer/publication/profile reset.
+- Sidebar drum uses existing lyric words/timing, bounded visible-only projection RAF, cached measurements, reduced-motion/forced-colors flat mode. `ly.drum` opt-out must persist through settings merge. Do not apply the drum to full-screen/Mineradio lyrics silently.
+- Mineradio host/console persist preset, quality, shelf and lyrics with reentrancy guards. `ly.mrShelfMode` is separate from historical boolean `ly.mrShelf`; old false stays off. Full queue identity includes middle items and metadata; do not clamp >399 to another song. Hover must not launch direct prefetch.
+- Explicit card Play/Pause must be idempotent while pending. Existing scene rendering core stays unchanged; no unreviewed upstream overwrite.
+- Hidden playback watchdog is independent of visual RAF, checks intent/current token/video, retries once and falls back on bounded no-progress. Explicit Pause cannot be resumed by watchdog; missed ENDED recovery is once per load and requires real ended state near duration. Renderer orchestration stays NORMAL priority; hidden visuals still stop/GPU priority policy remains.
+- Run `test:drum-scene`, full root tests, existing EmbeddedFirst/release-polish/background/Mineradio UI scenarios. Current tests must run current code, exact inverses are historical controls only. Do not change old approved hashes.
+- This delivery is NOT full Mineradio/Folia parity. Folia/AGPL original renderers, local encrypted lyric import/folder watch/backup and native WE need further isolated work. Do not advertise unimplemented features or copy separately licensed preset-8 assets blindly.
+
+---
+
+# Active release — EmbeddedFirst release polish 1.0.3
+
+This section supersedes older direct-first/no-forced-iframe guidance below. The author explicitly selected embedded YouTube FIRST and explicitly kept version **1.0.3**. Older sections are retained as history, not simultaneous requirements. Current report: [RELEASE-POLISH-1.0.3](../verification/RELEASE-POLISH-1.0.3.md).
+
+- The actual archive directory is `.maintenance/ai/oldlogs/`. Do not create a second `.mainstance` directory. Root `AGENTS.md` remains removed at the author's earlier request.
+- `Logs/` is for readable English release notes: one file per version plus its index. Update `Logs/1.0.3.md`; no unit-test counts, internal traces, hashes or experimental reports there. Technical reports and evidence belong in this archive.
+- Online YouTube/service-mapped tracks: iframe first; mapping IPC returns a video ID only. Direct media/yt-dlp are fallback only. No automatic hover/next-track direct prefetch or whole-file AutoSync analysis during successful embedded playback. Local/downloaded files and native Audius keep their existing routes.
+- Never silently claim EQ/DJ/bit-perfect processing of iframe audio. Existing live-capture visualizers are separate from the ordinary audio-deck processing chain. Preserve all graphics quality/FPS/accessibility settings.
+- System Play and Pause are explicit, idempotent commands even while mapping/resolution is pending. They must not toggle pending playback intent. Repeated BUFFERING notifications must not extend a continuous stall deadline forever. Paused/cued playback must not unexpectedly launch a backup.
+- Preserve `loadTok`, seek position, pause intent, library, downloads, cookies/accounts and all custom lyrics/settings. Failure of every provider is not permission to switch recordings automatically.
+- Electron is pinned to **44.10.1**, upgrading within the existing major for certificate-trust security fixes. Pulse remains 1.0.3. Keep app/package-lock.json consistent; do not restore vulnerable Electron 44.8.0 from a historical manifest.
+- Active diagnostic build: `ReleasePolish-EmbeddedFirst-AudioDiagnostics2`; enum-only bounded logs, no raw errors/URLs/track titles/secrets. Copy audio diagnostics natively; do not reintroduce the generic 64KB clipboard limit.
+- Build **portable only** for this request: `electron-builder --win portable --x64 --publish never`. `npm run dist` also creates the historical installer and is NOT portable-only. No GitHub publication or version bump.
+- Run the full root tests and current release-polish/embedded-first UI tests. Historical approved manifests remain unchanged; release-polish has its own exact inverse before embedded-first in the historical control chain. New behavior is executed directly, not through inverses.
+- Linux Chromium fixtures and Windows cross-build inspection do not establish native Windows/SMTC/live YouTube behavior. Do not claim every song works, guaranteed startup time, or patent registration.
+
+---
+
+# Current direct-stream regression fix — 1.0.3
+
+Current verification: ../verification/DIRECT-STREAM-1.0.3.md. This supersedes the prior audio-audit claim that removing URL checks was safe. Version stays 1.0.3; do not publish GitHub without permission.
+
+- NEVER race API URLs alone: metadata can return a URL whose CDN denies playback with 403. Race each candidate through metadata AND an actual bounded media-byte check. Only a verified playable candidate may win and cancel the others.
+- `probeAudio` validates HTTP 200/206, audio/video/octet-stream content type and a nonempty byte response; six-second bound and body cancellation. Same User-Agent as subsequent streaming. Do not weaken quality preference or replace direct playback with forced iframe playback.
+- Old persisted links without `verified:2` are ignored. Only the disposable stream URL cache is refreshed; user library/downloads/accounts remain untouched. yt-dlp backup also needs playable-byte verification before reporting success.
+- New direct-stream integration uses real local HTTP for player API/CDN/proxy and a real Chromium decoder/analyser, NOT media route fulfillment. Negative control runs exact prior source and demonstrates the failing two-403/third-good case.
+- Live YouTube check from this environment was blocked by LOGIN_REQUIRED (bot confirmation) on all guest clients. That is not proof that the fix works on the author’s network; request a track/error if the user still sees failure.
+- Historical inverse chain now starts with direct-stream-original.cjs; the audio wrapper calls it before audio/lyrics/older inverses. All older approved manifests stay immutable. Historical audio backend fixtures explicitly use the prior contract; direct-stream.cjs covers current HTTP behavior.
+
+---
+
+# Current audio-engine audit — 1.0.3
+
+Current verification: ../verification/AUDIO-ENGINE-1.0.3.md. User release notes: Logs/1.0.3.md. No version bump or GitHub publication.
+
+- Stream resolver uses staggered first-usable metadata requests (350ms spacing), aborts losing requests, keeps original audio format preference and verifies URLs with actual media requests rather than a startup range probe.
+- Cached Apple/Spotify recording matches bypass redundant catalog metadata/ISRC; uncached work is deduplicated. Preserve matching quality/scoring and original service identity.
+- Core audio intent is independent of media playback state. Pending pause, seek and rapid switches must respect loadTok; clean startup timers and metadata listeners. Foreground fallback remains available. Background prefetch must not promote itself into yt-dlp work.
+- Stream header timeout MUST be cleared after headers, never a total-duration timeout on the audio body. Client close aborts media fetch. Range recovery must not delete another request’s newer URL.
+- DJ async operations have request/epoch guards, cancellation, bounded canplay readiness and gain restoration if an armed transition fails. Preserve dual-deck EQ, tempo, graph, analyser and original quality.
+- Run test:audio-engine plus audio/file-video/lyric-studio/lyrics-provider/developer suites. Local Chromium fixtures do not establish Windows-native or live-service latency.
+- Historical baseline chain: apply audio-engine-original.cjs before lyrics-provider-original.cjs and older inverses (lyrics wrapper already does this). Never replace old approved hashes.
+
+---
+
+# Current hotfix — 1.0.3
+
+The author explicitly requested 1.0.3. Current verification: ../verification/LYRICS-PROVIDER-1.0.3.md. User release notes: Logs/1.0.3.md. Do not publish GitHub without permission.
+
+- Spicy selection uses the main-process project credential, never a renderer personal-key gate.
+- Menu and Settings source changes invalidate only the current non-user lyric record. Re-selecting a source retries it. Preserve custom lyrics, offsets, stretch, syllables, attribution and user data.
+- Per-track request identity and source/background/Spicy preferences guard lyric cache commits. Stale provider responses must not replace current results.
+- Apply lyrics-provider-original.cjs before developer-experience and older historical inverses; never rebase old hashes.
+- Версия — только по явной просьбе автора; active release is 1.0.3. Older guidance below is historical when superseded.
+
+---
+
 # Current internal development notes — 1.0.2
 
 This directory is the internal AI archive, moved intact from root docs. Root AGENTS.md was explicitly removed by the author. User-facing English release notes belong in root Logs/1.0.2.md, not here. Runtime files stay in app/. Read verification/DEVELOPER-EXPERIENCE-1.0.2.md (relative to this archive root) for the latest changes. Historical reports below are not current requirements when superseded.

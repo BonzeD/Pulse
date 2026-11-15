@@ -1,0 +1,486 @@
+{
+  "package.json": {
+    "sha256": "5a9aaf2ba2aaba25728de480349891901c654bf25ddafe37aad450a4c605198b",
+    "originalSha256": "449b7f8cdb3e68668a1dcf96203a380823c6688ec0d0a2e572a0cbc9a14c6ffd",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs\",\n"
+        ]
+      },
+      {
+        "from": 43,
+        "to": 45,
+        "original": [
+          "    \"test:lyrics-provider\": \"node --test tests/lyrics-provider.cjs && node tests/lyrics-provider-ui.cjs\"\n"
+        ]
+      },
+      {
+        "from": 80,
+        "to": 82,
+        "original": [
+          "      \"audius.js\"\n"
+        ]
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "868f9f2892be5692bbd83919f4da5032a643f1443ffdd5a2839ac8b57e7cfd1a",
+    "originalSha256": "5a4653b9872ed8b718428b6e3c508fb0ab5ccaf90d697feac95eb3d1ebb4cbe0",
+    "patches": [
+      {
+        "from": 224,
+        "to": 228,
+        "original": [
+          "const streams = {}; let sLoaded = false;\n",
+          "function loadStreams() { if (sLoaded) return; sLoaded = true; try { const o = JSON.parse(fs.readFileSync(streamsFile(), 'utf8')), now = Date.now(); for (const k in o) if (o[k].url && o[k].exp > now + 300e3 && !streams[k]) streams[k] = o[k]; } catch {} }\n"
+        ]
+      },
+      {
+        "from": 243,
+        "to": 244,
+        "original": [
+          "const clientBad = {}; // id трека → номера клиентов, ссылки которых не открылись (403)\n"
+        ]
+      },
+      {
+        "from": 251,
+        "to": 252,
+        "original": [
+          "async function tryClient(ci, id, fresh) {\n"
+        ]
+      },
+      {
+        "from": 254,
+        "to": 255,
+        "original": [
+          "    method: 'POST', signal: AbortSignal.timeout(9000),\n"
+        ]
+      },
+      {
+        "from": 267,
+        "to": 268,
+        "original": [
+          "  // ссылка действительно открывается (иначе YouTube отдаёт 403 уже в плеере). 2.0.4: если проверка просто не успела\n",
+          "  // (медленная сеть) — ссылку всё равно берём: отказ бывает только с явным 403/410\n",
+          "  let ok = true;\n",
+          "  try {\n",
+          "    const t = await fetch(f.url, { headers: { Range: 'bytes=0-1', 'User-Agent': C.ua }, signal: AbortSignal.timeout(6000) });\n",
+          "    try { await t.body?.cancel(); } catch {}\n",
+          "    ok = t.status === 206 || t.status === 200;\n",
+          "  } catch {}\n",
+          "  if (!ok) return null;\n"
+        ]
+      },
+      {
+        "from": 273,
+        "to": 276,
+        "original": [
+          "  let retry = false;\n",
+          "  for (let ci = 0; ci < CLIENTS.length; ci++) {\n",
+          "    if (bad.has(ci) || Date.now() < clientDown[ci]) continue;\n"
+        ]
+      },
+      {
+        "from": 277,
+        "to": 291,
+        "original": [
+          "      const r = await tryClient(ci, id); clientFails[ci] = 0;\n",
+          "      if (r && r.url) return r;\n",
+          "      if (r && r.retry) retry = true;\n",
+          "    } catch { if (++clientFails[ci] >= 4) { clientDown[ci] = Date.now() + 3 * 60e3; clientFails[ci] = 0; } }\n",
+          "  }\n",
+          "  // 2.0.4: второй круг — новым гостем (без старого visitorData)\n",
+          "  if (retry) for (let ci = 0; ci < CLIENTS.length; ci++) {\n",
+          "    if (bad.has(ci)) continue;\n",
+          "    try { const r = await tryClient(ci, id, true); if (r && r.url) return r; } catch {}\n",
+          "  }\n",
+          "  // все клиенты «на паузе» из-за сбоев сети — даём им ещё один шанс, а не молчим 5 минут\n",
+          "  if (CLIENTS.every((_, ci) => Date.now() < clientDown[ci])) clientDown.fill(0);\n",
+          "  return null;\n"
+        ]
+      },
+      {
+        "from": 301,
+        "to": 303,
+        "original": [
+          "    const to = setTimeout(() => { try { pr.kill(); } catch {} }, 30000);\n",
+          "    pr.stdout.on('data', (b) => (out += b)); pr.stderr.on('data', (b) => (err += b));\n"
+        ]
+      },
+      {
+        "from": 316,
+        "to": 317,
+        "original": []
+      },
+      {
+        "from": 324,
+        "to": 327,
+        "original": [
+          "    streams[id] = r; saveStreams(); return r.url;\n"
+        ]
+      },
+      {
+        "from": 332,
+        "to": 334,
+        "original": [
+          "function upstream(url, req, ua) {\n",
+          "  const ac = new AbortController(); const h = { 'User-Agent': ua || UA };\n"
+        ]
+      },
+      {
+        "from": 335,
+        "to": 337,
+        "original": [
+          "  const m = range.match(/bytes=(\\d+)-(\\d*)/);\n",
+          "  if (m && !m[2]) range = `bytes=${m[1]}-${+m[1] + 10 * 1024 * 1024 - 1}`; // куски по 10 МБ — YouTube режет большие\n"
+        ]
+      },
+      {
+        "from": 338,
+        "to": 340,
+        "original": [
+          "  const to = setTimeout(() => ac.abort(), 15000); // нет ответа за 15 с — пробуем заново\n",
+          "  return fetch(url, { headers: h, signal: ac.signal }).then((r) => { clearTimeout(to); r._ac = ac; return r; }, (e) => { clearTimeout(to); throw e; });\n"
+        ]
+      },
+      {
+        "from": 342,
+        "to": 346,
+        "original": []
+      },
+      {
+        "from": 347,
+        "to": 374,
+        "original": [
+          "    let url = await resolveStream(id); let r = await upstream(url, req, streams[id] && streams[id].ua).catch(() => null);\n",
+          "    if (!r) { delete streams[id]; url = await resolveStream(id); r = await upstream(url, req, streams[id] && streams[id].ua); }\n",
+          "    if (r.status === 403 || r.status === 410) { r.body?.cancel().catch(() => {}); const ci = streams[id] && streams[id].ci; delete streams[id]; if (ci != null) (clientBad[id] = clientBad[id] || new Set()).add(ci); url = await resolveStream(id); r = await upstream(url, req, streams[id] && streams[id].ua); }\n",
+          "    const h = { 'Content-Type': r.headers.get('content-type') || 'audio/mp4', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' };\n",
+          "    for (const k of ['content-length', 'content-range']) if (r.headers.get(k)) h[k] = r.headers.get(k);\n",
+          "    res.writeHead(r.status, h);\n",
+          "    res.on('close', () => r._ac.abort());\n",
+          "    if (!r.body || req.method === 'HEAD') { r.body?.cancel().catch(() => {}); return res.end(); }\n",
+          "    Readable.fromWeb(r.body).on('error', () => res.destroy()).pipe(res);\n",
+          "  } catch (e) { if (!res.headersSent) res.writeHead(502); res.end(String(e.message || e)); }\n"
+        ]
+      }
+    ]
+  },
+  "services.js": {
+    "sha256": "bb7259ae2458725b5aaa7c0de7cf78d7058e90e910c9218911e0a725f466cc1f",
+    "originalSha256": "cfdafcd71a1b0260312fdfeceb0a59dc4b720c068dddf88f4a8d2ec8785b8e24",
+    "patches": [
+      {
+        "from": 137,
+        "to": 138,
+        "original": []
+      },
+      {
+        "from": 140,
+        "to": 152,
+        "original": [
+          "  const meta = await trackMeta(id);\n",
+          "  if (svcOf(id) === 'sp' && !meta.isrc && !cachedYt(id)) { const isrc = await spIsrc(id.slice(3)); if (isrc) { meta.isrc = isrc; saveSoon(); } } // 2.0.2: ISRC — для точного совпадения\n",
+          "  const m = await matchOne({ key: id, ...meta });\n",
+          "  if (!m) throw new Error('Этого трека нет в YouTube Music — звук взять неоткуда');\n",
+          "  const a = db().alias; (a[m.id] = a[m.id] || []).includes(id) || a[m.id].push(id); saveSoon();\n",
+          "  return m.id;\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "7ea1bbc1849d332aa4a859b4efc701d996a043d405b6fdb77921e7d8fac84e51",
+    "originalSha256": "a1e98d03aa258f4173100d89a85691934cb74669f6b43cb9b44c8c82072d5f8d",
+    "patches": [
+      {
+        "from": 137,
+        "to": 154,
+        "original": []
+      },
+      {
+        "from": 157,
+        "to": 160,
+        "original": [
+          "onA('playing', () => { if (engine === 'audio') { errStreak = 0; setLoading(false); onStarted(); } });\n",
+          "onA('waiting', () => engine === 'audio' && setLoading(true));\n",
+          "onA('pause', () => { if (engine === 'audio') { playing = false; onPlayState(); } });\n"
+        ]
+      },
+      {
+        "from": 162,
+        "to": 163,
+        "original": [
+          "const retried = new Set();\n"
+        ]
+      },
+      {
+        "from": 167,
+        "to": 169,
+        "original": [
+          "  const t = curTrack(), errorTok = loadTok; setLoading(false);\n"
+        ]
+      },
+      {
+        "from": 170,
+        "to": 172,
+        "original": [
+          "  if (t && audio.getAttribute('src').startsWith('/stream/') && !retried.has(t.id)) { retried.add(t.id); const at = audio.currentTime || 0; setLoading(true); audio.src = `/stream/${t.id}?r=${Date.now()}`; audio.addEventListener('loadedmetadata', () => { if (errorTok === loadTok && at > 1) audio.currentTime = at; }, { once: true }); E.play(); return; }\n",
+          "  if (t && audio.getAttribute('src').startsWith('/stream/') && ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, true); }\n"
+        ]
+      },
+      {
+        "from": 174,
+        "to": 175,
+        "original": [
+          "  if (++errStreak <= 8) setTimeout(() => { if (errorTok === loadTok) next(true); }, 700);\n"
+        ]
+      },
+      {
+        "from": 177,
+        "to": 178,
+        "original": []
+      },
+      {
+        "from": 186,
+        "to": 197,
+        "original": [
+          "  play: () => { window.PulseFileVideo?.intent(true); if(window.PulseFileVideo?.pending())return; /* file-video integration */ if (engine === 'audio') { initAudioGraph(); actx.resume().catch(() => {}); const playTok = loadTok; audio.play().catch(() => { if (playTok === loadTok) setLoading(false); }); } else if (ready) player.playVideo(); },\n",
+          "  pause: () => { window.PulseFileVideo?.intent(false); /* file-video integration */ if (typeof djFinish === 'function') djFinish(); return engine === 'audio' ? audio.pause() : ready && player.pauseVideo(); },\n",
+          "  seek: (t) => { if (typeof djFinish === 'function') djFinish(); if (engine === 'audio') audio.currentTime = t; else if (ready) player.seekTo(t, true); beatState.kp = -1; },\n"
+        ]
+      },
+      {
+        "from": 200,
+        "to": 202,
+        "original": [
+          "    const tok = ++loadTok; window.PulseFileVideo?.reset(); /* file-video integration */ setLoading(false); $('seekBuf').style.width = '0';\n",
+          "    const at = () => { if (start > 1) audio.addEventListener('loadedmetadata', () => { if (tok === loadTok) audio.currentTime = start; }, { once: true }); };\n"
+        ]
+      },
+      {
+        "from": 209,
+        "to": 211,
+        "original": [
+          "      engine = 'audio'; audioTrackId = t.id; at();\n",
+          "      audio.src = fileAudioUrl(t);\n"
+        ]
+      },
+      {
+        "from": 220,
+        "to": 221,
+        "original": [
+          "    // если звук не готов за 12 с — не держим тишину: включаем через встроенный YouTube (если трек это разрешает)\n",
+          "    const slow = setTimeout(() => { if (tok !== loadTok || !ready || !canEmbed(t) || engine !== 'audio' || audio.getAttribute('src')) return; loadTok++; setLoading(false); toast('Звук долго не отдаётся — включаю через встроенный YouTube'); useIframe(t, autoplay, start); }, 12000);\n"
+        ]
+      },
+      {
+        "from": 222,
+        "to": 223,
+        "original": [
+          "      clearTimeout(slow); if (r && r.vid && r.vid !== t.id) vidMap[t.id] = r.vid; // 2.0.2: запоминаем запись YouTube для трека сервиса\n"
+        ]
+      },
+      {
+        "from": 224,
+        "to": 229,
+        "original": [
+          "      if (lib.mode === 'video' && ready && r && r.ok && canEmbed(t) && isSvcId(t.id)) { setLoading(false); return useIframe(t, autoplay, start); }\n",
+          "      if (r && r.ok) { at(); audio.src = `/stream/${t.id}`; if (autoplay) E.play(); else setLoading(false); return; }\n",
+          "      setLoading(false);\n",
+          "      if (ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, autoplay, start); }\n"
+        ]
+      },
+      {
+        "from": 230,
+        "to": 231,
+        "original": [
+          "      if (autoplay && ++errStreak <= 8) setTimeout(() => { if (tok === loadTok) next(true); }, 800);\n"
+        ]
+      },
+      {
+        "from": 309,
+        "to": 310,
+        "original": []
+      },
+      {
+        "from": 365,
+        "to": 366,
+        "original": [
+          "let hovT = null, hovId = null; const prefetched = new Set();\n"
+        ]
+      },
+      {
+        "from": 368,
+        "to": 370,
+        "original": [
+          "  if (!id || !/^[\\w-]{11}$/.test(id) || off[id] || !online() || prefetched.has(id) || !pulse.prefetch) return;\n",
+          "  hovT = setTimeout(() => { prefetched.add(id); pulse.prefetch(id); }, 300);\n"
+        ]
+      },
+      {
+        "from": 380,
+        "to": 382,
+        "original": [
+          "  // 2.0.12: следующий трек готовим полностью (с запасным путём yt-dlp), если быстрые способы YouTube не справились —\n",
+          "  // раньше предзагрузка запасной путь не трогала, и следующий трек мог грузиться 5–15 с. Через 3 с, чтобы не мешать старту текущего\n",
+          "  if (n && !off[n.id] && online()) { const nid = n.id; (pulse.prefetch || pulse.resolve)(nid); setTimeout(() => { if (curTrack() && curTrack().id === t.id && pulse.resolve) pulse.resolve(nid).catch(() => {}); }, 3000); }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/audius.js": {
+    "sha256": "1acf9005dc0a6b68d80c93bec2b1906bf3519f0c56ffca2c5ace2e736617d1ff",
+    "originalSha256": "8bc92cfa659f781b29449df7e80adfaa9282ffbad5124cfd9542571ccb31509d",
+    "patches": [
+      {
+        "from": 28,
+        "to": 29,
+        "original": [
+          "  cancel();sourceButton();\n"
+        ]
+      }
+    ]
+  },
+  "renderer/dj.js": {
+    "sha256": "5ec2429bc0e11fd38b8f9c24e593599009a54b1bdf7239195788c66f9ac5c462",
+    "originalSha256": "e1c03ef07a38db41660d259c1cdb7537feb75b1b61e4e395a0b70c040d5ae42a",
+    "patches": [
+      {
+        "from": 5,
+        "to": 6,
+        "original": []
+      },
+      {
+        "from": 94,
+        "to": 95,
+        "original": [
+          "  go.then((r) => { if (r && r.ok) getAnalysis(n.t); });\n"
+        ]
+      },
+      {
+        "from": 143,
+        "to": 145,
+        "original": [
+          "  dj.busy = true; const curId = curTrack()?.id, s = S().dj;\n"
+        ]
+      },
+      {
+        "from": 146,
+        "to": 147,
+        "original": [
+          "    initAudioGraph(); actx.resume();\n"
+        ]
+      },
+      {
+        "from": 149,
+        "to": 152,
+        "original": []
+      },
+      {
+        "from": 154,
+        "to": 155,
+        "original": [
+          "      if (curTrack()?.id !== curId) throw new Error('cancel');\n"
+        ]
+      },
+      {
+        "from": 156,
+        "to": 158,
+        "original": [
+          "      await new Promise((res) => { nd.addEventListener('canplay', res, { once: true }); nd.addEventListener('error', res, { once: true }); setTimeout(res, 9000); });\n",
+          "      if (nd.error || curTrack()?.id !== curId) throw new Error('cancel');\n"
+        ]
+      },
+      {
+        "from": 159,
+        "to": 160,
+        "original": [
+          "    const anN = await djAn(t), anC = beatState.an, wasPlaying = preloaded && !nd.paused;\n"
+        ]
+      },
+      {
+        "from": 171,
+        "to": 172,
+        "original": [
+          "    if (curTrack()?.id !== curId) throw new Error('cancel');\n"
+        ]
+      },
+      {
+        "from": 174,
+        "to": 175,
+        "original": []
+      },
+      {
+        "from": 176,
+        "to": 177,
+        "original": [
+          "    if (!wasPlaying) await nd.play().catch(() => {});\n"
+        ]
+      },
+      {
+        "from": 182,
+        "to": 183,
+        "original": [
+          "    audio = nd; audioTrackId = t.id; dj.from = od; dj.fromNodes = O; dj.next = null; dj.prepId = null; dj.load = null; dj.plan = null; dj.t0 = performance.now(); dj.X = X; dj.xfFrom = dj.xf; dj.xfTo = ni;\n"
+        ]
+      },
+      {
+        "from": 187,
+        "to": 189,
+        "original": [
+          "    dj.busy = false; if (e.message !== 'cancel') { dj.skipId = curId; if (manual) toast('Не получилось свести: ' + e.message, 'alert'); }\n",
+          "  }\n"
+        ]
+      },
+      {
+        "from": 199,
+        "to": 200,
+        "original": []
+      },
+      {
+        "from": 226,
+        "to": 227,
+        "original": [
+          "  initAudioGraph(); actx.resume();\n"
+        ]
+      },
+      {
+        "from": 229,
+        "to": 241,
+        "original": [
+          "  dj.loading = { d, t }; djRender();\n",
+          "  if (!off[t.id]) { const r = await pulse.resolve(t.id); if (!r || !r.ok) { dj.loading = null; djRender(); return toast(r ? r.error : 'нет звука', 'alert'); } }\n",
+          "  dj.loading = null;\n",
+          "  if (decks.indexOf(audio) === d) return djRender();\n",
+          "  try { a.pause(); } catch {} a.src = url; dj.load = { i, t, d }; dj.rates[d] = 1; djK[d].pitch = 0; djSetRate(d); dj.loops[d] = null; dj.plan = null;\n",
+          "  a.addEventListener('loadedmetadata', () => { djAn(t).then((an) => { if (dj.load && dj.load.t.id === t.id && S().dj.trim) { const st = djEdges(an, a.duration).start; if (a.paused && a.currentTime < 0.5) a.currentTime = st; } djRender(); }); }, { once: true });\n"
+        ]
+      },
+      {
+        "from": 243,
+        "to": 244,
+        "original": [
+          "function djUnload() { const L = dj.load; if (!L) return; const a = decks[L.d]; dj.load = null; if (a !== audio) try { a.pause(); a.removeAttribute('src'); a.load(); } catch {} }\n"
+        ]
+      },
+      {
+        "from": 249,
+        "to": 250,
+        "original": [
+          "  audio = a; audioTrackId = L.t.id; dj.load = null; dj.plan = null; dj.next = null; dj.prepId = null;\n"
+        ]
+      },
+      {
+        "from": 264,
+        "to": 265,
+        "original": [
+          "  if (!a.src) return djLoadNext(); initAudioGraph(); actx.resume();\n"
+        ]
+      }
+    ]
+  }
+}

@@ -78,3 +78,47 @@ body.prism-live #fpsMeter{display:none}
 #prismLive.sp-calm .sp-mini-spectrum i{transform:scaleY(.0714)!important}
 @media(prefers-reduced-motion:reduce){#prismLive .sp-mini-spectrum i{transform:scaleY(.0714)!important}}
 @media(forced-colors:active){#prismLive .sp-mini-spectrum i{background:CanvasText;mask-image:none;forced-color-adjust:none}}
+
+/* -- Pulse COSMOS splash (1.0.10) -- */
+#splash[data-style="cosmos"]{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#020308;color:#eef1f8;font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;--pulse:0;--mx:0;--my:0;cursor:default}
+#splash[data-style="cosmos"] .cs-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cs-core{position:absolute;left:50%;top:40%;transform:translate(calc(-50% + var(--mx) * -1px),calc(-50% + var(--my) * -1px));text-align:center;pointer-events:none}
+.cs-word{margin:0;display:flex;justify-content:center;font-weight:250;font-size:clamp(50px,8.2vw,118px);line-height:1;letter-spacing:.5em;padding-left:.5em;color:#eef1f8;text-shadow:0 0 calc(18px + var(--pulse) * 14px) rgba(150,175,255,.2),0 2px 18px rgba(0,0,0,.7)}
+.cs-word span{display:inline-block;opacity:0;animation:cs-ign 1.6s cubic-bezier(.16,1,.3,1) calc(1.35s + var(--i) * .13s) forwards}
+@keyframes cs-ign{0%{opacity:0;transform:scale(.35);filter:blur(14px) brightness(3)}35%{opacity:1}100%{opacity:1;transform:none;filter:blur(0) brightness(1)}}
+.cs-tag{margin:30px 0 0;font-size:13px;font-weight:300;letter-spacing:.52em;padding-left:.52em;text-transform:uppercase;color:rgba(214,222,242,.62);opacity:0;animation:cs-fade 1.4s cubic-bezier(.16,1,.3,1) 2.25s forwards}
+.cs-coord{margin:10px 0 0;font:300 10.5px/1 "Cascadia Mono","Consolas",ui-monospace,monospace;letter-spacing:.24em;color:rgba(255,140,155,.42);opacity:0;animation:cs-fade 1.4s ease 2.7s forwards}
+@keyframes cs-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#splash[data-style="cosmos"].cs-fallback{background:radial-gradient(60% 35% at 50% 45%,rgba(60,70,140,.22),transparent 70%),radial-gradient(40% 30% at 75% 30%,rgba(90,30,90,.18),transparent 70%),#020308}
+.cs-fallback .cs-gl{display:none}
+@media (max-height:480px){.cs-tag{margin-top:18px}}
+/* -- COSMOS exits: star (default) / dissolve / calm -- */
+@property --r{syntax:'<length>';inherits:true;initial-value:0px}
+#splash[data-style="cosmos"].bye{pointer-events:none;animation:none !important}
+#splash[data-style="cosmos"] .cs-core{transition:opacity .45s ease,filter .5s ease,transform .9s cubic-bezier(.5,0,.75,0)}
+#splash[data-style="cosmos"].bye .cs-core{opacity:0;filter:blur(5px)}
+/* 1 - into the star: camera dives to the rose star, the app opens from it */
+#splash[data-style="cosmos"].bye.x-star{-webkit-mask-image:radial-gradient(circle at var(--fx,60%) var(--fy,30%),transparent calc(var(--r) - 34px),#000 var(--r));mask-image:radial-gradient(circle at var(--fx,60%) var(--fy,30%),transparent calc(var(--r) - 34px),#000 var(--r));animation:csIris 1.15s cubic-bezier(.6,0,.25,1) .4s both !important}
+#splash[data-style="cosmos"].bye.x-star::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--fx,60%) var(--fy,30%),rgba(255,120,140,0) calc(var(--r) - 6px),rgba(255,128,146,.42) calc(var(--r) + 4px),rgba(150,110,255,.14) calc(var(--r) + 40px),rgba(0,0,0,0) calc(var(--r) + 120px))}
+#splash[data-style="cosmos"].bye.x-star .cs-core{transform:translate(-50%,-50%) scale(1.25)}
+@keyframes csIris{from{--r:0px}to{--r:160vmax}}
+html body.cs-star :is(.side,.top,#view,.bar){animation:csLit 1.2s cubic-bezier(.2,.7,.2,1) backwards !important}
+@keyframes csLit{from{filter:brightness(1.6) saturate(1.25)}}
+/* 2 - dissolve: space fades out under the stars; stars drift past over the app */
+#splash[data-style="cosmos"].bye.x-dissolve{background:transparent !important}
+#splash[data-style="cosmos"].bye.x-dissolve .cs-core{transform:translate(-50%,-50%) scale(1.12)}
+html body.cs-dissolve :is(.side,.top,#view,.bar){animation:csRise 1.1s cubic-bezier(.16,1,.3,1) backwards !important}
+html body.cs-dissolve :is(.side,#cs-x){animation-delay:.08s !important}
+html body.cs-dissolve :is(#view,#cs-x){animation-delay:.16s !important}
+html body.cs-dissolve :is(.bar,#cs-x){animation-delay:.24s !important}
+@keyframes csRise{from{opacity:0;transform:scale(.985)}}
+/* 3 - calm: the logo floats up, the night slowly fades */
+#splash[data-style="cosmos"].bye.x-calm{animation:csOut .8s ease .2s both !important}
+#splash[data-style="cosmos"].bye.x-calm .cs-core{transform:translate(-50%,calc(-50% - 26px));transition:opacity .6s ease,filter .6s ease,transform 1s cubic-bezier(.2,.7,.2,1)}
+@keyframes csOut{to{opacity:0}}
+html body.cs-calm :is(.side,.top,#view,.bar){animation:csUp .9s cubic-bezier(.16,1,.3,1) backwards !important}
+html body.cs-calm :is(.side,#cs-x){animation-delay:.07s !important}
+html body.cs-calm :is(#view,#cs-x){animation-delay:.14s !important}
+html body.cs-calm :is(.bar,#cs-x){animation-delay:.21s !important}
+@keyframes csUp{from{opacity:0;transform:translateY(12px)}}
+@media (prefers-reduced-motion:reduce){#splash[data-style="cosmos"].bye{-webkit-mask-image:none;mask-image:none;animation:csOut .4s ease both !important}html body.cs-in :is(.side,.top,#view,.bar){animation:csUp .4s ease backwards !important}}

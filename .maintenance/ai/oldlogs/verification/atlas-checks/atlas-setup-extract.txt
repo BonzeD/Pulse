@@ -1,0 +1,23 @@
+
+7-Zip (z) 25.01 (x64) : Copyright (c) 1999-2025 Igor Pavlov : 2025-08-03
+ 64-bit locale=C.UTF-8 Threads:2 OPEN_MAX:1048576, ASM
+
+Scanning the drive for archives:
+1 file, 241614401 bytes (231 MiB)
+
+Extracting archive: app/dist/Pulse-Setup-1.0.3.exe
+--
+Path = app/dist/Pulse-Setup-1.0.3.exe
+Type = Nsis
+Physical Size = 241614401
+Method = LZMA:26
+Solid = -
+Headers Size = 132620
+Embedded Stub Size = 48128
+SubType = NSIS-3 Unicode
+
+Everything is Ok
+
+Files: 869
+Size:       860674717
+Compressed: 241614401

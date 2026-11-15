@@ -1,0 +1,40 @@
+/* Sidebar-only cylindrical projection. Words retain their existing karaoke renderer. */
+#lyrics .ly-inner.ly-drum > :is(.ly-line,.ly-gap){
+  transform:perspective(900px) translateY(var(--drum-y,0px)) translateZ(var(--drum-z,0px)) rotateX(var(--drum-angle,0deg))!important;
+  transform-origin:center center!important;backface-visibility:hidden;
+  opacity:var(--drum-opacity,1)!important;transition:color .4s,filter .4s!important;
+}
+#lyrics .ly-inner.ly-drum > .ly-line.cur{--drum-opacity:1;color:rgba(255,255,255,.7)}
+#lyrics .ly-inner.ly-drum > [data-drum-out]{visibility:hidden;pointer-events:none}
+body.no-anim #lyrics .ly-inner.ly-drum > :is(.ly-line,.ly-gap){transform:none!important;opacity:1!important;visibility:visible}
+@media(prefers-reduced-motion:reduce),(forced-colors:active){
+  #lyrics .ly-inner.ly-drum > :is(.ly-line,.ly-gap){transform:none!important;opacity:1!important;visibility:visible}
+}
+
+/* On narrow desktop windows, the selected lyrics panel must not disappear entirely. */
+@media(max-width:900px){
+ body:not(.ui-clean):not(.lyonly).pp-open #pp:has(#tabLyrics.on){grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)}
+ body:not(.ui-clean):not(.lyonly).pp-open #pp:has(#tabLyrics.on)>.pp-side{display:flex!important;min-width:0}
+ body:not(.ui-clean):not(.lyonly).pp-open #pp:has(#tabLyrics.on)>.pp-media{position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
+ #pp:has(#tabLyrics.on) .ly-tools{flex-wrap:wrap;gap:4px}
+ #pp:has(#tabLyrics.on) .ly-src{flex-basis:100%;min-width:0}
+}
+@media(max-width:600px){
+ body.pp-open:not(.ui-clean){--top:144px}
+ body.pp-open:not(.ui-clean):not(.lyonly) .visual-return{top:106px;height:30px}
+ body.pp-open:not(.ui-clean) #top .top-l{position:absolute;left:8px;top:8px;width:auto!important;gap:4px}
+ body.pp-open:not(.ui-clean) #top .brand{font-size:18px;gap:4px}
+ body.pp-open:not(.ui-clean) #top .net{display:none}
+ body.pp-open:not(.ui-clean) #top .top-r{position:absolute;right:8px;top:8px;gap:0}
+ body.pp-open:not(.ui-clean) #top .win button{width:40px;height:44px}
+ body.pp-open:not(.ui-clean) #top .acc-btn{height:44px;margin-left:0;padding-right:8px}
+ body.pp-open:not(.ui-clean) #top .top-c{position:absolute;left:8px;right:8px;top:60px;height:44px;padding:0;gap:4px;min-width:0}
+ body.pp-open:not(.ui-clean) #top #gsearch{height:44px;min-width:0;margin-left:0;padding-left:10px}
+ body.pp-open:not(.ui-clean) #top #gsearch .ds-kbd{display:none}
+ #pp:has(#tabLyrics.on) .ly-btn{min-width:40px;min-height:44px}
+}
+
+/* Smooth wheel retargeting; dragging and reduced motion remain direct. */
+#lyrics .ly-inner.free.ly-manual-smooth{transition:transform 220ms cubic-bezier(.18,.65,.25,1)!important}
+body.no-anim #lyrics .ly-inner.free.ly-manual-smooth{transition:none!important}
+@media(prefers-reduced-motion:reduce){#lyrics .ly-inner.free.ly-manual-smooth{transition:none!important}}

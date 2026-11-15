@@ -1,0 +1,11 @@
+✔ Pulse package, lockfile, plugin API, Mineradio host and installer defaults are 1.0.3 (7.449015ms)
+✔ generated installer artwork matches 1.0.3 at every DPI (15.475762ms)
+✔ all first-party JavaScript files parse after version-label replacement (106.956927ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 212.182428

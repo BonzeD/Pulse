@@ -1,0 +1,219 @@
+{
+  "release": "1.0.3",
+  "base": "delivered DirectFix 1.0.3",
+  "scope": "audio-only observation and visual background housekeeping; no transport/auth policy changes",
+  "environment": "Linux Chromium + actual generated audio/local HTTP; mocked Electron IPC",
+  "nativeWindowsCpuRamBenchmark": false,
+  "liveYouTubeOrAccountValidation": false,
+  "checks": {
+    "unit": {
+      "tests": 482,
+      "pass": 482,
+      "fail": 0,
+      "skipped": 0,
+      "passLines": [],
+      "logSha256": "bebf2219d3975b8d6e3fd5453642268536ffe7ece1996a60af97a7d3b65f5fbe"
+    },
+    "audioRecorderNativeAndLifecycle": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "passLines": [],
+      "logSha256": "f3129639173b3cef01d04d49cc78903fe500b49132d7ece42a24f1a11d2c4d8c"
+    },
+    "fullRendererBackgroundAndAudioLog": {
+      "passLines": [
+        "PASS full application: opt-in audio log with real WAV/media events, redacted copy/save, all 4 locales at 390px; native hide parks main RAF without stopping audio/context, delayed graphics/cache release and foreground restore. Local Chromium fixture, not Windows CPU/RAM benchmark."
+      ],
+      "logSha256": "41af07faf0c239d46d2b8c9edc1f1a8da25f3cb567f4ba97673ff2d6b07d7c27"
+    },
+    "audioEngine": {
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "skipped": 0,
+      "passLines": [
+        "PASS audio engine full renderer: actual WAV -> existing media element -> single AudioContext/analyser, pause during resolver, real transport toggle, no duplicate resolve, offline pause/.4s resume, pending seek, latest-track wins and metadata-listener cleanup. Local fixture only, not real YouTube/Windows latency."
+      ],
+      "logSha256": "05cf2ff6b9787cb514af1868190d7d584d3e17f6822f821f4ccc2c4474a8c806"
+    },
+    "directStream": {
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "passLines": [
+        "PASS actual HTTP player API fixture → validated third CDN candidate → real proxy → Chromium audio decoder/AudioContext/analyser, pause and seek. First two candidates reject with 403. No iframe or media-route interception. Not a live YouTube/Windows proof."
+      ],
+      "logSha256": "5de402c883187ce3072605657d944f4a49c6f4c56833e407605b349aaf03686a"
+    },
+    "lyricsProviders": {
+      "passLines": [
+        "PASS 1.0.3 full-renderer source menu/settings: empty personal key, Spicy → Apple → Spicy, stale response/cache protection, explicit fallback retry, custom text and timing preserved, desktop/390. API transport mocked; no live account or native Windows claim."
+      ],
+      "logSha256": "280be0c6b6af0fa382c97e2e05a1df9eaa66442926a023b158574226bf472055"
+    },
+    "fileVideo": {
+      "passLines": [
+        "Passed full-app video playback, pause/resume, seek, shared volume, fullscreen command, mode switching, rounded glow, audio-only/downloaded/offline cases, compatibility conversion, stale-load checks, adaptive shared dropdowns, language changes, disabled/grouped/long options, dialog top layer and audio/video download submenus."
+      ],
+      "logSha256": "526522ad153a8af30d06f19a5a8547fde245fb763ed3488e376ee0716b6024e1"
+    },
+    "widget": {
+      "passLines": [
+        "Passed 102 widget pointer/command checks across 3 sizes, lock states and scaled controls. Windows native hit testing remains unverified."
+      ],
+      "logSha256": "2931b616f321606a793a8a4029145400e84c50fcfabb8ad83e7d7f26050a1438"
+    },
+    "developer": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0,
+      "passLines": [
+        "PASS developer experience UI: draft/rollback/preservation, optional auth, settings source, real audio mini spectrum, opt-in tools + cancellation/cleanup, localized companion UI, 390/620/1366, reduced motion/forced colors. Not native Windows E2E."
+      ],
+      "logSha256": "e3dee26ae1e6a773d514c9ef336f6d9ab32e3ffe49c16fd41eb745935f5e07eb"
+    },
+    "prism": {
+      "passLines": [
+        "PASS prism startup: WebGL, 1366/390, RU/EN/JA/UK, keyboard/click skip, no repeated intro, fallback, reduced motion, forced colors, context loss, context release and zero trailing RAFs",
+        "PASS Prism live: gesture timing, persistence, real-signal uniforms, shared Space, close/focus/inert, 1366/390, RU/EN/JA/UK, tray pause, no canvas reallocations, no idle RAF, repeated open, reduced motion, forced colors, GPU fallback/context loss",
+        "PASS full-app Prism: actual WAV -> existing WebAudio analyser -> live glass, five brand activations, keyboard activation, unchanged audio/context/settings/volume/track, native tray suspend/resume, exit leaves playback running"
+      ],
+      "logSha256": "0e5e49f45250bd652a331e7134ec787f7641a98a6216a4408064006ddc40cfee"
+    },
+    "graphics": {
+      "passLines": [],
+      "result": {
+        "ownedGpuContextsReleased": 2,
+        "sharpPixelIdentical": [
+          "ring",
+          "pulse",
+          "blob",
+          "sun",
+          "bars",
+          "mirror",
+          "wave",
+          "particles",
+          "warp",
+          "tunnel",
+          "grid",
+          "aurora",
+          "spiral",
+          "kaleido",
+          "dots",
+          "radial",
+          "scope",
+          "spectro",
+          "rays",
+          "hex",
+          "fire",
+          "joy",
+          "stars",
+          "vinyl",
+          "mosaic",
+          "city",
+          "helix",
+          "coverfield"
+        ],
+        "finiteGeometryCalls": 6388,
+        "shortWaveLengths": [
+          1,
+          2,
+          8,
+          16,
+          24
+        ],
+        "zeroHeightSafe": true,
+        "gridAllocations": {
+          "before": 28,
+          "after": 2
+        },
+        "lifecycleReleased": true
+      },
+      "logSha256": "4d096b30c83266fba9d8323b3c3d32d1a0093bfddfd20ecb530484c82de6d7c2"
+    }
+  },
+  "applicationPackage": {
+    "version": "1.0.3",
+    "checkedFirstPartyFiles": 245,
+    "diff": [],
+    "missing": [],
+    "appAsarSha256": "ad2383e98d9e97bc33ded52f57faee8cbb9016d1fc817b164cade728029c5923",
+    "nativeBridgeSha256": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+    "nativeBridgeUnchanged": true,
+    "appPE": {
+      "fixed": {
+        "fileVersionMS": 65536,
+        "fileVersionLS": 196608,
+        "productVersionMS": 65536,
+        "productVersionLS": 196608,
+        "fileFlagsMask": 63,
+        "fileFlags": 0,
+        "fileOS": 262148,
+        "fileType": 1,
+        "fileSubtype": 0,
+        "fileDateMS": 0,
+        "fileDateLS": 0
+      },
+      "strings": {
+        "CompanyName": "werxapee, Daswi",
+        "FileDescription": "Pulse Player",
+        "FileVersion": "1.0.3",
+        "InternalName": "Pulse",
+        "LegalCopyright": "Copyright (C) 2015 GitHub, Inc. All rights reserved.",
+        "OriginalFilename": "Pulse.exe",
+        "ProductName": "Pulse",
+        "ProductVersion": "1.0.3",
+        "SquirrelAwareVersion": "1"
+      }
+    },
+    "limits": "Linux local fixtures; no native Windows or live account CPU/RAM benchmark"
+  },
+  "portablePayload": {
+    "resources/app.asar": "ad2383e98d9e97bc33ded52f57faee8cbb9016d1fc817b164cade728029c5923",
+    "resources/media-bridge/PulseMediaBridge.exe": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+    "resources/yt-dlp/_internal/base_library.zip": "3b7f23abfeb973dd9b737477890199cd8518946122207ece9c7af43d53509c3b"
+  },
+  "unchangedApprovalManifests": [
+    "app/tests/audio-engine-approved.json",
+    "app/tests/audius-approved.json",
+    "app/tests/canvas-perf-approved.json",
+    "app/tests/developer-experience-approved.json",
+    "app/tests/direct-stream-approved.json",
+    "app/tests/final-approved.json",
+    "app/tests/graphics-102-approved.json",
+    "app/tests/lyric-ending-approved.json",
+    "app/tests/lyric-silence-approved.json",
+    "app/tests/lyric-studio-approved.json",
+    "app/tests/lyrics-provider-approved.json",
+    "app/tests/prism-live-approved.json",
+    "app/tests/release-101-approved.json",
+    "app/tests/setup-debug-approved.json",
+    "app/tests/visual-performance-approved.json"
+  ],
+  "customInstallerUnchanged": true,
+  "setupPayload": {
+    "resources/app.asar": "ad2383e98d9e97bc33ded52f57faee8cbb9016d1fc817b164cade728029c5923",
+    "resources/media-bridge/PulseMediaBridge.exe": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+    "resources/yt-dlp/_internal/base_library.zip": "3b7f23abfeb973dd9b737477890199cd8518946122207ece9c7af43d53509c3b"
+  },
+  "windowsBuilds": {
+    "Pulse-1.0.3-AudioBackground-portable.exe": {
+      "bytes": 223673663,
+      "sha256": "80ba137844f6acbf4d872e14331bde3ecfd309c6adc9a725d64a9807c0665602",
+      "version": "1.0.3",
+      "unsigned": true
+    },
+    "Pulse-Setup-1.0.3-AudioBackground.exe": {
+      "bytes": 242009808,
+      "sha256": "066e649e5231373a285c8ded80b8c849a0719281a06ceca3861b5cc7bfdfa2f8",
+      "version": "1.0.3",
+      "unsigned": true
+    }
+  },
+  "buildExitCode": 0,
+  "customSetupPayloadMatchesPortable": true
+}

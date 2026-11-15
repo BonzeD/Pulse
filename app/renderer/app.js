@@ -23,7 +23,8 @@ const EQI = '<span class="eqi"><i></i><i></i><i></i></span>';
 const online = () => navigator.onLine;
 
 let lib = { playlists: [], queue: { name: '', tracks: [], idx: -1 }, volume: 80, shuffle: false, repeat: 'off', mode: 'cover', tab: 'next', lyrics: {}, offsets: {}, known: {}, vizStyle: 'ring', autoplay: true, mini: false };
-let account = null, accLists = null;
+let account = null, accLists = null, accountState={state:'signed-out',verified:false}, accountRefreshSeq=0;
+const accountStatusLabel=()=>accountState.state==='reauth'?'Нужно войти заново':'Вход не подтверждён';
 let off = {}, dl = {}, wsAvail = false;
 window.addEventListener('beforeunload', () => { if (saveT && !window.__pulseResetting && pulse.flushLibrary) { clearTimeout(saveT); pulse.flushLibrary(lib); } });
 let saveT; const save = () => { clearTimeout(saveT); if (window.__pulseResetting) return; saveT = setTimeout(() => { if (!window.__pulseResetting) pulse.saveLibrary(lib); }, 400); };
@@ -135,44 +136,126 @@ function outLat() { if (engine !== 'audio' || !actx) return 0; return Math.max(0
 const heard = (extraMs = 0) => Math.max(0, E.time() - outLat() * ((audio && audio.playbackRate) || 1) - extraMs / 1000);
 let player, ready = false, playing = false, engine = 'audio', audioTrackId = null, loadTok = 0, errStreak = 0, dragging = false, hist = [];
 const noEmbed = {};
+let iframeJob = null;
+function clearIframeJob(){if(iframeJob)clearTimeout(iframeJob.timer);iframeJob=null;}
+// Audio intent is not the same as a media element that has already started.
+let audioWanted = false, audioPending = false, audioResumeAt = 0, audioStartTimer = null, audioSeekCleanup = null, audioErrorIdle = false;
+function clearAudioStart() { clearTimeout(audioStartTimer); audioStartTimer = null; }
+function clearAudioSeek() { if(audioSeekCleanup)audioSeekCleanup();audioSeekCleanup=null; }
+function beginAudioLoad(want, start=0) { clearIframeJob();clearAudioStart();clearAudioSeek();audioErrorIdle=false;audioWanted=!!want;audioPending=false;audioResumeAt=Number.isFinite(start)?Math.max(0,start):0; }
+function seekAudioWhenReady(tok=loadTok, deck=audio, fresh=false) {
+  clearAudioSeek();
+  const seek=()=>{clearAudioSeek();if(tok!==loadTok||deck!==audio)return;try{const max=Number.isFinite(deck.duration)&&deck.duration>0?Math.max(0,deck.duration-.01):audioResumeAt;deck.currentTime=Math.min(audioResumeAt,max);}catch{}};
+  if(!fresh&&deck.readyState>=1)seek();else{deck.addEventListener('loadedmetadata',seek,{once:true});audioSeekCleanup=()=>deck.removeEventListener('loadedmetadata',seek);}
+}
+function armAudioStart(t, tok=loadTok) {
+  clearAudioStart();if(!audioWanted)return;
+  audioStartTimer=setTimeout(()=>{audioStartTimer=null;if(tok!==loadTok||!audioWanted||!ready||!canEmbed(t)||engine!=='audio'||audioPending||audio.readyState>=3||noEmbed[t?.id])return;
+    ++loadTok;audioPending=false;clearAudioSeek();setLoading(false);toast('Звук долго не отдаётся — включаю через встроенный YouTube');useIframe(t,audioWanted,audioResumeAt);
+  },12000);
+}
+
 // 1.0.0: отдельное состояние кнопки, без стилей полноэкранного загрузчика.
 function setLoading(v) { $('btnPlay').classList.toggle('is-loading', v); $('btnPlay').setAttribute('aria-busy', String(!!v)); }
 onA('play', () => { if (engine === 'audio') { playing = true; onPlayState(); } });
-onA('playing', () => { if (engine === 'audio') { errStreak = 0; setLoading(false); onStarted(); } });
-onA('waiting', () => engine === 'audio' && setLoading(true));
-onA('pause', () => { if (engine === 'audio') { playing = false; onPlayState(); } });
+onA('playing', () => { if (engine === 'audio') { errStreak = 0; audioPending=false; clearAudioStart(); setLoading(false); onStarted(); } });
+onA('waiting', () => engine === 'audio' && audioWanted && setLoading(true));
+onA('pause', () => { if (engine === 'audio') { playing = false; if(!audioWanted)setLoading(false); onPlayState(); } });
 onA('ended', () => { if (engine === 'audio') onEnded(); });
 onA('progress', () => { try { const d = audio.duration, b = audio.buffered; if (d && b.length) $('seekBuf').style.width = (b.end(b.length - 1) / d) * 100 + '%'; } catch {} });
-const retried = new Set();
+let streamRetryTok = -1;
 onA('error', () => {
   if (engine !== 'audio' || !audio.getAttribute('src')) return;
   if (window.PulseAudius?.recover()) return; // Audius startup-only fallback
   if (window.PulseFileVideo?.recover()) return; // file-video integration
-  const t = curTrack(), errorTok = loadTok; setLoading(false);
+  const t = curTrack(), errorTok = loadTok; clearAudioStart();setLoading(false);
+  if(!audioWanted){audioErrorIdle=true;return;}
   // первая ошибка потока — просто переподключаемся (ссылка YouTube могла протухнуть), с того же места
-  if (t && audio.getAttribute('src').startsWith('/stream/') && !retried.has(t.id)) { retried.add(t.id); const at = audio.currentTime || 0; setLoading(true); audio.src = `/stream/${t.id}?r=${Date.now()}`; audio.addEventListener('loadedmetadata', () => { if (errorTok === loadTok && at > 1) audio.currentTime = at; }, { once: true }); E.play(); return; }
-  if (t && audio.getAttribute('src').startsWith('/stream/') && ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, true); }
+  if (t && audio.getAttribute('src').startsWith('/stream/') && streamRetryTok !== loadTok) { streamRetryTok=loadTok;audioResumeAt=audio.currentTime||0;setLoading(true);clearAudioSeek();audio.src=`/stream/${t.id}?r=${Date.now()}`;seekAudioWhenReady(errorTok,audio,true);armAudioStart(t,errorTok);E.play();return; }
+  if (t && audio.getAttribute('src').startsWith('/stream/') && ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, audioWanted, audio.currentTime||0); }
   toast(off[t?.id] ? 'Не удалось открыть скачанный файл — пропускаю' : 'Не удалось воспроизвести — пропускаю');
   if (t) { markFailed(t); markRows(); }
-  if (++errStreak <= 8) setTimeout(() => { if (errorTok === loadTok) next(true); }, 700);
+  if (++errStreak <= 8) setTimeout(() => { if (errorTok === loadTok && audioWanted) next(true); }, 700);
 });
 function useIframe(t, autoplay, start = 0) {
+  if(!iframeJob||iframeJob.t.id!==t.id){clearIframeJob();iframeJob={t,tok:loadTok,vid:ytVid(t)||t.id,phase:autoplay?'starting':'cued',started:false,timer:null};}
+  window.PulseAudioLog?.event('engine-policy',{engine:'embedded',reason:'embedded-first',autoplay:!!autoplay});
+  clearAudioStart();clearAudioSeek();audioPending=false;audioWanted=!!autoplay;audioResumeAt=Number.isFinite(start)?Math.max(0,start):0;
   audio.pause(); audio.removeAttribute('src'); audio.load(); engine = 'yt'; audioTrackId = null;
   const vid = ytVid(t) || t.id; // 2.0.2
   autoplay ? player.loadVideoById({ videoId: vid, startSeconds: start }) : player.cueVideoById({ videoId: vid, startSeconds: start });
-  updateMode();
+  updateMode();armIframeStart(iframeJob);
+}
+// One embedded attempt per load. Mapping does not request any direct media URL.
+function currentIframeJob(job){return iframeJob===job&&job.tok===loadTok;}
+function iframeEventMatches(job,e){
+ if(!currentIframeJob(job)||!job.vid||['mapping','waiting'].includes(job.phase))return false;
+ let vid;try{vid=e?.target?.getVideoData?.()?.video_id;}catch{}return !vid||vid===job.vid;
+}
+function armIframeStart(job){
+ clearTimeout(job.timer);if(!currentIframeJob(job)||!audioWanted)return;
+ job.timer=setTimeout(()=>iframeFallback(job,'embedded-start-timeout'),10000);
+}
+function iframeFallback(job,reason,code){
+ if(!currentIframeJob(job))return;let at=audioResumeAt;
+ if(job.started)try{const tm=player.getCurrentTime();if(Number.isFinite(tm))at=tm;}catch{}
+ audioResumeAt=Math.max(0,at||0);noEmbed[job.t.id]=true;clearIframeJob();engine='audio';playing=false;
+ try{if(ready)player.stopVideo();}catch{}
+ window.PulseAudioLog?.event('fallback',{engine:'audio',reason,code,autoplay:audioWanted});
+ startDirectAudio(job.t,job.tok);
+}
+function maybeStartIframe(job){
+ if(!currentIframeJob(job)||!job.vid||!ready||!['mapping','waiting'].includes(job.phase))return;
+ clearTimeout(job.timer);job.phase=audioWanted?'starting':'cued';
+ try{useIframe(job.t,audioWanted,audioResumeAt);armIframeStart(job);}catch{iframeFallback(job,'embedded-error');}
+}
+function tryIframeFirst(t,tok){
+ delete noEmbed[t.id];const job={t,tok,vid:null,phase:'mapping',timer:null,started:false};iframeJob=job;engine='yt';audioTrackId=null;playing=false;audioPending=false;
+ setLoading(audioWanted);updateMode();window.PulseAudioLog?.event('engine-policy',{engine:'embedded',reason:'embedded-first',autoplay:audioWanted});
+ if(window.__ytFailed){iframeFallback(job,'embedded-ready-timeout');return true;}
+ job.timer=setTimeout(()=>iframeFallback(job,'embedded-ready-timeout'),10000);
+ const known=ytVid(t);const mapping=known?Promise.resolve({ok:true,vid:known}):pulse.mapYouTube?Promise.resolve().then(()=>pulse.mapYouTube(t.id)):Promise.resolve({ok:false});
+ mapping.then(result=>{
+  if(!currentIframeJob(job))return;
+  if(!result?.ok||!/^[-_a-zA-Z0-9]{11}$/.test(result.vid||''))return iframeFallback(job,'mapping-error');
+  vidMap[t.id]=result.vid;job.vid=result.vid;job.phase='waiting';maybeStartIframe(job);
+ },()=>iframeFallback(job,'mapping-error'));
+ return true;
+}
+function startDirectAudio(t,tok){
+ if(tok!==loadTok)return;engine='audio';audioTrackId=t.id;updateMode();
+    setLoading(audioWanted);
+    audioPending=true;armAudioStart(t,tok);
+    Promise.resolve().then(() => pulse.resolve(t.id)).catch(e => ({ ok: false, error: String(e.message || e) })).then((r) => {
+      if (r && r.vid && r.vid !== t.id) vidMap[t.id] = r.vid; // 2.0.2: запоминаем запись YouTube для трека сервиса
+      if (tok !== loadTok) return;
+      audioPending=false;
+      if (r && r.ok) { audio.src = `/stream/${t.id}`;if(audioResumeAt>0)seekAudioWhenReady(tok,audio,true);if(audioWanted){armAudioStart(t,tok);E.play();}else{clearAudioStart();setLoading(false);}return; }
+      clearAudioStart();setLoading(false);
+      toast(r ? r.error : 'Не удалось получить звук'); markFailed(t); markRows();
+      if (audioWanted && ++errStreak <= 8) setTimeout(() => { if (tok === loadTok && audioWanted) next(true); }, 800);
+    });
+
 }
 const E = {
-  time: () => (engine === 'audio' ? audio.currentTime : ready && player.getCurrentTime ? player.getCurrentTime() : 0) || 0,
-  dur: () => (engine === 'audio' ? (isFinite(audio.duration) ? audio.duration : 0) : ready && player.getDuration ? player.getDuration() : 0) || curTrack()?.dur || 0,
-  play: () => { window.PulseFileVideo?.intent(true); if(window.PulseFileVideo?.pending())return; /* file-video integration */ if (engine === 'audio') { initAudioGraph(); actx.resume().catch(() => {}); const playTok = loadTok; audio.play().catch(() => { if (playTok === loadTok) setLoading(false); }); } else if (ready) player.playVideo(); },
-  pause: () => { window.PulseFileVideo?.intent(false); /* file-video integration */ if (typeof djFinish === 'function') djFinish(); return engine === 'audio' ? audio.pause() : ready && player.pauseVideo(); },
-  seek: (t) => { if (typeof djFinish === 'function') djFinish(); if (engine === 'audio') audio.currentTime = t; else if (ready) player.seekTo(t, true); beatState.kp = -1; },
+  time: () => iframeJob&&['mapping','waiting'].includes(iframeJob.phase)?audioResumeAt:(engine === 'audio' ? audio.currentTime : ready && player.getCurrentTime ? player.getCurrentTime() : 0) || 0,
+  dur: () => iframeJob&&['mapping','waiting'].includes(iframeJob.phase)?curTrack()?.dur||0:(engine === 'audio' ? (isFinite(audio.duration) ? audio.duration : 0) : ready && player.getDuration ? player.getDuration() : 0) || curTrack()?.dur || 0,
+  play: () => { audioWanted=true;window.PulseFileVideo?.intent(true);if(window.PulseFileVideo?.pending())return;
+    if(engine==='audio'){if(audioPending){setLoading(true);armAudioStart(curTrack());return;}
+      if(audioErrorIdle&&curTrack())return E.load(curTrack(),true,E.time());
+      if(!audio.getAttribute('src'))return;
+      initAudioGraph();actx.resume().catch(()=>{});const playTok=loadTok;audio.play().catch(e=>{if(playTok===loadTok&&e?.name!=='AbortError')setLoading(false);});
+    }else if(iframeJob){if(['mapping','waiting'].includes(iframeJob.phase)){setLoading(true);maybeStartIframe(iframeJob);}else if(ready){player.playVideo();armIframeStart(iframeJob);}}else if(ready)player.playVideo();
+  },
+  pause: () => { if(pulse.prefetch)pulse.prefetch(null,true).catch(()=>{});audioWanted=false;clearAudioStart();if(iframeJob&&!['mapping','waiting'].includes(iframeJob.phase))clearTimeout(iframeJob.timer);setLoading(false);window.PulseFileVideo?.intent(false);if(typeof djFinish==='function')djFinish();return engine==='audio'?audio.pause():ready&&player.pauseVideo(); },
+  seek: t => { if(typeof djFinish==='function')djFinish();if(!Number.isFinite(t))return;const d=E.dur();t=Math.max(0,d?Math.min(t,Math.max(0,d-.01)):t);audioResumeAt=t;
+    if(engine==='audio'){if(audio.getAttribute('src'))seekAudioWhenReady();}else if(ready&&(!iframeJob||!['mapping','waiting'].includes(iframeJob.phase)))player.seekTo(t,true);beatState.kp=-1;
+  },
   volume: (v) => { if (gain) gain.gain.value = v / 100; else audio.volume = v / 100; if (ready) { player.setVolume(v); if (v > 0) player.unMute(); } },
   load(t, autoplay, start = 0) {
     if (typeof djFinish === 'function') djFinish(true);
-    const tok = ++loadTok; window.PulseFileVideo?.reset(); /* file-video integration */ setLoading(false); $('seekBuf').style.width = '0';
-    const at = () => { if (start > 1) audio.addEventListener('loadedmetadata', () => { if (tok === loadTok) audio.currentTime = start; }, { once: true }); };
+    const tok = ++loadTok; beginAudioLoad(autoplay,start);playing=false;if(pulse.prefetch)pulse.prefetch(null,true).catch(()=>{});audio.pause();window.PulseFileVideo?.reset(); /* file-video integration */ setLoading(false); $('seekBuf').style.width = '0';
+    const at = () => { if(audioResumeAt>0)seekAudioWhenReady(tok,audio,true); };
     // 1.0.0: owned local/downloaded media always uses the file player, never a YouTube embed.
     if (off[t.id] && lib.mode === 'video' && window.PulseFileVideo) {
       if (ready && engine === 'yt') try { player.stopVideo(); } catch {}
@@ -180,29 +263,17 @@ const E = {
     }
     if (off[t.id]) {
       if (ready && engine === 'yt') try { player.stopVideo(); } catch {}
-      engine = 'audio'; audioTrackId = t.id; at();
-      audio.src = fileAudioUrl(t);
+      engine = 'audio'; audioTrackId = t.id;
+      audio.src = fileAudioUrl(t); at();
       if (autoplay) E.play(); updateMode();
       return true;
     }
-    if (lib.mode === 'video' && ready && canEmbed(t) && online()) { useIframe(t, autoplay, start); return true; }
     if (ready && engine === 'yt') try { player.stopVideo(); } catch {}
     audio.pause(); audio.removeAttribute('src'); audio.load();
     engine = 'audio'; audioTrackId = t.id; updateMode();
     if (!online()) { toast('Нет интернета — играют только скачанные треки'); return false; }
-    setLoading(true);
-    // если звук не готов за 12 с — не держим тишину: включаем через встроенный YouTube (если трек это разрешает)
-    const slow = setTimeout(() => { if (tok !== loadTok || !ready || !canEmbed(t) || engine !== 'audio' || audio.getAttribute('src')) return; loadTok++; setLoading(false); toast('Звук долго не отдаётся — включаю через встроенный YouTube'); useIframe(t, autoplay, start); }, 12000);
-    Promise.resolve().then(() => pulse.resolve(t.id)).catch(e => ({ ok: false, error: String(e.message || e) })).then((r) => {
-      clearTimeout(slow); if (r && r.vid && r.vid !== t.id) vidMap[t.id] = r.vid; // 2.0.2: запоминаем запись YouTube для трека сервиса
-      if (tok !== loadTok) return;
-      if (lib.mode === 'video' && ready && r && r.ok && canEmbed(t) && isSvcId(t.id)) { setLoading(false); return useIframe(t, autoplay, start); }
-      if (r && r.ok) { at(); audio.src = `/stream/${t.id}`; if (autoplay) E.play(); else setLoading(false); return; }
-      setLoading(false);
-      if (ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, autoplay, start); }
-      toast(r ? r.error : 'Не удалось получить звук'); markFailed(t); markRows();
-      if (autoplay && ++errStreak <= 8) setTimeout(() => { if (tok === loadTok) next(true); }, 800);
-    });
+    if(!t.id.startsWith('ad:')&&!t.id.startsWith('local-'))return tryIframeFirst(t,tok);
+    startDirectAudio(t,tok);
     return true;
   }
 };
@@ -211,21 +282,23 @@ window.onYouTubeIframeAPIReady = () => {
     width: '100%', height: '100%',
     playerVars: { autoplay: 0, controls: 1, rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0, origin: location.origin },
     events: {
-      onReady: () => { ready = true; player.setVolume(lib.volume); },
+      onReady: () => { ready = true; player.setVolume(lib.volume);if(iframeJob)maybeStartIframe(iframeJob); },
       onStateChange: (e) => {
-        if (engine !== 'yt') return;
-        if (e.data === YT.PlayerState.PLAYING) { playing = true; errStreak = 0; setLoading(false); onStarted(); }
+        if (engine !== 'yt'||(iframeJob&&!iframeEventMatches(iframeJob,e))) return;
+        if(e.data===1||e.data===3||e.data===0)window.PulseAudioLog?.event(e.data===1?'playing':e.data===3?'waiting':'ended',{engine:'embedded'});
+        if (e.data === YT.PlayerState.PLAYING) { if(!audioWanted){player.pauseVideo();playing=false;setLoading(false);return;}if(iframeJob){clearTimeout(iframeJob.timer);iframeJob.started=true;iframeJob.phase='playing';}playing = true; errStreak = 0; setLoading(false); onStarted(); }
         else if ([0, 2, 5].includes(e.data)) playing = false;
-        if (e.data === YT.PlayerState.BUFFERING) setLoading(true);
-        if (e.data === YT.PlayerState.ENDED) onEnded();
+        if (e.data === YT.PlayerState.BUFFERING&&audioWanted){setLoading(true);if(iframeJob)armIframeStart(iframeJob);}
+        if (e.data === YT.PlayerState.ENDED){if(iframeJob)clearTimeout(iframeJob.timer);onEnded();}
         onPlayState();
       },
-      onError: () => {
-        if (engine !== 'yt') return;
+      onAutoplayBlocked:(e)=>{if(iframeJob&&audioWanted&&iframeEventMatches(iframeJob,e))iframeFallback(iframeJob,'embedded-autoplay-blocked');},
+      onError: (e) => {
+        if (engine !== 'yt'||(iframeJob&&!iframeEventMatches(iframeJob,e))) return;
+        window.PulseAudioLog?.event('media-error',{engine:'embedded',code:Number(e?.data)});
         const t = curTrack(); if (!t) return;
-        noEmbed[t.id] = true;
-        if (lib.mode === 'video') toast('Это видео нельзя показать вне YouTube — играю аудио');
-        const tm = E.time(); E.load(t, true, tm);
+        if(iframeJob)return iframeFallback(iframeJob,'embedded-error',Number(e?.data));
+        noEmbed[t.id]=true;const tm=E.time();audioResumeAt=tm;engine='audio';try{player.stopVideo();}catch{}startDirectAudio(t,loadTok);
       }
     }
   });
@@ -276,10 +349,15 @@ function prev() {
   for (let s = 1; s < q.tracks.length; s++) { const i = q.idx - s; if (i < 0) break; if (playable(q.tracks[i])) return playIdx(i, true); }
   E.seek(0);
 }
+// System Play/Pause are explicit commands, not transport toggles during a pending load.
+function transportPlay(){if(!playing){if(audioWanted||audioPending)E.play();else toggle();}}
+function transportPause(){if(playing||audioWanted||audioPending)E.pause();}
 function toggle() {
   const t = curTrack();
   if (!t) return;
+  if(engine==='yt'&&iframeJob&&(!iframeJob.started||['mapping','waiting','starting'].includes(iframeJob.phase))){audioWanted?E.pause():E.play();return;}
   if ((engine === 'yt' && (off[t.id] || !ready)) || (engine === 'audio' && !audio.getAttribute('src') && audioTrackId !== t.id)) { E.load(t, true); return; }
+  if (engine === 'audio' && audioPending) { audioWanted ? E.pause() : E.play(); return; }
   if (engine === 'audio' && !audio.getAttribute('src')) { E.load(t, true); return; }
   playing ? E.pause() : E.play();
 }
@@ -334,13 +412,7 @@ function playNextUp(t, end) {
   renderQueue(); save(); toast(end ? 'Добавлено в очередь' : 'Сыграет следующим', 'queue');
 }
 
-// предзагрузка ссылки на звук, пока мышь над треком — клик стартует почти мгновенно
-let hovT = null, hovId = null; const prefetched = new Set();
-document.addEventListener('mouseover', (e) => {
-  const r = e.target.closest && e.target.closest('.tr[data-id],.card[data-id]'), id = r && r.dataset.id; if (id === hovId) return; hovId = id; clearTimeout(hovT);
-  if (!id || !/^[\w-]{11}$/.test(id) || off[id] || !online() || prefetched.has(id) || !pulse.prefetch) return;
-  hovT = setTimeout(() => { prefetched.add(id); pulse.prefetch(id); }, 300);
-}, { passive: true });
+// Embedded-first: hover never resolves an alternate audio URL.
 // после старта воспроизведения
 let startedId = null;
 function onStarted() {
@@ -350,11 +422,10 @@ function onStarted() {
   if (startedId === t.id) return; startedId = t.id;
   // подгружаем следующий
   const i = nextIdx(true), n = lib.queue.tracks[i];
-  // 2.0.12: следующий трек готовим полностью (с запасным путём yt-dlp), если быстрые способы YouTube не справились —
-  // раньше предзагрузка запасной путь не трогала, и следующий трек мог грузиться 5–15 с. Через 3 с, чтобы не мешать старту текущего
-  if (n && !off[n.id] && online()) { const nid = n.id; (pulse.prefetch || pulse.resolve)(nid); setTimeout(() => { if (curTrack() && curTrack().id === t.id && pulse.resolve) pulse.resolve(nid).catch(() => {}); }, 3000); }
+  // Only the actual next track may use one bounded, delayed backup preparation.
+  // No direct-stream warming for a track whose embedded attempt has not failed.
   if (lib.queue.idx >= lib.queue.tracks.length - 3) extendRadio(false);
-  analyzeCurrent(t);
+  if(engine==='audio')analyzeCurrent(t);
 }
 
 // ---------- «сейчас играет» ----------
@@ -476,7 +547,7 @@ function setMode(m) {
     if (off[t.id] && !online()) toast('Скачанный трек — только аудио, видео доступно онлайн');
     else if (!ready || !canEmbed(t)) toast('Это видео нельзя показать вне YouTube — играет аудио');
     else { const tm = E.time(), was = playing; useIframe(t, was, tm); }
-  } else if (m !== 'video' && t && engine === 'yt') { const tm = E.time(), was = playing; E.load(t, was, tm); }
+  } // Embedded-first keeps the same player when only the visual mode changes.
   updateMode(); save(); lyState.cur = -2;
 }
 function updateNet() { const n = online(); $('net').textContent = n ? 'онлайн' : 'офлайн'; $('net').classList.toggle('off', !n); markRows(); }
@@ -698,7 +769,7 @@ async function cached(key, fn, force) {
   if (CL() !== 'yt') key = CL() + '|' + key; // 2.0.2: у каждого клиента свои страницы
   const c = cache.get(key);
   if (c && !force && Date.now() - c.at < 10 * 60e3) return c.v;
-  const v = await fn(); if (v && !v.error) cache.set(key, { v, at: Date.now() }); return v;
+  const v = await fn(); if (v && !v.error) {cache.set(key, { v, at: Date.now() });while(cache.size>32)cache.delete(cache.keys().next().value);} return v;
 }
 // 2.0.4: плавная смена страниц — старая страница затухает, новая проявляется. Пока грузится — старая остаётся,
 // спиннер появляется только если ответ задерживается (раньше: страница → спиннер → страница, всё рывками)
@@ -940,21 +1011,26 @@ function renderSideOn() {
 function renderAccBtn() {
   const b = $('accBtn'); b.classList.toggle('out', !account);
   b.innerHTML = account ? (account.photo ? `<img src="${esc(account.photo)}" referrerpolicy="no-referrer" />` : `<span class="ava">${esc(String(account.name || '?')[0])}</span>`) : `${ico('google')}<span>Войти</span>`;
-  b.title = account ? `${account.name} — YouTube Music` : 'Войти в YouTube Music';
+  b.title = account ? `${account.name} — YouTube Music` : accountState.state!=='signed-out'?accountStatusLabel():'Войти в YouTube Music';
+  b.setAttribute('aria-label',b.title);b.dataset.auth=accountState.state;if(!account&&accountState.state!=='signed-out')b.innerHTML=`${ico('google')}<span>${accountStatusLabel()}</span>`;
 }
 async function refreshAccount() {
-  if (!online()) { accLists = lib.accCache || null; renderSide(); return; } // офлайн: плейлисты из последней синхронизации
-  let info = null; try { info = await pulse.account.info(); } catch {}
-  const was = !!account; account = info && !info.error ? info : null;
+  const seq=++accountRefreshSeq,hadAccount=!!account;
+  if(!online()){account=null;accountState={verified:false,state:lib.accInfo?'unverified':'signed-out'};accLists=lib.accCache||null;renderAccBtn();renderSide();if(hadAccount&&['home','library'].includes(route().r))renderRoute(true);return;}
+  let info=null;try{info=await pulse.account.info();}catch{info={verified:false,state:'unverified'};}
+  if(seq!==accountRefreshSeq)return;
+  const was=!!account;accountState=info&&!info.error?info:{verified:false,state:info?.error?'unverified':'signed-out'};
+  account=info&&!info.error&&info.verified!==false?info:null;
   renderAccBtn();
-  if (!account) { accLists = null; renderSide(); return; }
-  lib.accInfo = { name: account.name };
-  const r = await pulse.account.playlists().catch(() => null);
-  accLists = r && !r.error ? r : lib.accCache || null;
-  if (r && !r.error) { lib.accCache = r; save(); }
+  if(!account){accLists=null;renderSide();if(hadAccount&&['home','library'].includes(route().r))renderRoute(true);return;}
+  const r=await pulse.account.playlists().catch(()=>null);
+  if(seq!==accountRefreshSeq)return;
+  if(r?.authRequired){account=null;accountState={verified:false,state:'reauth'};accLists=null;renderAccBtn();renderSide();if(hadAccount&&['home','library'].includes(route().r))renderRoute(true);return;}
+  lib.accInfo={name:account.name};accLists=r&&!r.error?r:lib.accCache||null;
+  if(r&&!r.error){lib.accCache=r;save();}
   renderSide();
-  if (!was) { cache.clear(); if (['home', 'library'].includes(route().r)) renderRoute(true); }
-  setTimeout(() => syncAll(!was && !lib.syncAt), 1500);
+  if(!was){cache.clear();if(['home','library'].includes(route().r))renderRoute(true);}
+  setTimeout(()=>syncAll(!was&&!lib.syncAt),1500);
 }
 function modal(html) { hideMenu(); if (typeof closeLyPop === 'function') closeLyPop(); clearTimeout($('modal')._ct); $('modal').classList.remove('closing'); $('modalBox').innerHTML = `<button class="ib x" data-act="closeModal">${ico('x')}</button>` + html; $('modal').classList.add('show'); }
 // 2.0.4: окно закрывается плавно (раньше пропадало мгновенно)
@@ -1012,7 +1088,7 @@ async function doLogin(kind) {
   if (!r) { if (kind === 'google') openLogin(site); return toast(kind === 'google' ? `Вход не найден — войди в ${SP ? 'Spotify' : 'аккаунт'} и закрой окно браузера` : `Вход не найден — проверь, что ты вошёл в ${SP ? 'open.spotify.com' : 'music.youtube.com'}`, 'alert'); }
   closeModal();
   if (SP) { toast('Вход в Spotify выполнен', 'check'); cache.clear(); await svcRefresh(); lyRecheckSvc('sp'); if (CL() === 'sp' && ['home', 'library'].includes(route().r)) renderRoute(true); return; }
-  await refreshAccount(); toast(account ? `Вошёл как ${account.name}` : 'Вход выполнен', 'user');
+  await refreshAccount(); toast(account ? `Вошёл как ${account.name}` : 'Вход не подтверждён', 'user');
 }
 // ---------- меню ----------
 function showMenu(x, y, items) {
@@ -1216,19 +1292,25 @@ function withGaps(lines, duration = typeof E !== 'undefined' ? E.dur() || 86400 
   return res;
 }
 // запись из базы → в библиотеку; своя синхронизация и запуски «по голосу» сохраняются
+const lyFetchRequests = new Map(); // 1.0.3: stale providers may not overwrite the current track cache.
 async function fetchLyrics(t) {
   if (!online()) return null;
-  const src = lySrcMode(); // 2.0.2: выбранный источник текста
+  const src = lySrcMode(), bgVox = S().ly.bgVox !== false, useSpicy = spicyKeyOn();
+  const request = {}; lyFetchRequests.set(t.id, request);
   // 2.0.4-fix: длительность — настоящей играющей записи (у треков Spotify/Apple в t.dur длина версии сервиса, а звук из YouTube)
   const realDur = audioTrackId === t.id && curTrack()?.id === t.id && engine === 'audio' && audio && isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
-  let r = await pulse.lyrics({ id: t.id, title: t.title, author: t.author, dur: realDur || t.dur || 0, src, bgVox: S().ly.bgVox !== false, useSpicy: spicyKeyOn(), artists: (t.artists || []).map((a) => a.name || a) }).catch(() => null);
+  let r = await pulse.lyrics({ id: t.id, title: t.title, author: t.author, dur: realDur || t.dur || 0, src, bgVox, useSpicy, artists: (t.artists || []).map((a) => a.name || a) }).catch(() => null);
   if ((!r || (!r.synced && !r.plain && !r.instrumental)) && !isSvcId(t.id) && !t.id.startsWith('local-')) { // 2.0.2: у треков сервисов YouTube Music уже спрошен в главном процессе
     const n = await nextInfo(t.id).catch(() => null); const y = n && n.lyricsId ? await pulse.ytm.lyrics(n.lyricsId).catch(() => null) : null;
     if (y && y.plain) r = { v: LY_V, kind: 'plain', plain: y.plain, source: 'YouTube Music' + (y.source ? ' · ' + y.source : ''), provider: 'ytm', srcMode: src };
   }
+  const latest = lyFetchRequests.get(t.id) === request;
+  if (latest) lyFetchRequests.delete(t.id);
+  if (!latest || src !== lySrcMode() || bgVox !== (S().ly.bgVox !== false) || useSpicy !== spicyKeyOn()) return null;
   const prev = lib.lyrics[t.id] || {};
+  if (prev.picked) return prev; // A manual selection made during the request wins.
   const rec = r && (r.synced || r.plain || r.instrumental) ? { ...r, v: LY_V } : { none: true, at: Date.now(), v: LY_V, srcMode: src };
-  if (spicyKeyOn()) rec.spTried = true; // 2.0.4: Spicy Lyrics уже спрошен для этой песни
+  if (useSpicy) rec.spTried = true; // 2.0.4: Spicy Lyrics уже спрошен для этой песни
   if (prev.user) { rec.user = prev.user; rec.userAt = prev.userAt; }
   lib.lyrics[t.id] = rec; save(); return rec;
 }
@@ -1437,6 +1519,7 @@ function lySmooth(t) {
 const beatState = { an: null, kp: -1, lastT: 0, bass: 0, flux: 0 };
 const anCache = new Map();
 function getAnalysis(t) {
+  if(!t||(!off[t.id]&&(engine!=='audio'||audioTrackId!==t.id)))return Promise.resolve(null);
   const url = audioUrl(t); if (!url || typeof AutoSync === 'undefined') return Promise.resolve(null);
   if (t.id.startsWith('ad:') || window.PulseAudius?.actual()?.source === 'ad' && curTrack()?.id === t.id) return Promise.resolve(null); // No whole-file Audius analysis/download. Live analyser remains available.
   if (anCache.has(t.id)) return anCache.get(t.id);
@@ -1586,19 +1669,27 @@ function readSpectrum(now = performance.now(), lagMs = 0) {
   }
   return engine === 'yt' && window.PulseAudioSignal ? PulseAudioSignal.read(now) : null;
 }
+// A small, real spectrum feed for the visible widget, even when the player is hidden.
+window.pulseWidgetVisible=false;
+if(pulse.onWidgetVisibility) pulse.onWidgetVisibility(v=>{window.pulseWidgetVisible=!!v;});
+setInterval(()=>{if(!window.pulseWidgetVisible || !pulse.sendWidgetSpectrum)return;const data=readSpectrum();const f=data?.f, bands=[0,0,0,0];if(f?.length){const sr=data.sampleRate||44100,fft=data.fftSize||f.length*2,edges=[60,250,1000,4000,12000];for(let n=0;n<4;n++){let sum=0,count=0;for(let i=Math.max(1,Math.floor(edges[n]*fft/sr));i<Math.min(f.length,Math.max(2,Math.floor(edges[n+1]*fft/sr)));i++){sum+=f[i];count++;}bands[n]=count?Math.min(1,sum/count/180):0;}}pulse.sendWidgetSpectrum(bands);},125);
 let hueT = 0, liveHueAt = 0;
 const ambEl = $('ambient'), vizCv = $('viz');
-let hiddenNow = document.hidden; document.addEventListener('visibilitychange', () => (hiddenNow = document.hidden || winHiddenIpc));
+let hiddenNow = document.hidden; document.addEventListener('visibilitychange', syncHiddenVisuals);
 // 2.0.12: окно спрятано в трей / виджет / свёрнуто (сигнал из main.js — сам браузер этого не видит из-за backgroundThrottling:false).
 // Главный цикл, «Только текст», Mineradio и CSS-анимации встают на паузу; звук, диджей и виджет продолжают работать
 let winHiddenIpc = false;
 function setWinHidden(v) {
   v = !!v; if (v === winHiddenIpc) return; winHiddenIpc = v; window.pulseWinHidden = v; hiddenNow = document.hidden || v;
+  syncHiddenVisuals();
+}
+function syncHiddenVisuals() {
+  hiddenNow = document.hidden || winHiddenIpc;
+  document.body.classList.toggle('win-hidden', hiddenNow);
+  if(hiddenNow){cancelAnimationFrame(mainRaf);mainRaf=0;if(typeof VisualExperiment!=='undefined')VisualExperiment.sync(performance.now());if(typeof lys!=='undefined'){cancelAnimationFrame(lys.raf);lys.raf=0;}}
+  else {lastFrame=0;mainFramePacer.reset();mainFrameRequest();if(typeof lys!=='undefined'&&lys.on&&!lys.raf)lys.raf=requestAnimationFrame(lysLoop);}
   window.dispatchEvent(new Event('pulse-window-visibility'));
-  document.body.classList.toggle('win-hidden', v);
-  if (typeof mrSync === 'function') try { mrSync(); } catch (e) {}
-  if (!v && typeof lys !== 'undefined' && lys.on && !lys.raf) lys.raf = requestAnimationFrame(lysLoop);
-  if (!v) { lastFrame = 0; mainFramePacer.reset(); }
+  if(typeof mrSync==='function')try{mrSync();}catch{}
 }
 let winFocused = document.hasFocus(); window.addEventListener('focus', () => (winFocused = true)); window.addEventListener('blur', () => (winFocused = false));
 let ppOpenNow = document.body.classList.contains('pp-open'), lyOnlyNow = false, mrOnNow = false;
@@ -1611,7 +1702,8 @@ function liveVisualOnScreen() { const n = performance.now(); if (n - lvAt > 1000
 let fpsN = 0, fpsAt = 0;
 function fpsTick(now) { if (!S().perf.showFps) return; fpsN++; if (now - fpsAt >= 1000) { let el = $('fpsMeter'); if (!el) { el = document.createElement('div'); el.id = 'fpsMeter'; document.body.appendChild(el); } const ui = Math.round(fpsN * 1000 / (now - fpsAt)), v = Viz.stats ? Viz.stats() : null; el.textContent = 'UI ' + ui + ' FPS' + (ppOpenNow && !lyOnlyNow && lib.mode === 'visual' && v ? ' · VIZ ' + Math.round(v.fps) + ' FPS · ' + v.path + ' · CPU submit ' + v.submitMs.toFixed(1) + ' ms' : ''); fpsN = 0; fpsAt = now; } }
 // окно скрыто (в трее / виджете): визуал и текст не рисуем, но диджейский автомикс должен продолжать работать
-setInterval(() => { if (!hiddenNow) return; if (playing && typeof djTick === 'function') djTick(E.time()); if (typeof extFrame === 'function') extFrame(performance.now(), null, null, beat, null, E.time(), true); }, 120);
+let hiddenServiceAt=0;
+setInterval(() => { if (!hiddenNow) return; if (playing && S().dj.on && typeof djTick === 'function') djTick(E.time());const now=performance.now();if(now-hiddenServiceAt>=1000){hiddenServiceAt=now;if(typeof extFrame==='function')extFrame(now,null,null,beat,null,E.time(),true);} }, 120);
 // 2.0.11: авто-облегчение. Режим «Авто» следит за настоящей плавностью окна (интервал между кадрами браузера).
 // Если при открытом плеере или игре музыки окно 4 с подряд держится ниже ~33 FPS — значит, не успевает видеокарта
 // (её не видно из скрипта): Pulse включает body.perf-lite — убирает размытие под панелями, свечение обложки и
@@ -1629,8 +1721,10 @@ function liteTick(now) {
     if (!liteS.told) { liteS.told = true; toast('Окно рисовалось медленно — Pulse облегчил эффекты. Вернуть можно в настройках: Основные, «Авто-облегчение»'); }
   }
 }
+let mainRaf=0,mainFrames=0;
+function mainFrameRequest(){if(!mainRaf&&!hiddenNow)mainRaf=requestAnimationFrame(frame);}
 function frame(now) {
-  requestAnimationFrame(frame);
+  mainRaf=0;if(hiddenNow)return;mainFrames++;mainFrameRequest();
   // Direct GPU draw runs first in this same RAF, before service/DOM writes.
   if (window.PulsePrism?.active()) {
     if (hiddenNow) return;
@@ -1719,7 +1813,7 @@ function frame(now) {
   if (typeof extFrame === 'function') extFrame(now, f, wv, V.tempo ? beat : beat * 0.6, tempo, ht, false);
   if (typeof waveFrame === 'function' && !lyOnlyNow && !visualExperiment) waveFrame(now, f, beat, tempo); // 2.0.4: живая волна на Главной (сама решает, рисовать ли)
 }
-requestAnimationFrame(frame);
+mainFrameRequest();
 // центр сцены в координатах холста (холст может выходить под панель текста — режим «До края окна»)
 let scC = null, scAt = 0;
 function stageCenter() {
@@ -1729,8 +1823,10 @@ function stageCenter() {
 }
 window.addEventListener('resize', () => (scC = null));
 
+let hiddenPositionAt=0;
 PulseTimecode.mount({currentNode:$('tCur'), durationNode:$('tDur'), current:()=>E.time(), duration:()=>E.dur(), legacy:fmt});
 setInterval(() => {
+  if(hiddenNow){const now=performance.now();if(now-hiddenPositionAt<1000)return;hiddenPositionAt=now;}
   const d = E.dur(), c = E.time();
   if (!hiddenNow) {
     if (!dragging) $('seekFill').style.width = d ? (c / d) * 100 + '%' : '0';
@@ -1739,7 +1835,7 @@ setInterval(() => {
   if (!playing && lyState.lines && !hiddenNow) lyricsFrame(heard(S().ly.lag || 0));
   if ('mediaSession' in navigator && d && navigator.mediaSession.setPositionState) try { navigator.mediaSession.setPositionState({ duration: d, position: Math.min(c, d), playbackRate: 1 }); } catch {}
 }, 250);
-setInterval(sendState, 700);
+let stateHeartbeat=null;function stateSchedule(){clearTimeout(stateHeartbeat);stateHeartbeat=setTimeout(()=>{if(playing||!hiddenNow)sendState();stateSchedule();},hiddenNow?1000:700);}stateSchedule();
 
 // ---------- действия с элементами ----------
 function openItem(it) {
@@ -1778,7 +1874,7 @@ document.addEventListener('click', (e) => {
   if ((el = c('[data-login]'))) return doLogin(el.dataset.login);
   if ((el = c('[data-sg]'))) { $('gq').value = el.dataset.sg; return doSearch(el.dataset.sg); }
   if ((el = c('[data-go]'))) { const g = el.dataset.go; return go(g === 'library' ? { r: 'library', tab: 'pl' } : { r: g }); }
-  if ((el = c('[data-b]'))) { e.stopPropagation(); return goBrowse(el.dataset.b); }
+  if ((el = c('[data-b]')) && !el.closest('[class*="atl-"]')) { e.stopPropagation(); return goBrowse(el.dataset.b); }
   if ((el = c('[data-local]'))) return go({ r: 'local', id: el.dataset.local });
   if ((el = c('[data-like]'))) { const x = trackFromRow(el); return toggleLike(x ? x.t : curTrack()); }
   if ((el = c('[data-dl]'))) { const x = trackFromRow(el); if (x) dlClick(x.t, el); return; }
@@ -1824,7 +1920,7 @@ $('accBtn').onclick = (e) => {
   if (!account) return openLogin();
   const b = e.currentTarget.getBoundingClientRect();
   showMenu(b.right - 260, b.bottom + 6, [['user', account.name, null], '-', ['settings', 'Настройки', () => go({ r: 'settings' })], ['edit', 'Редактор окна', () => window.czEdit ? czEdit() : openEditor('window')], ['refresh', 'Обновить плейлисты', () => refreshAccount().then(() => toast('Обновлено', 'refresh'))],
-    ['logout', 'Выйти', async () => { if (!confirm('Выйти из аккаунта?')) return; await pulse.account.logout(); account = null; accLists = null; cache.clear(); renderAccBtn(); renderSide(); renderRoute(true); toast('Вы вышли из аккаунта', 'logout'); }]]);
+    ['logout', 'Выйти', async () => { if (!confirm('Выйти из аккаунта?')) return; ++accountRefreshSeq;await pulse.account.logout(); accountState={verified:false,state:'signed-out'};account = null; accLists = null; cache.clear(); renderAccBtn(); renderSide(); renderRoute(true); toast('Вы вышли из аккаунта', 'logout'); }]]);
 };
 
 // «три полоски»: из плеера/полноэкранного режима — сразу к меню
@@ -1888,7 +1984,7 @@ $('gq').addEventListener('keydown', (e) => {
   items.forEach((x, k) => x.classList.toggle('sel', k === sgSel));
 });
 $('gqClear').onclick = () => { $('gq').value = ''; $('gsearch').classList.remove('has', 'open'); $('gq').focus(); };
-window.addEventListener('online', () => { updateNet(); refreshAccount().then(flushLikes); }); window.addEventListener('offline', updateNet);
+window.addEventListener('online', () => { updateNet(); refreshAccount().then(flushLikes); }); window.addEventListener('offline',()=>{updateNet();refreshAccount();});
 window.addEventListener('keydown', (e) => {
   if(e.target.closest?.('.media-dialog'))return;
   if (e.key === 'Escape') { hideMenu(); if ($('modal').classList.contains('show')) return closeModal(); if (document.body.classList.contains('pp-open')) return closePP(); }
@@ -1932,7 +2028,7 @@ pulse.onCommand((n, a) => ({ escape: fsEscape, navBack: back, navFwd: fwd, toggl
 const DEF_SETTINGS = {
   chorus: { marks: true, key: true, only: false }, // 2.0.12: припевы
   look: { background: { mode: 'default', first: '#13202c', second: '#28162d', angle: 135, dim: 65, blur: 0, image: '', name: '' }, accent: 'auto', color: '#ff2d95', ambient: true, blurAmt: 90, ambBright: 35, scale: 100, anim: true, splash: true, compact: false, beat: true, artShape: 'round', react: true, reactAmt: 50, ambAll: true, ambAllOp: 45, tint: 35, artSize: 100 },
-  ly: { lineFx: 'line', kBar: 'on', mrPreset: 0, mrReaction: 1, mrMorph: true, mrQuality: 'auto', mrFps: 60, mrLyrics: true, mrShowTitle: true, mrShelf: true, mrKeep: false, size: 100, align: 'left', glow: true, mode: 'words', blur: true, visLine: true, font: 'default', weight: 800, color: 'accent', colorC: '#ffffff', dimOp: 28, spacing: 128, speed: 70, anim: 'pop', backDelay: 4, lag: 0, snap: true, visSize: 100, fill: true, vis: 'classic', kFont: 'serif', kSize: 100, kAnim: 'rise', kRefl: true, kRipple: 50, kReflQ: 'normal', kGrad: 'cover', kGradC1: '#ffd36e', kGradC2: '#ff5fa2', kGradSeed: 0, kParticles: true, kGlow: 100, kGlowCol: 'accent', kColor: 'white', kBeat: 40, kShake: 0, kChroma: false, kOutline: false, kReflOp: 32, kReflBlur: 12, kPtType: 'dust', kPtDens: 100, kBgDim: 65, kLayout: 'left', kCover: 'right', kCase: 'upper', kFit: true, idleFs: true, idleSec: 8,
+  ly: { drum: true, lineFx: 'line', kBar: 'on', mrPreset: 0, mrReaction: 1, mrMorph: true, mrQuality: 'auto', mrFps: 60, mrLyrics: true, mrShowTitle: true, mrShelf: true, mrShelfMode: '', mrKeep: false, size: 100, align: 'left', glow: true, mode: 'words', blur: true, visLine: true, font: 'default', weight: 800, color: 'accent', colorC: '#ffffff', dimOp: 28, spacing: 128, speed: 70, anim: 'pop', backDelay: 4, lag: 0, snap: true, visSize: 100, fill: true, vis: 'classic', kFont: 'serif', kSize: 100, kAnim: 'rise', kRefl: true, kRipple: 50, kReflQ: 'normal', kGrad: 'cover', kGradC1: '#ffd36e', kGradC2: '#ff5fa2', kGradSeed: 0, kParticles: true, kGlow: 100, kGlowCol: 'accent', kColor: 'white', kBeat: 40, kShake: 0, kChroma: false, kOutline: false, kReflOp: 32, kReflBlur: 12, kPtType: 'dust', kPtDens: 100, kBgDim: 65, kLayout: 'left', kCover: 'right', kCase: 'upper', kFit: true, idleFs: true, idleSec: 8,
     // 2.0.2: откуда брать текст (auto — все источники), бэк-вокал Apple Music, цвета Spotify, авторы
     src: 'auto', bgVox: true, svcColors: true, credits: true },
   viz: { neonExperiment: true, directExperiment: true, sens: 100, fps: 60, coverBars: false, tempo: true, smooth: 30, lag: 0, react: 60, fx: { glow: 100, trails: 0, zoom: 30, shake: 0, flash: 0, mirror: 'off', hue: 0, thick: 100, density: 100, bass: 100, coverPulse: 100, bgDim: 0 } },
@@ -2144,6 +2240,7 @@ function builtinTabs() {
       R('Свечение слов', '', tg('ly.glow')),
       R('Размывать дальние строки', '', tg('ly.blur')),
       grp('Прокрутка'),
+      R('Барабан строк', 'Строки огибают цилиндр: текущая читается прямо, дальние уходят в перспективу', tg('ly.drum')),
       R('Скорость прокрутки', 'Как быстро текст едет к новой строке', rng('ly.speed', 15, 150, 5, ''), 'прокрутка скорость'),
       R('Возврат к текущей строке', 'Через сколько секунд после ручной прокрутки текст вернётся сам (0 — не возвращаться)', rng('ly.backDelay', 0, 15, 1, 's'), 'прокрутка скролл'),
       grp('Строка в режиме «Визуал»'),
@@ -2180,7 +2277,7 @@ function builtinTabs() {
       R('Скорость воспроизведения', '', seg('audio.speed', [[0.75, '0.75×'], [0.9, '0.9×'], [1, '1×'], [1.1, '1.1×'], [1.25, '1.25×'], [1.5, '1.5×']]))] },
     { id: 'sync', icon: 'cloud', title: 'Синхронизация и офлайн', rows: [
       grp('Аккаунт'),
-      R('Аккаунт YouTube Music', account ? `Вошёл как <b data-i18n-skip>${esc(account.name)}</b>` : 'Не выполнен вход — плейлисты только на устройстве', account ? `<button class="btn sm" data-sact="sync">${ico('sync')}Синхронизировать</button>` : `<button class="btn sm acc" data-act="login">${ico('google')}Войти</button>`, 'аккаунт вход google'),
+      R('Аккаунт YouTube Music', account ? `Вошёл как <b data-i18n-skip>${esc(account.name)}</b>` : (accountState.state!=='signed-out'?accountStatusLabel():'Не выполнен вход — плейлисты только на устройстве'), account ? `<button class="btn sm" data-sact="sync">${ico('sync')}Синхронизировать</button>` : `<button class="btn sm acc" data-act="login">${ico('google')}Войти</button>`, 'аккаунт вход google'),
       R('Создавать плейлисты в YouTube Music', 'Новые плейлисты сразу появляются в аккаунте и на всех устройствах', tg('sync.createInYtm')),
       R('Автосинхронизация', 'Как часто обновлять плейлисты из YouTube Music', seg('sync.interval', [[5, '5 мин'], [15, '15 мин'], [60, 'Час'], [0, 'Вручную']])),
       grp('Офлайн'),

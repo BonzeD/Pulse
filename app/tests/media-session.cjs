@@ -51,8 +51,8 @@ test('main forwards only valid live player state into SMTC',()=>{
 });
 test('native Play/Pause/seek commands reach the existing engine without toggle inversion',()=>{
  const fs=require('node:fs'),vm=require('node:vm'),src=fs.readFileSync('renderer/app.js','utf8');const line=src.split('\n').find(s=>s.startsWith('pulse.onCommand('));let command;
- const c={pulse:{onCommand:f=>command=f},playing:false,toggles:0,pauses:0,positions:[],fsEscape(){},back(){},fwd(){},prev(){},toggleShuffle(){},cycleRepeat(){},
+ const c={audioWanted:false,audioPending:false,pulse:{onCommand:f=>command=f},playing:false,toggles:0,pauses:0,positions:[],fsEscape(){},back(){},fwd(){},prev(){},toggleShuffle(){},cycleRepeat(){},
  toggle(){c.toggles++;c.playing=!c.playing;},next(){},E:{pause(){c.pauses++;c.playing=false;},dur:()=>200,seek:n=>c.positions.push(n)}};
- vm.runInNewContext(line,c);command('play');command('play');assert.equal(c.toggles,1);command('pause');command('pause');assert.equal(c.pauses,1);
+ vm.runInNewContext(src.slice(src.indexOf('function transportPlay()'),src.indexOf('function toggle()')),c);vm.runInNewContext(line,c);command('play');command('play');assert.equal(c.toggles,1);command('pause');command('pause');assert.equal(c.pauses,1);
  command('seekSeconds',250);command('seekSeconds',-2);command('seekSeconds',NaN);command('seekSeconds','10');assert.deepEqual(c.positions,[200,0]);
 });

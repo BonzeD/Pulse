@@ -1,0 +1,2 @@
+PASS normal range validation: real HTTP proxy → Chromium decoder/analyser, pause and seek. Local synthetic fixtures, not live YouTube.
+PASS same-request backup: real HTTP proxy → Chromium decoder/analyser, pause and seek. Local synthetic fixtures, not live YouTube.

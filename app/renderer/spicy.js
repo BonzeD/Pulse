@@ -126,7 +126,7 @@ function spNow() {
   return (lySmooth(heard(S().ly.lag || 0)) - offset()) / stretchK();
 }
 function spFrame() {
-  if (!SP.on) return; SP.raf = requestAnimationFrame(spFrame);
+  SP.raf=0;if(!SP.on||document.hidden||window.pulseWinHidden)return;SP.raf=requestAnimationFrame(spFrame);
   if (SP.from === 'pulse' && lyState.lines !== SP.srcLines) { SP.srcLines = lyState.lines; spPaint(spFromPulse(lyState.lines), lyState.lines ? '' : 'Для этой песни пока нет текста'); }
   if (!SP.lines || SP.stat) return;
   const now = spNow(), L = SP.lines;
@@ -304,7 +304,7 @@ const SPT = { raf: 0, blk: null, map: null };
 const spCurve = typeof Kara !== 'undefined' && Kara.spline ? { SC: Kara.spline([[0, 0.95], [0.7, 1.05], [1, 1]]), YO: Kara.spline([[0, 0.01], [0.9, -1 / 60], [1, 0]]), GL: Kara.spline([[0, 0], [0.15, 1], [0.6, 1], [1, 0]]) } : null;
 // 2.0.4: работает сам по себе — даже если стиль Spicy для панели текста выключен; не нужен, когда включён полноэкранный Spicy-вид
 const spStageFx = () => spS().stage !== false && !spS().on;
-function spStageOn() { return spStageFx() && typeof lys !== 'undefined' && lys.on && !SP.on; }
+function spStageOn() { return !document.hidden&&!window.pulseWinHidden&&spStageFx() && typeof lys !== 'undefined' && lys.on && !SP.on; }
 function spStageKick() { if (spStageOn() && !SPT.raf) SPT.raf = requestAnimationFrame(spStageFrame); if (!spStageOn()) spStageClear(); }
 function spStageClear() { if (SPT.raf) cancelAnimationFrame(SPT.raf); SPT.raf = 0; SPT.blk = null; SPT.map = null; }
 // доля заливки слова: по настоящим слогам (Spicy Lyrics) — сколько букв уже спето, иначе равномерно по времени слова
@@ -347,3 +347,6 @@ function spStageFrame() {
   }
 }
 { const base = spApplyLook; spApplyLook = function () { const r = base.apply(this, arguments); spStageKick(); return r; }; }
+
+function spVisibility(){if(document.hidden||window.pulseWinHidden){cancelAnimationFrame(SP.raf);SP.raf=0;spStageClear();}else{if(SP.on&&!SP.raf)SP.raf=requestAnimationFrame(spFrame);spStageKick();}}
+document.addEventListener('visibilitychange',spVisibility);window.addEventListener('pulse-window-visibility',spVisibility);

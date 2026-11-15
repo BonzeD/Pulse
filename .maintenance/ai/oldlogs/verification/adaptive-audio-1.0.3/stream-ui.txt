@@ -1,0 +1,1 @@
+PASS next-track prewarm learns failed clients, prepares one validated backup, then actual proxy → Chromium decoder/AudioContext/analyser plays it without another player API or backup resolver. Pause/seek preserved. Local HTTP/synthetic subprocess fixtures only, not live YouTube latency.

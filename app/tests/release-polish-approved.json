@@ -1,0 +1,287 @@
+{
+  "audio-diagnostics.js": {
+    "sha256": "0864ed55bd3b25b38971f227e608daaf5ebb19b78b038d87d28a82314f70389d",
+    "originalSha256": "5352e7727ee75402611ab09ae0379f322320070fba4ce4f3696a0089425aaa04",
+    "patches": [
+      {
+        "from": 6,
+        "to": 7,
+        "original": [
+          "const REASONS=new Set(['eligible','track-rejected','policy-cooldown','network-cooldown','no-candidates','direct-start','backup-start','winner-direct','winner-backup','repeated-upstream-rejection','foreground-priority','aborted','consumer-closed','runtime-missing','runtime-unhealthy','runtime-ready','shared-foreground','shared-prefetch','hover-direct-only','next-direct-only','next-backup-eligible','next-warm-scheduled','warm-policy-changed','foreground-busy','target-cancelled','replaced-selection','probe-rejected','invalid-content','empty-body','http-error','no-url','bot-check','login-required','age-restricted','unavailable','geo-blocked','rate-limited','http-403','network-timeout','dns','tls','connection','extractor','js-runtime','runtime-broken','spawn-missing','spawn-denied','spawn-error','process-deadline','next-request','invalid-range','unsupported-format','backup-retry','invalid-output','embedded-first','embedded-ready-timeout','embedded-start-timeout','embedded-error','embedded-autoplay-blocked','mapping-error','unknown']);\n"
+        ]
+      },
+      {
+        "from": 47,
+        "to": 48,
+        "original": [
+          " function read(){return {pulseAudioLog:1,diagnosticsVersion:2,build:'EmbeddedFirst-AudioDiagnostics2',created,...state(),note:'Relative times in ms. Track labels are local to this capture. Enum-only failure categories; no raw errors, stderr, track names, URLs, cookies, tokens or file paths.',events:rows.map(x=>({...x}))};}\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "cb23b1fa320e005e336d34f4aa071c1a4d992fff95b185f39ed3ff0a8a0fa809",
+    "originalSha256": "97e2d80d541a9daa781b721567d12c915dd34a611959371c5e6475e86ec39306",
+    "patches": [
+      {
+        "from": 195,
+        "to": 196,
+        "original": [
+          " clearTimeout(job.timer);if(!currentIframeJob(job)||!audioWanted)return;\n"
+        ]
+      },
+      {
+        "from": 208,
+        "to": 209,
+        "original": [
+          " clearTimeout(job.timer);job.phase=audioWanted?'starting':'cued';\n"
+        ]
+      },
+      {
+        "from": 233,
+        "to": 234,
+        "original": [
+          "      clearAudioStart();setLoading(false);\n"
+        ]
+      },
+      {
+        "from": 249,
+        "to": 250,
+        "original": [
+          "  pause: () => { if(pulse.prefetch)pulse.prefetch(null,true).catch(()=>{});audioWanted=false;clearAudioStart();if(iframeJob&&!['mapping','waiting'].includes(iframeJob.phase))clearTimeout(iframeJob.timer);setLoading(false);window.PulseFileVideo?.intent(false);if(typeof djFinish==='function')djFinish();return engine==='audio'?audio.pause():ready&&player.pauseVideo(); },\n"
+        ]
+      },
+      {
+        "from": 287,
+        "to": 288,
+        "original": []
+      },
+      {
+        "from": 289,
+        "to": 291,
+        "original": [
+          "        if (e.data === YT.PlayerState.PLAYING) { if(!audioWanted){player.pauseVideo();playing=false;setLoading(false);return;}if(iframeJob){clearTimeout(iframeJob.timer);iframeJob.started=true;iframeJob.phase='playing';}playing = true; errStreak = 0; setLoading(false); onStarted(); }\n",
+          "        else if ([0, 2, 5].includes(e.data)) playing = false;\n"
+        ]
+      },
+      {
+        "from": 352,
+        "to": 355,
+        "original": []
+      },
+      {
+        "from": 2006,
+        "to": 2007,
+        "original": [
+          "  navigator.mediaSession.setActionHandler('play', () => { if (!playing) toggle(); }); navigator.mediaSession.setActionHandler('pause', () => { if (playing) E.pause(); });\n"
+        ]
+      },
+      {
+        "from": 2021,
+        "to": 2022,
+        "original": [
+          "pulse.onCommand((n, a) => ({ escape: fsEscape, navBack: back, navFwd: fwd, toggle, play: () => { if (!playing) toggle(); }, pause: () => { if (playing) E.pause(); }, seekSeconds: () => { const d = E.dur(); if (Number.isFinite(a) && Number.isFinite(d) && d > 0) E.seek(Math.max(0, Math.min(d, a))); }, next: () => next(), prev, shuffle: toggleShuffle, repeat: cycleRepeat, seek: () => seekFrac(a), volume: () => setVolume(a), like: () => { toggleLike(curTrack()); sendState(); }, dislike: () => { if (typeof toggleDislike === 'function') toggleDislike(curTrack()); sendState(); }, wave: () => typeof waveToggle === 'function' && waveToggle(), editor: () => window.openEditor && openEditor(a), winHidden: () => setWinHidden(a), /* 2.0.12 */ widgetSize: () => { S().widget.size = a; settingChanged('widget.size'); rerenderSettings(); } }[n] || (() => {}))());\n"
+        ]
+      },
+      {
+        "from": 2027,
+        "to": 2028,
+        "original": [
+          "  ly: { lineFx: 'line', kBar: 'on', mrPreset: 0, mrReaction: 1, mrMorph: true, mrQuality: 'auto', mrFps: 60, mrLyrics: true, mrShowTitle: true, mrShelf: true, mrKeep: false, size: 100, align: 'left', glow: true, mode: 'words', blur: true, visLine: true, font: 'default', weight: 800, color: 'accent', colorC: '#ffffff', dimOp: 28, spacing: 128, speed: 70, anim: 'pop', backDelay: 4, lag: 0, snap: true, visSize: 100, fill: true, vis: 'classic', kFont: 'serif', kSize: 100, kAnim: 'rise', kRefl: true, kRipple: 50, kReflQ: 'normal', kGrad: 'cover', kGradC1: '#ffd36e', kGradC2: '#ff5fa2', kGradSeed: 0, kParticles: true, kGlow: 100, kGlowCol: 'accent', kColor: 'white', kBeat: 40, kShake: 0, kChroma: false, kOutline: false, kReflOp: 32, kReflBlur: 12, kPtType: 'dust', kPtDens: 100, kBgDim: 65, kLayout: 'left', kCover: 'right', kCase: 'upper', kFit: true, idleFs: true, idleSec: 8,\n"
+        ]
+      },
+      {
+        "from": 2239,
+        "to": 2240,
+        "original": []
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "d7acfee6fc1cd381a067bfa57f0e48e21f57c9d960a517bdc2c6c9336502fcbc",
+    "originalSha256": "ec876611dd6493a949dea33cb90cbc687114fa0195325be1e431486734936c34",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs tests/adaptive-audio.cjs tests/startup-latency.cjs tests/diagnostics-detail.cjs tests/reliability.cjs tests/embedded-first.cjs\",\n"
+        ]
+      },
+      {
+        "from": 50,
+        "to": 53,
+        "original": [
+          "    \"test:embedded\": \"node --test tests/embedded-first.cjs && node tests/embedded-first-ui.cjs\"\n"
+        ]
+      },
+      {
+        "from": 134,
+        "to": 135,
+        "original": [
+          "    \"electron\": \"44.8.0\",\n"
+        ]
+      }
+    ]
+  },
+  "package-lock.json": {
+    "sha256": "876b24796f9157b4b634315ecb7bf4f5e238d77702ea0f126ffe971b4c50a0c9",
+    "originalSha256": "3682dfb50425f342d8da1a958f294d83274eb44aede3527e0c0bca30190add85",
+    "patches": [
+      {
+        "from": 15,
+        "to": 16,
+        "original": [
+          "        \"electron\": \"44.8.0\",\n"
+        ]
+      },
+      {
+        "from": 1990,
+        "to": 1993,
+        "original": [
+          "      \"version\": \"44.8.0\",\n",
+          "      \"resolved\": \"https://registry.npmjs.org/electron/-/electron-44.8.0.tgz\",\n",
+          "      \"integrity\": \"sha512-Yn2tJ335l8MGRJj86vaAYq1MOidtiw9eXdmHX6p3ecHQWwucsMMBxDzqUrYnXEHyqdc/IhOh2KGHzmizJvzd3Q==\",\n"
+        ]
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "86bf53fa6b14ab9bcdf797b10d3348e4206cf7e5f3b2444d32452907ff34fbef",
+    "originalSha256": "fe2dfbe85320f2449294a3d868a0c4f891f3919db81b0ab01b7eb5d651e81a22",
+    "patches": [
+      {
+        "from": 184,
+        "to": 185,
+        "original": [
+          "  // получает сигнал «спрятано» (останавливает свои циклы и анимации), а его процесс и процесс графики — пониженный\n"
+        ]
+      },
+      {
+        "from": 191,
+        "to": 194,
+        "original": [
+          "    try { require('os').setPriority(win.webContents.getOSProcessId(), pr); } catch {}\n"
+        ]
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "c7d3a60c685e09ed85fe929788f880837cfe9c46cf64b5e39ba30afa583ebde9",
+    "originalSha256": "81dce5da512982e7081eb959b02357e413bde8162ad8af8fe78494e559eeafbb",
+    "patches": [
+      {
+        "from": 50,
+        "to": 51,
+        "original": []
+      },
+      {
+        "from": 378,
+        "to": 381,
+        "original": []
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "de1bb85004769e042768805c2e4256df6f4e5bd80ef1cc36d9701032e61027d2",
+    "originalSha256": "2bd730567875527904395f04f5220d4e0b0fc12584727257fb3475f113f9a148",
+    "patches": [
+      {
+        "from": 22,
+        "to": 23,
+        "original": [
+          "    return { language: S().app.language || 'en', reaction: y.mrReaction == null ? 1 : +y.mrReaction, morph: y.mrMorph !== false && !document.body.classList.contains('no-anim'), preset: +y.mrPreset || 0, quality: q, fps: y.mrFps == null ? 60 : +y.mrFps, lyrics: y.mrLyrics !== false, showTitle: y.mrShowTitle !== false, shelf: y.mrShelf === false ? 'off' : 'side' };\n"
+        ]
+      },
+      {
+        "from": 33,
+        "to": 36,
+        "original": [
+          "      const q = lib.queue, n = q.tracks.length, sig = n + '|' + (n ? q.tracks[0].id + '|' + q.tracks[n - 1].id : '') + '|' + (q.name || '');\n"
+        ]
+      },
+      {
+        "from": 37,
+        "to": 38,
+        "original": [
+          "      return { sig, idx: Math.min(q.idx, 399), name: q.name || '', tracks: qCache.tracks };\n"
+        ]
+      },
+      {
+        "from": 46,
+        "to": 48,
+        "original": [
+          "    play: () => { if (!playing) toggle(); },\n",
+          "    pause: () => { if (playing) toggle(); },\n"
+        ]
+      },
+      {
+        "from": 59,
+        "to": 60,
+        "original": [
+          "      if (i === lib.queue.idx && !retry) { if (!playing) toggle(); return true; }\n"
+        ]
+      },
+      {
+        "from": 63,
+        "to": 64,
+        "original": [
+          "    prefetch: (i) => { const t = lib.queue.tracks[i]; if (!t || off[t.id] || !online() || i === lib.queue.idx || !pulse.prefetch) return; if (!window.__mrPf) window.__mrPf = new Map(); const k = window.__mrPf.get(t.id); if (k && Date.now() - k < 10 * 60e3) return; window.__mrPf.set(t.id, Date.now()); pulse.prefetch(t.id); },\n"
+        ]
+      },
+      {
+        "from": 67,
+        "to": 75,
+        "original": []
+      },
+      {
+        "from": 152,
+        "to": 153,
+        "original": [
+          "      R('3D-полка с очередью', 'Карточки треков сбоку; клик — включить', tg('ly.mrShelf'), 'mineradio полка очередь'),\n"
+        ]
+      }
+    ]
+  },
+  "renderer/mineradio/pulse-bridge.js": {
+    "sha256": "fc043f70953426b09c4240cb0b88331eaf981a6b3db55e27c7c51935e5cc5119",
+    "originalSha256": "5e720870dbd3c772b320418ec0de188259edab55ecb73d1415f7e0df7aacb98d",
+    "patches": [
+      {
+        "from": 47,
+        "to": 48,
+        "original": []
+      },
+      {
+        "from": 53,
+        "to": 55,
+        "original": [
+          "      getFloatFrequencyData: function (a) { a.fill(-100); },\n",
+          "      getFloatTimeDomainData: function (a) { a.fill(0); },\n"
+        ]
+      },
+      {
+        "from": 184,
+        "to": 185,
+        "original": [
+          "  var lastCfg = '';\n"
+        ]
+      },
+      {
+        "from": 188,
+        "to": 189,
+        "original": []
+      },
+      {
+        "from": 197,
+        "to": 198,
+        "original": []
+      },
+      {
+        "from": 199,
+        "to": 205,
+        "original": []
+      }
+    ]
+  }
+}

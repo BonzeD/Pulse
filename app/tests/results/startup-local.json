@@ -1,0 +1,19 @@
+{
+  "environment": "Linux Chromium; local HTTP fixtures, synthetic 3.5 s player API delay, 20 ms mock backup process, actual WAV decoding; NOT live YouTube or Windows measurements",
+  "results": [
+    {
+      "variant": "original AdaptiveAudio",
+      "clickToPlayingMs": 3649,
+      "paused": false,
+      "error": null,
+      "peak": 225
+    },
+    {
+      "variant": "startup fix",
+      "clickToPlayingMs": 1608,
+      "paused": false,
+      "error": null,
+      "peak": 225
+    }
+  ]
+}

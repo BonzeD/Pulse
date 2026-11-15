@@ -1,0 +1,1 @@
+PASS EmbeddedFirst full renderer: mocked YouTube API; embed first, zero speculative direct calls, visual modes preserve engine, pause/play, seek fallback, stale resolver isolation, transport toggle during service mapping. NOT a live YouTube latency test.

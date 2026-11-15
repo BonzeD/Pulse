@@ -1,0 +1,282 @@
+{
+  "main.js": {
+    "sha256": "fe2dfbe85320f2449294a3d868a0c4f891f3919db81b0ab01b7eb5d651e81a22",
+    "originalSha256": "678444b38d31703da3d489c4f57b6ec667d7f93b6737327a202aac7b9e428077",
+    "patches": [
+      {
+        "from": 447,
+        "to": 455,
+        "original": [
+          "ipcHandle('yt:prefetch', async (_e, id, next) => { try { if(next===true&&id===null)return off.prefetch(null,true);if (isAudius(id)) return null; return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id, next===true); } catch { return null; } });\n"
+        ]
+      }
+    ]
+  },
+  "preload.js": {
+    "sha256": "409d429faac344fc3e47d979a4badd51a9c7073e3ae29b56de3174b5acfa8aba",
+    "originalSha256": "fb63f1d32bbd216cad00c38a546a018ecda11be35cc53b4fc40e27b0c25aee83",
+    "patches": [
+      {
+        "from": 26,
+        "to": 27,
+        "original": []
+      }
+    ]
+  },
+  "audio-diagnostics.js": {
+    "sha256": "5352e7727ee75402611ab09ae0379f322320070fba4ce4f3696a0089425aaa04",
+    "originalSha256": "985c8406ddabd23a15aee50247c7203ed852d396c9ee9fffcdd9a2682180d092",
+    "patches": [
+      {
+        "from": 3,
+        "to": 4,
+        "original": [
+          "const STAGES=new Set(['mapping','capture','load','load-switch','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','resolve','cache','player-api','probe','backup','backup-queue','backup-runtime','backup-health','backup-download','backup-process','backup-spawned','backup-output','backup-url','client-policy','resolve-path','resolve-shared','prefetch-policy','format-policy','stream','upstream','first-byte','fallback']);\n"
+        ]
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "original": [
+          "const REASONS=new Set(['eligible','track-rejected','policy-cooldown','network-cooldown','no-candidates','direct-start','backup-start','winner-direct','winner-backup','repeated-upstream-rejection','foreground-priority','aborted','consumer-closed','runtime-missing','runtime-unhealthy','runtime-ready','shared-foreground','shared-prefetch','hover-direct-only','next-direct-only','next-backup-eligible','next-warm-scheduled','warm-policy-changed','foreground-busy','target-cancelled','replaced-selection','probe-rejected','invalid-content','empty-body','http-error','no-url','bot-check','login-required','age-restricted','unavailable','geo-blocked','rate-limited','http-403','network-timeout','dns','tls','connection','extractor','js-runtime','runtime-broken','spawn-missing','spawn-denied','spawn-error','process-deadline','next-request','invalid-range','unsupported-format','backup-retry','invalid-output','unknown']);\n"
+        ]
+      },
+      {
+        "from": 47,
+        "to": 48,
+        "original": [
+          " function read(){return {pulseAudioLog:1,diagnosticsVersion:2,build:'ReliabilityFix-AudioDiagnostics2',created,...state(),note:'Relative times in ms. Track labels are local to this capture. Enum-only failure categories; no raw errors, stderr, track names, URLs, cookies, tokens or file paths.',events:rows.map(x=>({...x}))};}\n"
+        ]
+      }
+    ]
+  },
+  "dev-window.js": {
+    "sha256": "6646228178c21728f8d1dbe38773bb0a1a040005d0d50857ae75002976655600",
+    "originalSha256": "4737bf6298d1a51f0b5dc76f5738a7c40384a4cbfae5bc267a1bdc0dab9c5a78",
+    "patches": [
+      {
+        "from": 5,
+        "to": 6,
+        "original": [
+          " const rendererStages=new Set(['capture','load','load-switch','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','fallback']);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "97e2d80d541a9daa781b721567d12c915dd34a611959371c5e6475e86ec39306",
+    "originalSha256": "79b64cfab6858051503b066c9ea58221d4eedbde263db754a5d0bad623578a83",
+    "patches": [
+      {
+        "from": 138,
+        "to": 140,
+        "original": []
+      },
+      {
+        "from": 144,
+        "to": 145,
+        "original": [
+          "function beginAudioLoad(want, start=0) { clearAudioStart();clearAudioSeek();audioErrorIdle=false;audioWanted=!!want;audioPending=false;audioResumeAt=Number.isFinite(start)?Math.max(0,start):0; }\n"
+        ]
+      },
+      {
+        "from": 152,
+        "to": 153,
+        "original": [
+          "  audioStartTimer=setTimeout(()=>{audioStartTimer=null;if(tok!==loadTok||!audioWanted||!ready||!canEmbed(t)||engine!=='audio'||audioPending||audio.readyState>=3)return;\n"
+        ]
+      },
+      {
+        "from": 180,
+        "to": 183,
+        "original": [
+          "  window.PulseAudioLog?.event('fallback',{engine:'embedded',autoplay:!!autoplay});\n",
+          "  clearAudioStart();clearAudioSeek();audioPending=false;audioWanted=!!autoplay;\n"
+        ]
+      },
+      {
+        "from": 186,
+        "to": 238,
+        "original": [
+          "  updateMode();\n"
+        ]
+      },
+      {
+        "from": 240,
+        "to": 242,
+        "original": [
+          "  time: () => (engine === 'audio' ? audio.currentTime : ready && player.getCurrentTime ? player.getCurrentTime() : 0) || 0,\n",
+          "  dur: () => (engine === 'audio' ? (isFinite(audio.duration) ? audio.duration : 0) : ready && player.getDuration ? player.getDuration() : 0) || curTrack()?.dur || 0,\n"
+        ]
+      },
+      {
+        "from": 247,
+        "to": 248,
+        "original": [
+          "    }else if(ready)player.playVideo();\n"
+        ]
+      },
+      {
+        "from": 249,
+        "to": 250,
+        "original": [
+          "  pause: () => { if(pulse.prefetch)pulse.prefetch(null,true).catch(()=>{});audioWanted=false;clearAudioStart();setLoading(false);window.PulseFileVideo?.intent(false);if(typeof djFinish==='function')djFinish();return engine==='audio'?audio.pause():ready&&player.pauseVideo(); },\n"
+        ]
+      },
+      {
+        "from": 251,
+        "to": 252,
+        "original": [
+          "    if(engine==='audio'){if(audio.getAttribute('src'))seekAudioWhenReady();}else if(ready)player.seekTo(t,true);beatState.kp=-1;\n"
+        ]
+      },
+      {
+        "from": 256,
+        "to": 257,
+        "original": [
+          "    const tok = ++loadTok; beginAudioLoad(autoplay,start);audio.pause();window.PulseFileVideo?.reset(); /* file-video integration */ setLoading(false); $('seekBuf').style.width = '0';\n"
+        ]
+      },
+      {
+        "from": 270,
+        "to": 270,
+        "original": [
+          "    if (lib.mode === 'video' && ready && canEmbed(t) && online()) { useIframe(t, autoplay, start); return true; }\n"
+        ]
+      },
+      {
+        "from": 274,
+        "to": 276,
+        "original": [
+          "    setLoading(true);\n",
+          "    audioPending=true;armAudioStart(t,tok);\n",
+          "    Promise.resolve().then(() => pulse.resolve(t.id)).catch(e => ({ ok: false, error: String(e.message || e) })).then((r) => {\n",
+          "      if (r && r.vid && r.vid !== t.id) vidMap[t.id] = r.vid; // 2.0.2: запоминаем запись YouTube для трека сервиса\n",
+          "      if (tok !== loadTok) return;\n",
+          "      audioPending=false;\n",
+          "      if (lib.mode === 'video' && ready && r && r.ok && canEmbed(t) && isSvcId(t.id)) { setLoading(false); return useIframe(t, audioWanted, audioResumeAt); }\n",
+          "      if (r && r.ok) { audio.src = `/stream/${t.id}`;at();if(audioWanted){armAudioStart(t,tok);E.play();}else{clearAudioStart();setLoading(false);}return; }\n",
+          "      clearAudioStart();setLoading(false);\n",
+          "      if (ready && canEmbed(t)) { toast('Пробую через встроенный YouTube…'); return useIframe(t, audioWanted, audioResumeAt); }\n",
+          "      toast(r ? r.error : 'Не удалось получить звук'); markFailed(t); markRows();\n",
+          "      if (audioWanted && ++errStreak <= 8) setTimeout(() => { if (tok === loadTok && audioWanted) next(true); }, 800);\n",
+          "    });\n"
+        ]
+      },
+      {
+        "from": 284,
+        "to": 285,
+        "original": [
+          "      onReady: () => { ready = true; player.setVolume(lib.volume); },\n"
+        ]
+      },
+      {
+        "from": 286,
+        "to": 287,
+        "original": [
+          "        if (engine !== 'yt') return;\n"
+        ]
+      },
+      {
+        "from": 288,
+        "to": 289,
+        "original": [
+          "        if (e.data === YT.PlayerState.PLAYING) { playing = true; errStreak = 0; setLoading(false); onStarted(); }\n"
+        ]
+      },
+      {
+        "from": 290,
+        "to": 292,
+        "original": [
+          "        if (e.data === YT.PlayerState.BUFFERING) setLoading(true);\n",
+          "        if (e.data === YT.PlayerState.ENDED) onEnded();\n"
+        ]
+      },
+      {
+        "from": 294,
+        "to": 295,
+        "original": []
+      },
+      {
+        "from": 296,
+        "to": 297,
+        "original": [
+          "        if (engine !== 'yt') return;\n"
+        ]
+      },
+      {
+        "from": 299,
+        "to": 301,
+        "original": [
+          "        noEmbed[t.id] = true;\n",
+          "        if (lib.mode === 'video') toast('Это видео нельзя показать вне YouTube — играю аудио');\n",
+          "        const tm = E.time(); E.load(t, true, tm);\n"
+        ]
+      },
+      {
+        "from": 354,
+        "to": 355,
+        "original": []
+      },
+      {
+        "from": 411,
+        "to": 412,
+        "original": [
+          "// предзагрузка ссылки на звук, пока мышь над треком — клик стартует почти мгновенно\n",
+          "let hovT = null, hovId = null; const prefetched = new Map();\n",
+          "document.addEventListener('mouseover', (e) => {\n",
+          "  const r = e.target.closest && e.target.closest('.tr[data-id],.card[data-id]'), id = r && r.dataset.id; if (id === hovId) return; hovId = id; clearTimeout(hovT);\n",
+          "  if (!id || !/^[\\w-]{11}$/.test(id) || off[id] || !online() || (Date.now()-(prefetched.get(id)||0)<120000) || !pulse.prefetch) return;\n",
+          "  hovT = setTimeout(() => { prefetched.set(id,Date.now());if(prefetched.size>100)prefetched.delete(prefetched.keys().next().value);pulse.prefetch(id).catch(()=>{}); }, 300);\n",
+          "}, { passive: true });\n"
+        ]
+      },
+      {
+        "from": 422,
+        "to": 423,
+        "original": [
+          "  if(n&&n.id!==t.id&&!off[n.id]&&online()&&pulse.prefetch)pulse.prefetch(n.id,true).catch(()=>{});\n"
+        ]
+      },
+      {
+        "from": 424,
+        "to": 425,
+        "original": [
+          "  analyzeCurrent(t);\n"
+        ]
+      },
+      {
+        "from": 546,
+        "to": 547,
+        "original": [
+          "  } else if (m !== 'video' && t && engine === 'yt') { const tm = E.time(), was = playing; E.load(t, was, tm); }\n"
+        ]
+      },
+      {
+        "from": 1518,
+        "to": 1519,
+        "original": []
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "ec876611dd6493a949dea33cb90cbc687114fa0195325be1e431486734936c34",
+    "originalSha256": "a6d0fb212dd1e013c84655e5bc720ac18a665ceb7d0ceedaf9ac25637e5a6039",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs tests/adaptive-audio.cjs tests/startup-latency.cjs tests/diagnostics-detail.cjs tests/reliability.cjs\",\n"
+        ]
+      },
+      {
+        "from": 49,
+        "to": 51,
+        "original": [
+          "    \"test:reliability\": \"node --test tests/reliability.cjs\"\n"
+        ]
+      }
+    ]
+  }
+}

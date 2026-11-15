@@ -11,7 +11,31 @@ const txt = (o) => (o ? o.simpleText || (o.runs || []).map((r) => r.text).join('
 const dur = (t) => (t || '').split(':').reduce((a, x) => a * 60 + (+x || 0), 0);
 
 async function ytCookies() { return (await ses().cookies.get({})).filter((c) => /youtube\.com$|google\.com$/.test(c.domain.replace(/^\./, ''))); }
-async function loggedIn() { return (await ytCookies()).some((c) => /youtube\.com/.test(c.domain) && (c.name === 'SAPISID' || c.name === '__Secure-3PAPISID')); }
+const liveCookie = c => !c.expirationDate || c.expirationDate > Date.now()/1000;
+const authCookie = c => liveCookie(c) && !!c.value && /(^|\.)youtube\.com$/.test(c.domain) && ['SAPISID','__Secure-3PAPISID'].includes(c.name);
+async function loggedIn() { return (await ytCookies()).some(authCookie); }
+let sessionEpoch=0, restorePromise=null, restored=false;
+async function flushSession() { await ses().cookies.flushStore(); ses().flushStorageData(); }
+// Restore only the explicitly active local snapshot, never scan another browser.
+async function restoreSession() {
+  if (restorePromise) return restorePromise;
+  if (restored) return loggedIn();
+  const epoch=sessionEpoch;
+  restorePromise=(async()=>{
+    if (!await loggedIn()) {
+      const d=accRead(), a=d.list.find(x=>x.id===d.active), cs=(a?.cookies||[]).filter(liveCookie);
+      if (epoch===sessionEpoch && cs.some(authCookie)) await applyCookies(cs,epoch);
+    }
+    if(epoch!==sessionEpoch)return false;
+    restored=true;
+    await flushSession();
+    if(await loggedIn())await writeCookieFile();
+    return loggedIn();
+  })().finally(()=>{restorePromise=null;});
+  return restorePromise;
+}
+async function sessionBoundary() { ++sessionEpoch; restored=true; await restorePromise?.catch(()=>{}); }
+
 
 async function writeCookieFile() {
   const cs = await ytCookies(); if (!cs.length) return null;
@@ -249,8 +273,8 @@ function cancelViaBrowser() { extCancel = true; try { if (extProc) extProc.kill(
 // вход засчитывается, только если YouTube реально узнал аккаунт (иначе — неполные cookies, «Аккаунт Google»)
 async function verifyLogin() {
   const info = await accountInfo(true);
-  if (!info) { await dropSession(); return false; }
-  await writeCookieFile(); return true;
+  if (!info) return false;
+  await accSnapshot(info); await writeCookieFile(); await flushSession(); ++sessionEpoch; return true;
 }
 async function dropSession() { try { await ses().clearStorageData({ storages: ['cookies'] }); } catch {} try { fs.unlinkSync(cookieFile()); } catch {} }
 
@@ -399,7 +423,7 @@ async function importCookieText(text) {
 }
 // 1.9.6: «Файл cookies.txt» и «Вставить Cookie вручную» убраны
 
-async function logout() { await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} return true; }
+async function logout() { await sessionBoundary(); const d=accRead(); d.active=null; accWrite(d); await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} await flushSession(); return true; }
 
 async function headers() {
   const cs = await ytCookies(); const yc = cs.filter((c) => /youtube\.com/.test(c.domain));
@@ -412,8 +436,8 @@ async function headers() {
 }
 const CTX = { client: { clientName: 'WEB_REMIX', clientVersion: '1.20250101.01.00', hl: 'ru', gl: 'RU' } };
 async function api(endpoint, body, query = '') {
-  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', headers: await headers(), body: JSON.stringify({ ...body, context: { ...(body?.context || CTX), client: { ...(body?.context?.client || CTX.client), hl: catalogLocale.current().language } } }) });
-  if (!r.ok) throw new Error(`YouTube Music API ${r.status}`);
+  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', ...(endpoint==='account/account_menu'?{signal:AbortSignal.timeout(8000)}:{}), headers: await headers(), body: JSON.stringify({ ...body, context: { ...(body?.context || CTX), client: { ...(body?.context?.client || CTX.client), hl: catalogLocale.current().language } } }) });
+  if (!r.ok) { const e=new Error(`YouTube Music API ${r.status}`); e.status=r.status; throw e; }
   return r.json();
 }
 
@@ -458,7 +482,8 @@ async function playlistTracks(browseId) {
 }
 
 async function libraryPlaylists() {
-  const j = await api('browse', { browseId: 'FEmusic_liked_playlists' });
+  let j;try { j=await api('browse', { browseId: 'FEmusic_liked_playlists' }); } catch(e) { if(e.status===401||e.status===403)return {authRequired:true};throw e; }
+  if(j?.responseContext?.loggedOut===true)return {authRequired:true};
   const out = [];
   (function w(n) {
     if (!n || typeof n !== 'object') return;
@@ -478,20 +503,24 @@ async function libraryPlaylists() {
 // 1.9.6: если YouTube не узнал аккаунт (нет блока активного аккаунта) — входа НЕТ.
 // Раньше в этом случае показывался «Аккаунт Google» без имени, который постоянно возвращался.
 async function accountInfo(strict) {
+  await restoreSession();
+  const epoch=sessionEpoch;
   if (!(await loggedIn())) return null;
+  const cached=(state='unverified')=>{if(strict||epoch!==sessionEpoch)return null;const d=accRead(),a=d.list.find(x=>x.id===d.active);return {name:a?.name||null,photo:a?.photo||null,verified:false,state};};
   let j;
-  try { j = await api('account/account_menu', {}); } catch (e) {
-    if (strict) return null;
-    // нет сети — показываем последний известный настоящий аккаунт
-    const d = accRead(), a = d.list.find((x) => x.id === d.active); return a ? { name: a.name, photo: a.photo || null } : null;
-  }
-  const s = JSON.stringify(j);
-  const name = (s.match(/"accountName":\{"runs":\[\{"text":"([^"]+)"/) || [])[1];
-  const photo = (s.match(/"accountPhoto":\{"thumbnails":\[\{"url":"([^"]+)"/) || [])[1] || null;
-  if (!name && !/activeAccountHeaderRenderer/.test(s)) { await dropSession(); return null; } // cookies битые/неполные — чистим
-  return { name: name || 'Аккаунт YouTube', photo };
+  try { j=await api('account/account_menu',{}); }
+  catch(e) { return cached(e.status===401||e.status===403?'reauth':'unverified'); }
+  if(epoch!==sessionEpoch)return null;
+  if(j?.responseContext?.loggedOut===true)return cached('reauth');
+  let name=null,photo=null,active=false;
+  (function walk(n){if(!n||typeof n!=='object')return;
+    if(n.activeAccountHeaderRenderer){const a=n.activeAccountHeaderRenderer;active=true;name=txt(a.accountName)||name;photo=a.accountPhoto?.thumbnails?.at(-1)?.url||photo;return;}
+    for(const v of Object.values(n))walk(v);
+  })(j);
+  // An unfamiliar/temporary response must never erase a valid local session.
+  if(!active)return cached();
+  return {name:name||'Аккаунт YouTube',photo,verified:true,state:'verified'};
 }
-
 
 // ---------- менеджер аккаунтов: несколько входов, переключение в один клик ----------
 // Каждый аккаунт = снимок cookies YouTube/Google. Хранится в userData/accounts.json, зашифрованным средствами ОС (safeStorage), если доступно.
@@ -500,27 +529,27 @@ const accFile = () => path.join(app.getPath('userData'), 'accounts.json');
 function accRead() {
   try {
     const raw = JSON.parse(fs.readFileSync(accFile(), 'utf8'));
-    (raw.list || []).forEach((a) => { if (a.enc && safeStorage.isEncryptionAvailable()) { try { a.cookies = JSON.parse(safeStorage.decryptString(Buffer.from(a.enc, 'base64'))); } catch { a.cookies = []; } } });
+    (raw.list || []).forEach((a) => { if (a.enc && safeStorage.isEncryptionAvailable()) { try { a.cookies = JSON.parse(safeStorage.decryptString(Buffer.from(a.enc, 'base64'))); } catch { delete a.cookies; } } });
     // 1.9.6: «Аккаунт Google» без имени и фото — это не аккаунт, а битые cookies. Убираем навсегда.
     const list = (raw.list || []).filter((a) => a.custom || a.photo || (a.name && a.name !== 'Аккаунт Google'));
     const d = { active: list.some((a) => a.id === raw.active) ? raw.active : null, list };
-    if (list.length !== (raw.list || []).length) accWrite(d);
     return d;
   } catch { return { active: null, list: [] }; }
 }
 function accWrite(d) {
   const enc = safeStorage.isEncryptionAvailable();
-  const out = { active: d.active, list: d.list.map((a) => { const o = { id: a.id, name: a.name, photo: a.photo || null, added: a.added, used: a.used, custom: !!a.custom }; if (enc) o.enc = safeStorage.encryptString(JSON.stringify(a.cookies || [])).toString('base64'); else o.cookies = a.cookies || []; return o; }) };
+  const out = { active: d.active, list: d.list.map((a) => { const o = { id: a.id, name: a.name, photo: a.photo || null, added: a.added, used: a.used, custom: !!a.custom }; if (a.enc && !Array.isArray(a.cookies)) o.enc=a.enc; else if (enc) o.enc = safeStorage.encryptString(JSON.stringify(a.cookies || [])).toString('base64'); else o.cookies = a.cookies || []; return o; }) };
   try { atomicJSON(accFile(), out); } catch (e) { console.error(e); }
 }
 const accId = (cs) => { const c = cs.find((x) => x.name === 'SAPISID') || cs.find((x) => x.name === '__Secure-3PAPISID') || cs.find((x) => x.name === 'SID'); return c ? crypto.createHash('sha1').update(c.name + c.value).digest('hex').slice(0, 12) : null; };
 const pub = (d) => ({ active: d.active, list: d.list.map((a) => ({ id: a.id, name: a.name, photo: a.photo, used: a.used, active: a.id === d.active })) });
 // запомнить текущий вход (вызывается после входа и при открытии менеджера)
-async function accSnapshot() {
+async function accSnapshot(verifiedInfo) {
+  const epoch=sessionEpoch;
   const d = accRead(); if (!(await loggedIn())) return pub(d);
   const cs = await ytCookies(), id = accId(cs); if (!id) return pub(d);
-  const info = await accountInfo(true).catch(() => null);
-  if (!info) return pub(accRead()); // YouTube не узнал вход — в список не добавляем
+  const info = verifiedInfo || await accountInfo(true).catch(() => null);
+  if (!info || epoch!==sessionEpoch) return pub(accRead()); // YouTube не узнал вход — в список не добавляем
   // 1.9.5: «Аккаунт Google» = имя не удалось получить. Раньше из-за этого плодились копии, которые после удаления возвращались
   const known = true;
   let a = d.list.find((x) => x.id === id);
@@ -533,10 +562,12 @@ async function accSnapshot() {
   a.name = a.name || 'Аккаунт Google';
   // склеиваем дубликаты того же человека
   d.list = d.list.filter((x) => x === a || !(x.id === id || (known && (x.name === info.name || (info.photo && x.photo === info.photo))) || (known && x.name === 'Аккаунт Google' && !x.photo && x.cookies && accId(x.cookies) === id)));
-  d.active = a.id; accWrite(d); return pub(d);
+  d.active = a.id; accWrite(d); await flushSession(); return pub(d);
 }
-async function applyCookies(cs) {
+async function applyCookies(cs, epoch=sessionEpoch) {
   for (const c of cs || []) {
+    if(epoch!==sessionEpoch)return;
+    if(!liveCookie(c))continue;
     const host = c.domain.replace(/^\./, '');
     const o = { url: `https://${host}${c.path || '/'}`, path: c.path || '/', secure: !!c.secure, httpOnly: !!c.httpOnly, name: c.name, value: c.value };
     if (!c.hostOnly) o.domain = c.domain; if (c.expirationDate) o.expirationDate = c.expirationDate; if (c.sameSite && c.sameSite !== 'unspecified') o.sameSite = c.sameSite;
@@ -545,16 +576,17 @@ async function applyCookies(cs) {
 }
 async function accSwitch(id) {
   await accSnapshot().catch(() => {});
+  await sessionBoundary();
   const d = accRead(), a = d.list.find((x) => x.id === id); if (!a) throw new Error('Аккаунт не найден');
   await ses().clearStorageData({ storages: ['cookies'] });
   await applyCookies(a.cookies);
   if (!(await loggedIn()) || !(await accountInfo(true))) throw new Error('Вход в этот аккаунт устарел — войди заново');
-  d.active = a.id; a.used = Date.now(); accWrite(d); await writeCookieFile().catch(() => {});
+  d.active = a.id; a.used = Date.now(); accWrite(d); await writeCookieFile().catch(() => {}); await flushSession();
   return pub(d);
 }
 // «Добавить аккаунт»: текущий запоминаем и выходим, чтобы можно было войти в другой
 let accPrev = null;
-async function accAddNew() { await accSnapshot().catch(() => {}); accPrev = accRead().active; await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} const d = accRead(); d.active = null; accWrite(d); return pub(d); }
+async function accAddNew() { await accSnapshot().catch(() => {}); accPrev = accRead().active; await sessionBoundary(); await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} const d = accRead(); d.active = null; accWrite(d); return pub(d); }
 // 1.9.4: вход в новый аккаунт отменили — возвращаем прежний, а не оставляем человека разлогиненным
 async function accRestore() {
   if (await loggedIn()) { accPrev = null; return accSnapshot(); }
@@ -563,9 +595,9 @@ async function accRestore() {
 }
 async function accRemove(id) {
   const d = accRead(); const was = d.active === id; d.list = d.list.filter((x) => x.id !== id);
-  if (was) { d.active = null; await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} }
+  if (was) { await sessionBoundary(); d.active = null; await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} }
   accWrite(d); return pub(d);
 }
 async function accRename(id, name) { const d = accRead(), a = d.list.find((x) => x.id === id); if (a && name) { a.name = String(name).slice(0, 60); a.custom = true; accWrite(d); } return pub(d); }
 const accList = () => pub(accRead());
-module.exports = { importCdpCookies, accSnapshot, accSwitch, accAddNew, accRestore, accRemove, accRename, accList, findBrowsers, loginViaBrowser, cancelViaBrowser, login, loginFromBrowser, logout, loggedIn, accountInfo, libraryPlaylists, playlistTracks, cookieArgs, writeCookieFile, api, parseTracks };
+module.exports = { sessionRevision:()=>sessionEpoch, restoreSession, flushSession, importCdpCookies, accSnapshot, accSwitch, accAddNew, accRestore, accRemove, accRename, accList, findBrowsers, loginViaBrowser, cancelViaBrowser, login, loginFromBrowser, logout, loggedIn, accountInfo, libraryPlaylists, playlistTracks, cookieArgs, writeCookieFile, api, parseTracks };

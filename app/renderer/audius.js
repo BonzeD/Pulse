@@ -26,7 +26,7 @@
  E.play=function(){if(session){session.want=true;if(session.pending)return;}return basePlay();};
  E.pause=function(){if(session)session.want=false;return basePause();};
  E.load=function(t,autoplay,start=0){
-  cancel();sourceButton();
+  cancel();if(typeof beginAudioLoad==='function')beginAudioLoad(autoplay,start);sourceButton();
   const manual=mappings()[t.id], eligible=native(t)||(!off[t.id]&&!t.id.startsWith('local-')&&lib.mode!=='video'&&!fixOpen&&!hasTiming(t)&&(manual&&manual!=='current'||mode()!=='current'&&manual!=='current'));
   if(!eligible)return baseLoad.call(E,t,autoplay,start);
   if(!online())return baseLoad.call(E,t,autoplay,start);

@@ -1,0 +1,15 @@
+{
+  "electron": "44.10.1",
+  "version": "1.0.3",
+  "firstPartyFilesCompared": 250,
+  "resourcesCompared": 7,
+  "platform": "Windows x64",
+  "build": "DrumScene-EmbeddedFirst-AudioDiagnostics2",
+  "nativeWindowsExecution": false,
+  "liveYouTubeTested": false,
+  "unsigned": true,
+  "nativeMediaBridge": "cross-published from unchanged source with .NET 8.0.427",
+  "portablePayloadFilesCompared": 226,
+  "portableBytes": 201801466,
+  "portableSha256": "d4008a4aff7cc5ad46e89c76fb3366275353d32f83a2bc3d1a5158ec31403146"
+}

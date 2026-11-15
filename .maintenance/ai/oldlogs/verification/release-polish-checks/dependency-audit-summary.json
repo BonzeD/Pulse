@@ -1,0 +1,40 @@
+{
+  "before": {
+    "info": 0,
+    "low": 0,
+    "moderate": 16,
+    "high": 1,
+    "critical": 0,
+    "total": 17
+  },
+  "after": {
+    "info": 0,
+    "low": 0,
+    "moderate": 16,
+    "high": 0,
+    "critical": 0,
+    "total": 16
+  },
+  "electronBefore": "44.8.0",
+  "electronAfter": "44.10.1",
+  "remainingPackages": [
+    "@electron/asar",
+    "@electron/universal",
+    "app-builder-lib",
+    "dir-compare",
+    "dmg-builder",
+    "ejs",
+    "electron-builder",
+    "electron-builder-squirrel-windows",
+    "electron-winstaller",
+    "fast-uri",
+    "filelist",
+    "glob",
+    "jake",
+    "minimatch",
+    "rimraf",
+    "temp"
+  ],
+  "remainingFindingsResolved": false,
+  "forcedBuilderDowngradeApplied": false
+}

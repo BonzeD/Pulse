@@ -1,0 +1,292 @@
+{
+  "account.js": {
+    "sha256": "380c4ca6f348030beada9bde9501e6782e877d87c3e55acf288c53e00eb9ea28",
+    "originalSha256": "e3f2fc0e4e89583c8b2e2bb141e6f7edb7f8c80458785223115221e9e2d169dd",
+    "patches": [
+      {
+        "from": 13,
+        "to": 38,
+        "original": [
+          "async function loggedIn() { return (await ytCookies()).some((c) => /youtube\\.com/.test(c.domain) && (c.name === 'SAPISID' || c.name === '__Secure-3PAPISID')); }\n"
+        ]
+      },
+      {
+        "from": 275,
+        "to": 277,
+        "original": [
+          "  if (!info) { await dropSession(); return false; }\n",
+          "  await writeCookieFile(); return true;\n"
+        ]
+      },
+      {
+        "from": 425,
+        "to": 426,
+        "original": [
+          "async function logout() { await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} return true; }\n"
+        ]
+      },
+      {
+        "from": 438,
+        "to": 440,
+        "original": [
+          "  const r = await fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false${query}`, { method: 'POST', headers: await headers(), body: JSON.stringify({ ...body, context: { ...(body?.context || CTX), client: { ...(body?.context?.client || CTX.client), hl: catalogLocale.current().language } } }) });\n",
+          "  if (!r.ok) throw new Error(`YouTube Music API ${r.status}`);\n"
+        ]
+      },
+      {
+        "from": 504,
+        "to": 506,
+        "original": []
+      },
+      {
+        "from": 507,
+        "to": 508,
+        "original": []
+      },
+      {
+        "from": 509,
+        "to": 522,
+        "original": [
+          "  try { j = await api('account/account_menu', {}); } catch (e) {\n",
+          "    if (strict) return null;\n",
+          "    // нет сети — показываем последний известный настоящий аккаунт\n",
+          "    const d = accRead(), a = d.list.find((x) => x.id === d.active); return a ? { name: a.name, photo: a.photo || null } : null;\n",
+          "  }\n",
+          "  const s = JSON.stringify(j);\n",
+          "  const name = (s.match(/\"accountName\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"/) || [])[1];\n",
+          "  const photo = (s.match(/\"accountPhoto\":\\{\"thumbnails\":\\[\\{\"url\":\"([^\"]+)\"/) || [])[1] || null;\n",
+          "  if (!name && !/activeAccountHeaderRenderer/.test(s)) { await dropSession(); return null; } // cookies битые/неполные — чистим\n",
+          "  return { name: name || 'Аккаунт YouTube', photo };\n"
+        ]
+      },
+      {
+        "from": 523,
+        "to": 523,
+        "original": [
+          "\n"
+        ]
+      },
+      {
+        "from": 531,
+        "to": 532,
+        "original": [
+          "    (raw.list || []).forEach((a) => { if (a.enc && safeStorage.isEncryptionAvailable()) { try { a.cookies = JSON.parse(safeStorage.decryptString(Buffer.from(a.enc, 'base64'))); } catch { a.cookies = []; } } });\n"
+        ]
+      },
+      {
+        "from": 535,
+        "to": 535,
+        "original": [
+          "    if (list.length !== (raw.list || []).length) accWrite(d);\n"
+        ]
+      },
+      {
+        "from": 540,
+        "to": 541,
+        "original": [
+          "  const out = { active: d.active, list: d.list.map((a) => { const o = { id: a.id, name: a.name, photo: a.photo || null, added: a.added, used: a.used, custom: !!a.custom }; if (enc) o.enc = safeStorage.encryptString(JSON.stringify(a.cookies || [])).toString('base64'); else o.cookies = a.cookies || []; return o; }) };\n"
+        ]
+      },
+      {
+        "from": 546,
+        "to": 548,
+        "original": [
+          "async function accSnapshot() {\n"
+        ]
+      },
+      {
+        "from": 550,
+        "to": 552,
+        "original": [
+          "  const info = await accountInfo(true).catch(() => null);\n",
+          "  if (!info) return pub(accRead()); // YouTube не узнал вход — в список не добавляем\n"
+        ]
+      },
+      {
+        "from": 564,
+        "to": 565,
+        "original": [
+          "  d.active = a.id; accWrite(d); return pub(d);\n"
+        ]
+      },
+      {
+        "from": 566,
+        "to": 567,
+        "original": [
+          "async function applyCookies(cs) {\n"
+        ]
+      },
+      {
+        "from": 568,
+        "to": 570,
+        "original": []
+      },
+      {
+        "from": 578,
+        "to": 579,
+        "original": []
+      },
+      {
+        "from": 583,
+        "to": 584,
+        "original": [
+          "  d.active = a.id; a.used = Date.now(); accWrite(d); await writeCookieFile().catch(() => {});\n"
+        ]
+      },
+      {
+        "from": 588,
+        "to": 589,
+        "original": [
+          "async function accAddNew() { await accSnapshot().catch(() => {}); accPrev = accRead().active; await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} const d = accRead(); d.active = null; accWrite(d); return pub(d); }\n"
+        ]
+      },
+      {
+        "from": 597,
+        "to": 598,
+        "original": [
+          "  if (was) { d.active = null; await ses().clearStorageData(); try { fs.unlinkSync(cookieFile()); } catch {} }\n"
+        ]
+      },
+      {
+        "from": 602,
+        "to": 603,
+        "original": [
+          "module.exports = { importCdpCookies, accSnapshot, accSwitch, accAddNew, accRestore, accRemove, accRename, accList, findBrowsers, loginViaBrowser, cancelViaBrowser, login, loginFromBrowser, logout, loggedIn, accountInfo, libraryPlaylists, playlistTracks, cookieArgs, writeCookieFile, api, parseTracks };\n"
+        ]
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "92a8376a7037e72de6558db48def7d08f4007deaa7ecd03016ebbae4054fa436",
+    "originalSha256": "2fa0e5d594b04adc05a679176dc19508d3da0eb3bc812dbc6a0c8d38ffdf7c87",
+    "patches": [
+      {
+        "from": 354,
+        "to": 355,
+        "original": [
+          "  acc.loggedIn().then((ok) => ok && acc.writeCookieFile()).catch(() => {});\n"
+        ]
+      },
+      {
+        "from": 375,
+        "to": 376,
+        "original": [
+          "app.on('before-quit', () => { quitting = true; mediaBridge?.destroy(); try { svc.flush(); } catch {} if (wcfgSaveT && !resetting) { clearTimeout(wcfgSaveT); wcfgSaveT = null; const st = readStore(); st.widgetCfg = wcfg; writeStore(st); } try { discord.destroy(); } catch {} try { wallpaper.destroy(); } catch {} });\n"
+        ]
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "a8c26bc4e8f4d6c18c78d8d0aaf2bc4b4434a97ea4f17b10a2954bf40b63b405",
+    "originalSha256": "7dfa5d7d32467b76ec3caf9eb3e1abb3e7cbc5a5d917ee9c806b37cbb48a0526",
+    "patches": [
+      {
+        "from": 227,
+        "to": 228,
+        "original": [
+          "function loadStreams() { if (sLoaded) return; sLoaded = true; try { const o = JSON.parse(fs.readFileSync(streamsFile(), 'utf8')), now = Date.now(); for (const k of Object.keys(o).slice(-200)) if (streamId(k) && o[k]?.url && o[k].verified === 2 && o[k].exp > now + 300e3 && !streams[k]) streams[k] = o[k]; } catch {} }\n"
+        ]
+      },
+      {
+        "from": 254,
+        "to": 269,
+        "original": []
+      },
+      {
+        "from": 274,
+        "to": 275,
+        "original": [
+          "    response = await fetch(url, {headers:{'User-Agent':ua || UA, Range:'bytes=0-0'}, signal:signal ? AbortSignal.any([signal,timeout]) : timeout});\n"
+        ]
+      },
+      {
+        "from": 295,
+        "to": 296,
+        "original": [
+          "  const j = await r.json();apiEnd({outcome:'ok',status:r.status,playability:j.playabilityStatus?.status,formats:j.streamingData?.adaptiveFormats?.length});\n"
+        ]
+      },
+      {
+        "from": 306,
+        "to": 307,
+        "original": [
+          "  return { url: f.url, exp, ua: C.ua, ci, verified: 2 };\n"
+        ]
+      },
+      {
+        "from": 309,
+        "to": 310,
+        "original": [
+          "  const bad = clientBad[id] || new Set();\n",
+          "  if (bad.size >= CLIENTS.length) { bad.clear(); delete clientBad[id]; }\n",
+          "  if (CLIENTS.every((_, ci) => Date.now() < clientDown[ci])) clientDown.fill(0);\n"
+        ]
+      },
+      {
+        "from": 363,
+        "to": 365,
+        "original": [
+          "  const p = fastResolve(id).then(async r => {\n"
+        ]
+      },
+      {
+        "from": 368,
+        "to": 369,
+        "original": [
+          "    return {...backup, verified:2};\n"
+        ]
+      },
+      {
+        "from": 381,
+        "to": 382,
+        "original": [
+          "  let range = req.headers.range || 'bytes=0-';\n",
+          "  const m = range.match(/^bytes=(\\d+)-(\\d*)$/);\n",
+          "  if (m && !m[2]) range = `bytes=${m[1]}-${+m[1] + 10 * 1024 * 1024 - 1}`;\n",
+          "  h.Range = range;\n"
+        ]
+      },
+      {
+        "from": 386,
+        "to": 387,
+        "original": [
+          "  const streamEnd=audioTrace.begin('stream',{id,source:'yt'});res.once('finish',()=>streamEnd({outcome:'ok',status:res.statusCode}));res.once('close',()=>streamEnd({outcome:res.writableFinished?'ok':'cancelled',status:res.statusCode}));\n"
+        ]
+      },
+      {
+        "from": 392,
+        "to": 393,
+        "original": [
+          "    for (let attempt=0;attempt<2;attempt++) {\n"
+        ]
+      },
+      {
+        "from": 398,
+        "to": 399,
+        "original": [
+          "      catch (e) {headersEnd({outcome:closed()?'cancelled':'error'}); if(closed())return; if(attempt)throw e; }\n"
+        ]
+      },
+      {
+        "from": 403,
+        "to": 404,
+        "original": [
+          "      if (rejected && entry?.ci != null) (clientBad[id] ||= new Set()).add(entry.ci);\n"
+        ]
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "21111bf986a7e317ca265145a3f68c66fc4fec3efd3a28acf9cd75d7266b46d5",
+    "originalSha256": "3c03dc035f1a2fdca21e768ab40b86fac2ba44bc7237410694ffa5d0fdf0e1dd",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs\",\n"
+        ]
+      }
+    ]
+  }
+}

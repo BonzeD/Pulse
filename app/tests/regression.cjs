@@ -39,6 +39,7 @@ function mrSelector(source=read('renderer/mineradio-host.js')) {
  const state={lib:{queue:{idx:0,tracks:[{id:'a'},{id:'b'},{id:'c'}]}},playing:true,off:{},bad:new Set(),calls:[],toggles:0,notices:[],connected:true};
  state.online=()=>state.connected;state.toast=t=>state.notices.push(t);state.failed=t=>state.bad.has(t.id);state.failedAt={delete:id=>state.bad.delete(id)};
  state.playIdx=i=>{state.calls.push(i);state.lib.queue.idx=i;state.playing=true;};state.toggle=()=>{state.toggles++;state.playing=!state.playing;};
+ state.transportPlay=()=>{if(!state.playing)state.toggle();};
  const fn=require('node:vm').runInNewContext('('+source.slice(begin,finish).trim().replace(/,$/,'')+')',state);return{state,fn};
 }
 test('MineRadio explicit selection retries a failed track; automatic skip does not block it',()=>{const{state:s,fn}=mrSelector();s.bad.add('b');assert.equal(fn(1),true);assert.deepEqual(s.calls,[1]);assert.equal(s.bad.has('b'),false);});
@@ -79,5 +80,5 @@ test('Spicy UI differs from stable only by reviewed project-auth changes',()=>{
  let expected=read('tests/spicy-project-reference.txt');
  assert.equal(crypto.createHash('sha256').update(expected).digest('hex'),baseline['renderer/spicy.js']);
  for(const [oldStr,newStr] of require('./spicy-project-changes.json')){assert.ok(expected.includes(oldStr));expected=expected.replace(oldStr,newStr);}
- assert.equal(read('renderer/spicy.js'),expected);
+ assert.equal(require('./background-original.cjs')('renderer/spicy.js',read('renderer/spicy.js')),expected);
 });

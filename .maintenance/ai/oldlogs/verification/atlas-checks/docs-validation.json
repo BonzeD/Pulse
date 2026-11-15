@@ -1,0 +1,39 @@
+{
+  "currentLinksChecked": 16,
+  "Logs": "release notes only",
+  "technicalReportsMovedWithoutByteChanges": [
+    {
+      "from": "Logs/Audio-Diagnostics2.md",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/Audio-Diagnostics2.md",
+      "sha256": "ec30292e24e2bef3103968ed9560c2d3b0d0dd8380c52ee672e16f25ef8ae57f"
+    },
+    {
+      "from": "Logs/Audio-EmbeddedFirst.md",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/Audio-EmbeddedFirst.md",
+      "sha256": "422fcc75e6acbf6a28da541d3570e81c761c904581cca417c9c26ee92a5507f9"
+    },
+    {
+      "from": "Logs/Audio-ReliabilityFix.md",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/Audio-ReliabilityFix.md",
+      "sha256": "af449d3b64950b64bd20a005aa1f39bbfa24900ac003e53e66ffb41669048875"
+    },
+    {
+      "from": "Logs/Audio-StartupFix.md",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/Audio-StartupFix.md",
+      "sha256": "f1198e0224fb307c289002d5c0b27df4446c4e67af1840275b9837aaa5cf6596"
+    },
+    {
+      "from": "Logs/EmbeddedFirst-validation.json",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/EmbeddedFirst-validation.json",
+      "sha256": "02d89d22ae767bccdb129005d33d6907b75a01207e14a744a7239af5b7cbe672"
+    },
+    {
+      "from": "Logs/ReliabilityFix-validation.txt",
+      "to": ".maintenance/ai/oldlogs/verification/audio-history/ReliabilityFix-validation.txt",
+      "sha256": "ff16032a81ac5e13dc6c47bdee4cd7773140b69bbfa158648d52856147771987"
+    }
+  ],
+  "previousAgentGuidancePreserved": true,
+  "rootAGENTSRecreated": false,
+  "duplicateMisspelledArchiveCreated": false
+}

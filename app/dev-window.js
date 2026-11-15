@@ -1,12 +1,15 @@
 'use strict';
 /* Dedicated, sandboxed developer companion. It never receives the app preload. */
-module.exports=function createDeveloper({app,BrowserWindow,ipcMain,clipboard,path,safety,getMain,getPort}){
+module.exports=function createDeveloper({app,BrowserWindow,ipcMain,clipboard,dialog,path,safety,getMain,getPort}){
+ const trace=require('./audio-diagnostics');
+ const unsubscribe=trace.subscribe(state=>{const w=getMain();if(w&&!w.isDestroyed())w.webContents.send('audio:trace-state',state);});
+ const rendererStages=new Set(['capture','load','load-switch','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','fallback','engine-policy']);
  let win=null,pending=new Map(),sequence=0;
  const commands=new Set(['snapshot','checks','frames','cancelFrames','outlines','guides','inspect','setup','prism','settings']);
  function valid(e,w,url){return !!w&&!w.isDestroyed()&&e.sender===w.webContents&&e.senderFrame===w.webContents.mainFrame&&e.senderFrame.url===url;}
  const url=()=>`http://127.0.0.1:${getPort()}/dev.html`;
  function main(e){const w=getMain();return !!w&&!w.isDestroyed()&&e.sender===w.webContents&&e.senderFrame===w.webContents.mainFrame&&safety.appURL(e.senderFrame.url,getPort())&&new URL(e.senderFrame.url).pathname==='/index.html';}
- function clear(){for(const [,p]of pending){clearTimeout(p.timer);p.resolve({error:'disconnected'});}pending.clear();const w=getMain();if(w&&!w.isDestroyed())w.webContents.send('dev:closed');}
+ function clear(){trace.stop();for(const [,p]of pending){clearTimeout(p.timer);p.resolve({error:'disconnected'});}pending.clear();const w=getMain();if(w&&!w.isDestroyed())w.webContents.send('dev:closed');}
  function open(){
   const parent=getMain();if(!parent||parent.isDestroyed())return false;
   if(win&&!win.isDestroyed()){win.show();win.focus();return true;}
@@ -16,10 +19,18 @@ module.exports=function createDeveloper({app,BrowserWindow,ipcMain,clipboard,pat
   win.webContents.on('render-process-gone',clear);
   parent.once('closed',parentClosed);win.loadURL(url());return true;
  }
+ ipcMain.handle('audio:state',e=>{if(!main(e))throw Error('Untrusted audio observer');return trace.state();});
+ ipcMain.on('audio:trace',(e,m)=>{if(main(e)&&rendererStages.has(m?.stage))trace.event(m.stage,m.data);});
  ipcMain.handle('dev:open',e=>{if(!main(e))throw Error('Untrusted developer opener');return open();});
  ipcMain.handle('dev:request',async(e,action)=>{
   if(!valid(e,win,url()))throw Error('Untrusted developer window');
   const w=getMain();if(!w||w.isDestroyed())return {error:'disconnected'};
+  if(action==='audioStart')return trace.start();
+  if(action==='audioStop')return trace.stop();
+  if(action==='audioClear')return trace.clear();
+  if(action==='audioRead')return trace.read();
+  if(action==='audioCopy'){try{clipboard.writeText(JSON.stringify(trace.read()));return {ok:true};}catch{return {error:'clipboard-unavailable'};}}
+  if(action==='audioSave'){if(!dialog)return {error:'unavailable'};const json=JSON.stringify(trace.read(),null,2);const result=await dialog.showSaveDialog(win,{title:'Save audio log',defaultPath:'Pulse-1.0.3-audio-log.json',filters:[{name:'JSON',extensions:['json']}]});if(result.canceled||!result.filePath)return {cancelled:true};try{await require('fs').promises.writeFile(result.filePath,json,'utf8');return {ok:true};}catch{return {error:'save-failed'};}}
   if(action==='runtime')return {version:app.getVersion(),electron:process.versions.electron,chromium:process.versions.chrome,node:process.versions.node,platform:process.platform,gpu:app.getGPUFeatureStatus(),processes:app.getAppMetrics().map(p=>({type:p.type,cpuPercent:p.cpu.percentCPUUsage,memoryKB:p.memory?.workingSetSize||0}))};
   if(action==='devtools'){w.webContents.openDevTools({mode:'detach',activate:true});return {ok:true};}
   if(action==='screenshot'){const image=await w.webContents.capturePage();clipboard.writeImage(image);return {ok:true,width:image.getSize().width,height:image.getSize().height};}
@@ -32,6 +43,6 @@ module.exports=function createDeveloper({app,BrowserWindow,ipcMain,clipboard,pat
  ipcMain.on('dev:inspect',(e,point)=>{if(!main(e)||!win||win.isDestroyed()||!Number.isFinite(point?.x)||!Number.isFinite(point?.y))return;const w=getMain(),size=w.getContentSize();w.webContents.inspectElement(Math.round(Math.max(0,Math.min(size[0],point.x))),Math.round(Math.max(0,Math.min(size[1],point.y))));});
  ipcMain.handle('dev:copy',(e,text)=>{if(!valid(e,win,url())||typeof text!=='string'||text.length>65536)return false;clipboard.writeText(text);return true;});
  ipcMain.on('dev:close',e=>{if(valid(e,win,url()))win.close();});
- app.on('before-quit',()=>{clear();if(win&&!win.isDestroyed())win.destroy();});
+ app.on('before-quit',()=>{clear();unsubscribe();if(win&&!win.isDestroyed())win.destroy();});
  return {open};
 };

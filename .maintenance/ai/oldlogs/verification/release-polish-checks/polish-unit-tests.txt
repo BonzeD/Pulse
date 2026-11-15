@@ -1,0 +1,20 @@
+✔ repeated BUFFERING cannot postpone the original fallback deadline forever (7.197716ms)
+✔ native iframe PAUSED cancels its buffer watchdog and loading indicator (5.11866ms)
+✔ late PLAYING after app pause is neither started nor recorded as accepted playback (3.262784ms)
+✔ failed paused direct resolution can be retried by explicit E.play (4.813102ms)
+✔ system PAUSE during pending iframe mapping prevents eventual autoplay (4.366098ms)
+✔ system PLAY is idempotent during pending iframe mapping (3.893158ms)
+✔ system pause during fallback prevents delayed stream start; play does not toggle pending intent (5.079214ms)
+✔ an intermediate CUED state must not disable a requested autoplay deadline (2.973059ms)
+✔ pause clears deadline identity; play creates a fresh bounded attempt (3.393915ms)
+✔ native command IPC pause works while iframe and direct resolver are still pending (4.761001ms)
+✔ negative control: delivered EmbeddedFirst has watchdog reset and pending system pause bugs (15.095742ms)
+✔ release polish has an exact reversible control and keeps version 1.0.3 (9.623617ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 183.726829

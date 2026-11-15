@@ -13,7 +13,7 @@ for(const name of ['main.js','renderer','build','native','resources','tests','to
 const workflow=read('.github/workflows/build.yml');assert.match(workflow,/working-directory: app/);assert.match(workflow,/cache-dependency-path: app\/package-lock\.json/);assert.match(workflow,/path: app\/dist\/\*\.exe/);
 assert.match(read('.gitignore'),/app\/build\/installer-ui\/out\//);assert.match(read('.gitignore'),/!app\/resources\/media-bridge\/\.gitkeep/);
 assert.equal(read('LICENSE'),read('app/LICENSE'));
-for(const name of ['README.md','Logs/1.0.2.md','.maintenance/ai/oldlogs/REPOSITORY-LAYOUT.md','.maintenance/ai/oldlogs/development/FOR AI.md'])assert.ok(read(name).length>100,name);
+for(const name of ['README.md','Logs/1.0.3.md','.maintenance/ai/oldlogs/REPOSITORY-LAYOUT.md','.maintenance/ai/oldlogs/development/FOR AI.md'])assert.ok(read(name).length>100,name);
 const map=JSON.parse(read('.maintenance/ai/oldlogs/manifests/REORGANIZATION-MAP.json'));
 assert.ok(!fs.existsSync(path.join(root,'AGENTS.md')));assert.ok(!fs.existsSync(path.join(root,'docs')));
 for(const f of map.files){

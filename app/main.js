@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const safety = require('./core-safety');
+const audioTrace=require('./audio-diagnostics');
 const catalogLocale = require('./catalog-locale');
 const nativeDialogs=require('./native-dialogs').create(require('electron').dialog,()=>readStore().library?.settings?.app?.language||'en');
 const spicyProject = require('./spicy-project');
@@ -269,7 +270,7 @@ function createWidget() {
   widget.webContents.on('did-start-loading', () => { if (widget === createdWidget) widgetReady = false; });
   widget.loadURL(`http://widget.localhost:${port}/widget.html`);
   widget.webContents.on('did-finish-load', () => { applyWidgetCfg.zf = Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100)); try { widget.webContents.setZoomFactor(Math.max(0.7, Math.min(1.5, (+wcfg.scale || 100) / 100))); } catch {} widget.webContents.send('wcfg', wcfg); lastState && widget.webContents.send('state', lastState); lastLyrics && widget.webContents.send('lyrics', lastLyrics); widgetReady = true; if (widgetWanted) showWidget(); widget.webContents.send('widget-visible', widget.isVisible()); });
-  for (const event of ['show','hide']) widget.on(event, () => { if (widget && !widget.isDestroyed()) widget.webContents.send('widget-visible', event === 'show'); });
+  for (const event of ['show','hide']) widget.on(event, () => { if (widget && !widget.isDestroyed()) {if(event==='show'){lastState&&widget.webContents.send('state',lastState);lastLyrics&&widget.webContents.send('lyrics',lastLyrics);}widget.webContents.send('widget-visible', event === 'show'); if(win && !win.isDestroyed()) win.webContents.send('widget-visible', event === 'show');} });
   widget.on('moved', () => { const [x, y] = widget.getPosition(); const st = readStore(); st.widgetPos = { x, y }; writeStore(st); });
   widget.on('close', (e) => { if (!quitting) { e.preventDefault(); hideWidget(); } });
   // 2.0.4: при выходе виджет закрывается раньше главного окна — обнуляем ссылку, чтобы события/IPC не трогали уничтоженное окно
@@ -351,7 +352,7 @@ app.whenReady().then(async () => {
   wallpaper.setup({ port, preload: path.join(__dirname, 'preload.js') });
   discord.onStatus((st) => { try { win && win.webContents.send('discord:status', st); } catch {} });
   setTimeout(() => trimImgCache(), 15000);
-  acc.loggedIn().then((ok) => ok && acc.writeCookieFile()).catch(() => {});
+  await acc.restoreSession().catch(e=>console.warn('[account] Local session restore deferred:',e?.name||'Error'));
   createMain();
   createWidget();
   createTray();
@@ -372,7 +373,7 @@ app.whenReady().then(async () => {
   globalShortcut.register('Control+Alt+W', toggleWidget);
 }).catch(e => { nativeDialogs.showErrorBox('Pulse — запуск', String(e.message || e)); app.quit(); });
 
-app.on('before-quit', () => { quitting = true; mediaBridge?.destroy(); try { svc.flush(); } catch {} if (wcfgSaveT && !resetting) { clearTimeout(wcfgSaveT); wcfgSaveT = null; const st = readStore(); st.widgetCfg = wcfg; writeStore(st); } try { discord.destroy(); } catch {} try { wallpaper.destroy(); } catch {} });
+app.on('before-quit', () => { quitting = true; off.resetStreamPolicy(); acc.flushSession().catch(()=>{}); mediaBridge?.destroy(); try { svc.flush(); } catch {} if (wcfgSaveT && !resetting) { clearTimeout(wcfgSaveT); wcfgSaveT = null; const st = readStore(); st.widgetCfg = wcfg; writeStore(st); } try { discord.destroy(); } catch {} try { wallpaper.destroy(); } catch {} });
 app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('window-all-closed', () => {});
 
@@ -444,8 +445,21 @@ ipcOn('dl:start', (_e, items) => items.forEach(async (it) => {
 }));
 ipcOn('dl:cancel', (_e, id) => { const v = vidOf(id); if (v) off.cancel(v); else win && win.webContents.send('dl', { id, status: 'none' }); });
 ipcHandle('dl:remove', async (_e, id) => { if(typeof id==='string'&&id.startsWith('local-')){await media().remove(id);return true;} const v = vidOf(id); if (v) { off.cancel(v); off.remove(v); } return true; });
-ipcHandle('yt:prefetch', async (_e, id) => { try { if (isAudius(id)) return null; return off.prefetch(svc.isSvc(id) ? await svc.ytFor(id) : id); } catch { return null; } });
-ipcHandle('yt:resolve', async (_e, id) => { try { if (isAudius(id)) return { ok: !!(await audius.getTrack(id)), source: 'ad' }; const v = svc.isSvc(id) ? await svc.ytFor(id) : id; await off.resolveStream(v); return { ok: true, vid: v }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });
+// Embedded-first: hover/next requests must never start a workaround resolver.
+ipcHandle('yt:prefetch', async (_e,id,next)=>{if(next===true&&id===null)return off.prefetch(null,true);return false;});
+ipcHandle('yt:map',async(_e,id)=>{
+ const source=String(id).startsWith('am:')?'am':String(id).startsWith('sp:')?'sp':'yt',end=audioTrace.begin('mapping',{id,source,engine:'embedded'});
+ try{if(typeof id!=='string'||id.length>256||isAudius(id))throw Error('Invalid YouTube mapping');const vid=svc.isSvc(id)?await svc.ytFor(id):id;
+  if(!/^[-_a-zA-Z0-9]{11}$/.test(vid))throw Error('Invalid YouTube ID');audioTrace.alias(id,vid);end({outcome:'ok'});return {ok:true,vid};
+ }catch{end({outcome:'error'});return {ok:false};}
+});
+ipcHandle('yt:resolve', async (_e, id) => {
+ const source=isAudius(id)?'ad':String(id).startsWith('am:')?'am':String(id).startsWith('sp:')?'sp':'yt';
+ const end=audioTrace.begin('mapping',{id,source});
+ try { if (isAudius(id)){const result={ok:!!(await audius.getTrack(id)),source:'ad'};end({outcome:result.ok?'ok':'error'});return result;}
+ const v=svc.isSvc(id)?await svc.ytFor(id):id;audioTrace.alias(id,v);end({outcome:'ok'});await off.resolveStream(v);return {ok:true,vid:v};
+ }catch(e){end({outcome:'error'});return {ok:false,error:String(e.message||e)};}
+});
 ipcHandle('yt:search', async (_e, q) => { try { return await yt.search(q); } catch (e) { console.error(e); return null; } });
 ipcHandle('yt:mix', async (_e, v, list) => { try { return await yt.fetchMix(v, list); } catch (e) { console.error(e); return null; } });
 ipcHandle('yt:video', (_e, id) => yt.videoInfo(id));
@@ -644,10 +658,11 @@ ipcOn('state', (_e, st) => {
   lastState = st;
   if (quitting) return;
   mediaBridge?.update(st);
-  if (widget && !widget.isDestroyed()) widget.webContents.send('state', st);
-  if (tray && st.title) tray.setToolTip(`Pulse — ${st.title}`.slice(0, 120));
+  if (widget && !widget.isDestroyed() && widget.isVisible()) widget.webContents.send('state', st);
+  if (tray && st.title) {const tip=`Pulse — ${st.title}`.slice(0,120);if(tray.__pulseTip!==tip){tray.__pulseTip=tip;tray.setToolTip(tip);}}
 });
-ipcOn('lyrics', (_e, l) => { lastLyrics = l; if (!quitting && widget && !widget.isDestroyed()) widget.webContents.send('lyrics', l); });
+ipcOn('lyrics', (_e, l) => { lastLyrics = l; if (!quitting && widget && !widget.isDestroyed() && widget.isVisible()) widget.webContents.send('lyrics', l); });
+ipcOn('widget:spectrum', (_e, bands) => { if (!Array.isArray(bands) || bands.length !== 4 || bands.some(x => !Number.isFinite(x))) return; if(widget && !widget.isDestroyed() && widget.isVisible()) widget.webContents.send('widget:spectrum', bands.map(x=>Math.max(0,Math.min(1,x)))); });
 ipcOn('cmd', (_e, name, arg) => cmd(name, arg));
 ipcOn('win', (_e, action) => {
   if (!win || win.isDestroyed()) return;
@@ -677,4 +692,4 @@ ipcHandle('visualizer:tap', (event, options) => require('./visualizer-tap').conf
 require('./native-locale')({ app, ipcMain, Menu, getTray: () => tray, readStore });
 
 // Isolated developer companion; only the exact main frame may open it.
-require('./dev-window')({app,BrowserWindow,ipcMain,clipboard,path,safety,getMain:()=>win,getPort:()=>port});
+require('./dev-window')({app,BrowserWindow,ipcMain,clipboard,dialog:require('electron').dialog,path,safety,getMain:()=>win,getPort:()=>port});

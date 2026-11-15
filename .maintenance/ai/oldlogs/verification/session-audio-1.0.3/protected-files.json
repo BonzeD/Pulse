@@ -1,0 +1,86 @@
+[
+  {
+    "file": "build/installer.nsi",
+    "sha256": "8d9a885d0646228c77e0d739e6f8d162b52c5e98ed01810b7dc88a7c698fee30"
+  },
+  {
+    "file": "build/installer-ui/design.html",
+    "sha256": "f663dc36c5ea97cf8bc8e584a9835fdafa99d1bcfb22d8af0a7841443fc591e6"
+  },
+  {
+    "file": "build/installer-ui/gen.js",
+    "sha256": "ff8f641f36692aede9db314ecdaab7ac6477bd6f301bfddb56d5987ca8040b0d"
+  },
+  {
+    "file": "build/make-setup.sh",
+    "sha256": "dfebb59c730c2b88cba17fde1026db687786c015fde6e6f7ab33830fce1ed4eb"
+  },
+  {
+    "file": "build/afterPack.js",
+    "sha256": "1d8a5d8dbb8cbe2362007f21419ac3cac7659d810adde92e906a178abbef70b5"
+  },
+  {
+    "file": "tests/audio-engine-approved.json",
+    "sha256": "1918dfd1d73bce8fc846cded66cd0d42008ba7ee8bf27667e295c3192566dd6b"
+  },
+  {
+    "file": "tests/audius-approved.json",
+    "sha256": "6ef8df624e3da008d0bf6d28946520d75df9b8492bd115326fa83d93a78ef71b"
+  },
+  {
+    "file": "tests/background-approved.json",
+    "sha256": "a41e9fecf9eb28a074f11c67a56d95a81a42799415294a6c036de15347fdd0e1"
+  },
+  {
+    "file": "tests/canvas-perf-approved.json",
+    "sha256": "c37dfd4ece50f60cba1a7efd1fbf0fcf0814a423da0f98b8be2ba0c82be82ae8"
+  },
+  {
+    "file": "tests/developer-experience-approved.json",
+    "sha256": "b4d9fd8bf10b114fee87810bfc6cd39c711bc8422736934c959e5329051d0c68"
+  },
+  {
+    "file": "tests/direct-stream-approved.json",
+    "sha256": "6889c254d637381998a3daf761ff377356edfd4c8a438c29751127b77f0b4d8a"
+  },
+  {
+    "file": "tests/final-approved.json",
+    "sha256": "3a6230350dcdb0cf23938abb6b2b20b952c91a98dd07f51d2d8437ec58642b3f"
+  },
+  {
+    "file": "tests/graphics-102-approved.json",
+    "sha256": "ccf7cfb95859c28ccf4870deb55226c66277413f1c143858223ca70fc6916f99"
+  },
+  {
+    "file": "tests/lyric-ending-approved.json",
+    "sha256": "7e38cc2f0c149122fae61721e2cd834233512e4c227938852392322cc06f5987"
+  },
+  {
+    "file": "tests/lyric-silence-approved.json",
+    "sha256": "4dab77d42395628ab98b5e620c786e30d3b18d909d1d49013ad8e2d48c9235f4"
+  },
+  {
+    "file": "tests/lyric-studio-approved.json",
+    "sha256": "b5a05b03d5c84e1fabe0f74721817fcf8641a2257f8449a923b0d08de708b8eb"
+  },
+  {
+    "file": "tests/lyrics-provider-approved.json",
+    "sha256": "48c7bfb686fff33d0773f99ec65c7b744e0f4fa05e2c8431b1fcb795f8aba9ea"
+  },
+  {
+    "file": "tests/prism-live-approved.json",
+    "sha256": "0a5459f5d6d3a43372fc08fb1b72617046bb5a529abcbe76b2bce1ca280a0d60"
+  },
+  {
+    "file": "tests/release-101-approved.json",
+    "sha256": "7b8f15cf5c5846c96a5b8b3792b00915e7ba5b0a6e7294ecbd8494b10b5fd8b4"
+  },
+  {
+    "file": "tests/setup-debug-approved.json",
+    "sha256": "7bff3041261a3bd7bb4d9026fa73e4abcce23fe9786bcb70e8ff5d8adb848fb4"
+  },
+  {
+    "file": "tests/visual-performance-approved.json",
+    "sha256": "f047559bbc648048f581603f059a15df6c46a63b08eb2ce0c25c627c486186f3"
+  }
+]

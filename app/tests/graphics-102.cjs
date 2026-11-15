@@ -6,7 +6,7 @@ test('preview resources are released after their canvas is removed or replaced',
  let releases=0;const live={},replacement={},nodes={live,replaced:replacement},instances={live:{cv:live,v:{destroy(){throw Error('live preview destroyed');}}},gone:{cv:{},v:{destroy(){releases++;}}},replaced:{cv:{},v:{destroy(){releases++;}}}};
  const ctx={document:{getElementById:id=>nodes[id]||null},pvInst:instances};vm.runInNewContext(body+';pvCleanup();pvCleanup();',ctx);
  assert.equal(releases,2);assert.deepEqual(Object.keys(instances),['live']);
- assert.match(source,/function extFrame\([^)]*\)\s*\{\s*pvCleanup\(\);/);
+ assert.match(source,/function extFrame\([^)]*\)\s*\{\s*if\(!hidden\)pvCleanup\(\);/);
 });
 test('1.0.2 graphics deltas reverse exactly to reviewed historical inputs',()=>{
  const inverse=require('./graphics-102-original.cjs'),manifest=require('./graphics-102-approved.json');

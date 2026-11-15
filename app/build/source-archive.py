@@ -17,7 +17,9 @@ for base, dirs, names in os.walk(root):
         if rel==Path('.maintenance/ai/oldlogs/manifests/SOURCE-MANIFEST-organized-SHA256.txt'):continue
         if rel.as_posix().startswith('app/build/installer-ui/out/'):continue
         if rel==Path('app/build/uninstall-files.nsh') or name.startswith('.env'):continue
-        if p.resolve()==out or p.suffix in {'.log','.pdb','.pyc'}:continue
+        # Retain the four historical, sanitized startup-fix reports shipped in the baseline.
+        historical_log = rel.parent==Path('app/tests/results/startup-fix') and name in {'renderer-ui.log','stream-ui.log','structure.log','unit-tests.log'}
+        if p.resolve()==out or p.suffix in {'.pdb','.pyc'} or (p.suffix=='.log' and not historical_log):continue
         if rel.parts[:3]==('app','resources','media-bridge') and p.suffix in {'.exe','.dll','.json'}:continue
         files.append((p,rel))
 required=Path('app/resources/yt-dlp/_internal/base_library.zip')

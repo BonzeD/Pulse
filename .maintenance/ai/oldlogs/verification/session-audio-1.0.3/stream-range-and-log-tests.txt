@@ -1,0 +1,34 @@
+✔ negative control reproduces delivered regression: fastest two metadata URLs fail despite a playable third client (170.644297ms)
+✔ direct proxy reaches playable third client, forwards actual WAV bytes and reuses validated cache (756.281551ms)
+✔ HTTP 200 HTML and empty audio bodies are not accepted as playable audio (717.286404ms)
+✔ all-denied candidates never become a successful resolution or cached URL (722.978484ms)
+✔ a slow media probe does not block a healthy alternate and its request is canceled (425.416083ms)
+✔ persisted unverified links from the broken release are ignored without touching other user data (721.103779ms)
+✔ a link rejected after its successful probe recovers through another verified client (48.465846ms)
+✔ current direct-stream edits preserve every exact previous baseline (9.841536ms)
+✔ previous account code loses session-only cookies across a cold restart (11.826043ms)
+✔ cold startup restores encrypted active snapshot before account request, without browser or network (7.182276ms)
+✔ existing rotated auth cookies are not overwritten by stale snapshot (2.77749ms)
+✔ expired saved credentials cannot resurrect a session (2.175919ms)
+✔ explicit logout clears saved active pointer and survives next cold start (5.728485ms)
+✔ unexpected account menu never deletes valid cookies; strict verification remains strict (3.302533ms)
+✔ transient network failure retains cached identity, explicit HTTP denial does not claim verified login (3.130219ms)
+✔ verified login snapshots and flushes immediately, not only when manager opens (3.785324ms)
+✔ late account response cannot reactivate an explicitly logged-out session (5.055897ms)
+✔ concurrent local restore and logout end with no auth cookies and no active snapshot (7.465761ms)
+✔ failed decryption on a read never rewrites encrypted snapshot (8.579651ms)
+✔ previous one-byte check accepts a URL which rejects actual playback range (238.382556ms)
+✔ normal-sized probe rejects one-byte-only URLs and reaches playable third candidate (810.46498ms)
+✔ two real upstream rejections reach backup within the same HTTP request (51.762375ms)
+✔ unsuccessful proxy response is logged as error, never a successful 502 (733.21757ms)
+✔ explicit finite playback ranges are forwarded unchanged with exact bytes (26.114645ms)
+✔ anonymous LOGIN_REQUIRED response is labeled denied without claiming account logout (364.764384ms)
+✔ all changes invert exactly to the delivered AudioBackground source (5.989725ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6135.109299

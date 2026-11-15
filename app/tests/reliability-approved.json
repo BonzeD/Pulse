@@ -1,0 +1,210 @@
+{
+  "audio-diagnostics.js": {
+    "sha256": "985c8406ddabd23a15aee50247c7203ed852d396c9ee9fffcdd9a2682180d092",
+    "originalSha256": "b42cdd4308aab512405d54ff09d8352d260bc53c3b2392f91e86cdde89d1f987",
+    "patches": [
+      {
+        "from": 3,
+        "to": 4,
+        "original": [
+          "const STAGES=new Set(['mapping','capture','load','load-switch','play','pause','seek','metadata','data','canplay','playing','waiting','stalled','seeking','seeked','ended','media-error','resolve','cache','player-api','probe','backup','backup-queue','backup-runtime','backup-health','backup-download','backup-process','backup-spawned','backup-output','backup-url','client-policy','resolve-path','resolve-shared','prefetch-policy','stream','upstream','first-byte','fallback']);\n"
+        ]
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "original": [
+          "const REASONS=new Set(['eligible','track-rejected','policy-cooldown','network-cooldown','no-candidates','direct-start','backup-start','winner-direct','winner-backup','repeated-upstream-rejection','foreground-priority','aborted','consumer-closed','runtime-missing','runtime-unhealthy','runtime-ready','shared-foreground','shared-prefetch','hover-direct-only','next-direct-only','next-backup-eligible','next-warm-scheduled','warm-policy-changed','foreground-busy','target-cancelled','replaced-selection','probe-rejected','invalid-content','empty-body','http-error','no-url','bot-check','login-required','age-restricted','unavailable','geo-blocked','rate-limited','http-403','network-timeout','dns','tls','connection','extractor','js-runtime','runtime-broken','spawn-missing','spawn-denied','spawn-error','process-deadline','next-request','unknown']);\n"
+        ]
+      },
+      {
+        "from": 47,
+        "to": 48,
+        "original": [
+          " function read(){return {pulseAudioLog:1,diagnosticsVersion:2,build:'StartupFix-AudioDiagnostics2',created,...state(),note:'Relative times in ms. Track labels are local to this capture. Enum-only failure categories; no raw errors, stderr, track names, URLs, cookies, tokens or file paths.',events:rows.map(x=>({...x}))};}\n"
+        ]
+      }
+    ]
+  },
+  "dev-window.js": {
+    "sha256": "4737bf6298d1a51f0b5dc76f5738a7c40384a4cbfae5bc267a1bdc0dab9c5a78",
+    "originalSha256": "f1f1cb175bf0c23c4d0b99a85f79b743fd0d181192c7e22e874a5a9eb2df256e",
+    "patches": [
+      {
+        "from": 31,
+        "to": 32,
+        "original": []
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "1e4bb92471dc91df94e9ffd1f98e226786ddeb81baa1e9febf00eedff4691e68",
+    "originalSha256": "f716502efa3708bfa009db5d0f632d714168a8da1481506caff4760e754ff5c1",
+    "patches": [
+      {
+        "from": 227,
+        "to": 228,
+        "original": [
+          "function loadStreams() { if (sLoaded) return; sLoaded = true; try { const o = JSON.parse(fs.readFileSync(streamsFile(), 'utf8')), now = Date.now(); for (const k of Object.keys(o).slice(-200)) if (streamId(k) && o[k]?.url && o[k].verified === 3 && o[k].exp > now + 300e3 && !streams[k]) streams[k] = o[k]; } catch {} }\n"
+        ]
+      },
+      {
+        "from": 229,
+        "to": 230,
+        "original": [
+          "function saveStreams() { clearTimeout(saveT); saveT = setTimeout(() => { try { const o = {}; for (const k in streams) if (streams[k].url) o[k] = { url: streams[k].url, exp: streams[k].exp, ua: streams[k].ua, ci: streams[k].ci, verified: streams[k].verified }; fs.writeFileSync(streamsFile(), JSON.stringify(o)); } catch {} }, 1500); }\n"
+        ]
+      },
+      {
+        "from": 262,
+        "to": 274,
+        "original": [
+          " queue({outcome:'ok'});try{if(warming&&foregroundBackups)throw Error('Foreground audio has priority');if(signal.aborted)throw Error('Audio preparation cancelled');const end=ent.diag.child('backup',{id,source:'yt',prefetch:ent.low});let r;\n",
+          "  try{r=await ytdlpResolve(id,signal,end);end({outcome:'ok'});}catch(e){end({outcome:signal.aborted?'cancelled':'error',reason:audioTrace.classifyFailure(e)});throw e;}\n",
+          "  if(!await probeAudio(r.url,r.ua,signal,{id,engine:'backup',source:'yt',prefetch:ent.low},undefined,ent.diag))throw Error('YouTube не отдал рабочий аудиопоток');streamPolicy.backupSuccess();return {...r,verified:3};\n"
+        ]
+      },
+      {
+        "from": 292,
+        "to": 319,
+        "original": [
+          "async function probeAudio(url, ua, signal, traceData={},onStatus,observation) {\n"
+        ]
+      },
+      {
+        "from": 323,
+        "to": 325,
+        "original": [
+          "    response = await fetch(url, {headers:{'User-Agent':ua || UA, Range:audioRange('bytes=0-')}, signal:signal ? AbortSignal.any([signal,timeout]) : timeout});\n",
+          "    const type = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();\n",
+          "    if (![200,206].includes(response.status) || !/^(audio\\/|video\\/|application\\/octet-stream$)/.test(type) || !response.body) {reason=![200,206].includes(response.status)?'http-error':!response.body?'empty-body':'invalid-content';return false;}\n"
+        ]
+      },
+      {
+        "from": 348,
+        "to": 350,
+        "original": [
+          "  const a = ((j.streamingData || {}).adaptiveFormats || []).filter((f) => f.url && /^audio\\//.test(f.mimeType || ''));\n"
+        ]
+      },
+      {
+        "from": 358,
+        "to": 359,
+        "original": [
+          "  return { url: f.url, exp, ua: C.ua, ci, verified: 3 };\n"
+        ]
+      },
+      {
+        "from": 394,
+        "to": 395,
+        "original": [
+          "      try{pr=spawn(exe, [...cookies, '-g', '-f', 'bestaudio[ext=m4a]/bestaudio', '--no-playlist', '--no-warnings', '--socket-timeout', '10', '--retries', '2',\n"
+        ]
+      },
+      {
+        "from": 399,
+        "to": 401,
+        "original": [
+          "      const markUrl=()=>{if(!firstUrl&&/(?:^|\\n)https?:\\/\\/[^\\r\\n]+\\r?\\n/.test(out)){firstUrl=true;proc.event('backup-url',{outcome:'ok'});}};\n"
+        ]
+      },
+      {
+        "from": 403,
+        "to": 404,
+        "original": [
+          "      pr.stdout.on('data', (b) => {if(done)return;if(!firstOutput){firstOutput=true;proc.event('backup-output',{outcome:'ok',channel:'stdout'});}out = (out + b).slice(-65536);markUrl();});\n"
+        ]
+      },
+      {
+        "from": 411,
+        "to": 413,
+        "original": [
+          "        const url = out.trim().split(/\\r?\\n/).find((l) => l.startsWith('http'));\n"
+        ]
+      },
+      {
+        "from": 414,
+        "to": 416,
+        "original": [
+          "        proc({outcome:url?'ok':'error',exitCode:code,exitSignal:['SIGTERM','SIGKILL','SIGINT'].includes(exitSignal)?exitSignal:undefined,urlFound:!!url,reason:url?undefined:(err?audioTrace.classifyFailure(err):'no-url')});\n",
+          "        if (url) return res({ url, exp: +((url.match(/[?&]expire=(\\d+)/) || [])[1] || 0) * 1000 || Date.now() + 3 * 3600e3, ua: UA });\n"
+        ]
+      },
+      {
+        "from": 474,
+        "to": 476,
+        "original": [
+          "function upstream(url, req, ua, signal) {\n",
+          "  const h = { 'User-Agent': ua || UA };\n"
+        ]
+      },
+      {
+        "from": 498,
+        "to": 499,
+        "original": [
+          "      try { response = await upstream(url, req, entry?.ua, controller.signal);headersEnd({outcome:response.ok?'ok':'error',status:response.status,contentLength:Number(response.headers.get('content-length'))||undefined,rangeTotal:Number((response.headers.get('content-range')||'').match(/\\/(\\d+)$/)?.[1])||undefined}); }\n"
+        ]
+      },
+      {
+        "from": 501,
+        "to": 504,
+        "original": [
+          "      const rejected = response && [401,403,410].includes(response.status);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "79b64cfab6858051503b066c9ea58221d4eedbde263db754a5d0bad623578a83",
+    "originalSha256": "6f32be70c361ae2a273e5b6e9f383bfbb7f7b21823b9573d8029844d0237fbaf",
+    "patches": [
+      {
+        "from": 150,
+        "to": 151,
+        "original": [
+          "  audioStartTimer=setTimeout(()=>{audioStartTimer=null;if(tok!==loadTok||!audioWanted||!ready||!canEmbed(t)||engine!=='audio'||audio.readyState>=3)return;\n"
+        ]
+      },
+      {
+        "from": 228,
+        "to": 229,
+        "original": [
+          "      if (r && r.ok) { audio.src = `/stream/${t.id}`;at();if(audioWanted)E.play();else{clearAudioStart();setLoading(false);}return; }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/developer.js": {
+    "sha256": "5cb6a330115ec8a2f74776cec8ef0e0fc75e2340bd4b2fdc43da3f266f6b8a8e",
+    "originalSha256": "9ef97fc00cfde53d1c3a7b730facd1685785f2d596e15d0adfbfe674afcab486",
+    "patches": [
+      {
+        "from": 37,
+        "to": 38,
+        "original": [
+          " async function audioAction(name,button){if(button)button.disabled=true;try{if(name==='audioCopy'){audioLog=await api.request('audioRead');feedback(await api.copy(JSON.stringify(audioLog))?'copied':'failed');}else{const result=await api.request(name);if(result.error){feedback('failed');return;}if(name!=='audioSave')audioLog=result;feedback(result.cancelled?'cancel':'done');if(tab==='audio')document.getElementById('dev-content').innerHTML=audioView();}schedule();}catch{feedback('failed');}finally{if(button?.isConnected)button.disabled=false;}}\n"
+        ]
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "a6d0fb212dd1e013c84655e5bc720ac18a665ceb7d0ceedaf9ac25637e5a6039",
+    "originalSha256": "39b72b993329ac970aeb2452df7905eea483a728d0e3a39028f5cde83d3816e7",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs tests/background.cjs tests/session-stream.cjs tests/adaptive-audio.cjs tests/startup-latency.cjs tests/diagnostics-detail.cjs\",\n"
+        ]
+      },
+      {
+        "from": 48,
+        "to": 50,
+        "original": [
+          "    \"test:background\": \"node --test tests/background.cjs && node tests/background-ui.cjs\"\n"
+        ]
+      }
+    ]
+  }
+}

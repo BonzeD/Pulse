@@ -1957,3 +1957,5 @@ Object.assign(window.PulseEnglish,{
 });
 
 Object.assign(window.PulseEnglish,{"Обычный таймкод": "Standard timecode", "Точный таймкод (сотые секунды)": "Precise timecode (hundredths of a second)"});
+
+Object.assign(window.PulseEnglish,{"Вход не подтверждён": "Sign-in unverified", "Нужно войти заново": "Sign in again", "Проверить вход": "Check sign-in", "Сохранённый аккаунт": "Saved account"});

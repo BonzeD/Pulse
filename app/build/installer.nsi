@@ -6,7 +6,7 @@ ManifestDPIAware true
 XPStyle on
 !define APP "Pulse"
 !ifndef VERSION
-  !define VERSION "1.0.2"
+  !define VERSION "1.0.3"
 !endif
 !define EXE "Pulse.exe"
 !ifndef APPDIR

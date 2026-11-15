@@ -1,0 +1,119 @@
+✖ repeated BUFFERING cannot postpone the original fallback deadline forever (8.160285ms)
+✖ native iframe PAUSED cancels its buffer watchdog and loading indicator (6.121675ms)
+✖ late PLAYING after app pause is neither started nor recorded as accepted playback (3.708138ms)
+✖ failed paused direct resolution can be retried by explicit E.play (4.284443ms)
+✖ system PAUSE during pending iframe mapping prevents eventual autoplay (4.50427ms)
+✔ system PLAY is idempotent during pending iframe mapping (4.184546ms)
+✖ system pause during fallback prevents delayed stream start; play does not toggle pending intent (5.261315ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 1
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131.266255
+
+✖ failing tests:
+
+test at app/tests/release-polish.cjs:4:1
+✖ repeated BUFFERING cannot postpone the original fallback deadline forever (8.160285ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  5 !== 4
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:4:231)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 5,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at app/tests/release-polish.cjs:5:1
+✖ native iframe PAUSED cancels its buffer watchdog and loading indicator (6.121675ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:5:192)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at app/tests/release-polish.cjs:6:1
+✖ late PLAYING after app pause is neither started nor recorded as accepted playback (3.708138ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:6:235)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at app/tests/release-polish.cjs:7:1
+✖ failed paused direct resolution can be retried by explicit E.play (4.284443ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:7:269)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at app/tests/release-polish.cjs:8:1
+✖ system PAUSE during pending iframe mapping prevents eventual autoplay (4.50427ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:8:212)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at app/tests/release-polish.cjs:10:1
+✖ system pause during fallback prevents delayed stream start; play does not toggle pending intent (5.261315ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (/vercel/sandbox/data/release/Pulse-1.0.3/app/tests/release-polish.cjs:10:243)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

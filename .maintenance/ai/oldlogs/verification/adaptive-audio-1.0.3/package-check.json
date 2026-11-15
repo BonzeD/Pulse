@@ -1,0 +1,36 @@
+{
+  "version": "1.0.3",
+  "checkedFirstPartyFiles": 246,
+  "diff": [],
+  "missing": [],
+  "appAsarSha256": "bb5d8f785892a6e287af18b0a4841f61a3f6867f3308fc7519adfad1aac7ccfb",
+  "nativeBridgeSha256": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+  "nativeBridgeUnchanged": true,
+  "appPE": {
+    "fixed": {
+      "fileVersionMS": 65536,
+      "fileVersionLS": 196608,
+      "productVersionMS": 65536,
+      "productVersionLS": 196608,
+      "fileFlagsMask": 63,
+      "fileFlags": 0,
+      "fileOS": 262148,
+      "fileType": 1,
+      "fileSubtype": 0,
+      "fileDateMS": 0,
+      "fileDateLS": 0
+    },
+    "strings": {
+      "CompanyName": "werxapee, Daswi",
+      "FileDescription": "Pulse Player",
+      "FileVersion": "1.0.3",
+      "InternalName": "Pulse",
+      "LegalCopyright": "Copyright (C) 2015 GitHub, Inc. All rights reserved.",
+      "OriginalFilename": "Pulse.exe",
+      "ProductName": "Pulse",
+      "ProductVersion": "1.0.3",
+      "SquirrelAwareVersion": "1"
+    }
+  },
+  "limits": "Linux local fixtures; no native Windows or live account CPU/RAM benchmark"
+}

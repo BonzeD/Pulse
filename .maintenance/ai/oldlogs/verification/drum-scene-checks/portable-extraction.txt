@@ -1,0 +1,34 @@
+
+7-Zip (a) 25.01 (x64) : Copyright (c) 1999-2025 Igor Pavlov : 2025-08-03
+ 64-bit locale=C.UTF-8 Threads:2 OPEN_MAX:1048576
+
+Scanning the drive for archives:
+1 file, 201801466 bytes (193 MiB)
+
+Extracting archive: app/dist/Pulse-1.0.3-portable.exe
+
+WARNINGS:
+There are data after the end of archive
+
+--
+Path = app/dist/Pulse-1.0.3-portable.exe
+Type = 7z
+WARNINGS:
+There are data after the end of archive
+Offset = 61751
+Physical Size = 201451717
+Tail Size = 287998
+Headers Size = 3357
+Method = LZMA2:28 BCJ
+Solid = +
+Blocks = 2
+
+Everything is Ok
+
+Archives with Warnings: 1
+
+Warnings: 1
+Folders: 25
+Files: 226
+Size:       713554629
+Compressed: 201801466

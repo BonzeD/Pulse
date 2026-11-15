@@ -4,12 +4,16 @@ if (PV && window.parent !== window && window.parent.pvWidgetApi) window.pulse = 
 const $ = (id) => document.getElementById(id);
 const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let sliderDrag = null;
 let st = {}, last, lastId, cfg = { size: 'standard', lyrics: true, theme: 'glass' }, ly = null, li = -9, lw = -9;
 const SIZES = ['mini', 'standard', 'large'];
-pulse.onState((s) => { st = s; last = Date.now(); render(); });
+let widgetVisible=PV,widgetTimer=0,widgetBooted=false;
+pulse.onState((s) => {const changed=st.playing!==s.playing;st=s;last=Date.now();if(widgetVisible)render();if(changed)widgetSchedule();});
 // 1.9.2: одинаковый конфиг (палитра, повторные пуши) не пересобирает раскладку заново
 let cfgKey = '';
-if (pulse.onWidgetVisibility) pulse.onWidgetVisibility(v => { if(v) window.PulseMotion?.enter($('w')); else window.PulseMotion?.stop(); });
+
+if(pulse.onWidgetSpectrum) pulse.onWidgetSpectrum(bands=>{if(!widgetVisible || !Array.isArray(bands))return;document.querySelectorAll('.eq i').forEach((el,i)=>el.style.height=(3+11*Math.max(0,Math.min(1,Number(bands[i])||0)))+'px');});
+if (pulse.onWidgetVisibility) pulse.onWidgetVisibility(v => {widgetVisible=!!v;document.documentElement.classList.toggle('widget-hidden',!widgetVisible);if(v){window.PulseMotion?.enter($('w'));render();widgetSchedule();}else{window.PulseMotion?.stop();clearTimeout(widgetTimer);widgetTimer=0;}});
 pulse.onWidgetConfig((c) => { const k = JSON.stringify(c); if (k === cfgKey) return; cfgKey = k; cfg = c; applyCfg(); });
 if (pulse.onLyrics) pulse.onLyrics((l) => { ly = l && l.lines && l.lines.length ? l : null; li = lw = -9; frame(); });
 function applyCfg() {
@@ -108,7 +112,7 @@ function render() {
   $('repeat').classList.toggle('one', st.repeat === 'one');
   $('like').classList.toggle('on', !!st.liked);
   $('dislike').classList.toggle('on', !!st.disliked); // 2.0.4
-  $('vfill').style.width = (st.volume ?? 80) + '%';
+  if (!sliderDrag || sliderDrag.el.id !== 'vbar') $('vfill').style.width = (st.volume ?? 80) + '%';
   if (!st.has) { lastId = null; $('cover').style.backgroundImage = ''; $('bg').style.backgroundImage = ''; }
   if (st.has && st.id && (st.id + '|' + (st.art || '')) !== lastId) {
     lastId = st.id + '|' + (st.art || '');
@@ -152,14 +156,9 @@ const calmWake = (ms) => { calmSet(false); clearTimeout(calmT); calmT = setTimeo
 document.addEventListener('pointermove', () => calmWake(4000), { passive: true });
 document.addEventListener('pointerleave', () => calmWake(1200));
 calmWake(6000);
-setInterval(() => {
-  if (document.hidden) return;
-  if (calm && ++calmN % 12) { frame(); return; }
-  const c = now(), w = st.dur ? Math.min(100, (c / st.dur) * 100).toFixed(2) + '%' : '0';
-  if (w !== lastW) { lastW = w; $('fill').style.width = w; }
-  setTxt('tc', fmt(c)); setTxt('td', st.dur ? fmt(st.dur) : '0:00');
-  frame();
-}, 80);
+widgetBooted=true;
+function widgetSchedule(){clearTimeout(widgetTimer);widgetTimer=0;if(!widgetBooted||!widgetVisible||document.hidden)return;widgetTimer=setTimeout(()=>{widgetTimer=0;if(!widgetVisible||document.hidden)return;const c=now(),w=st.dur?Math.min(100,c/st.dur*100).toFixed(2)+'%':'0';if(!sliderDrag || sliderDrag.el.id!=='bar'){if(w!==lastW){lastW=w;$('fill').style.width=w;}setTxt('tc',fmt(c));}setTxt('td',st.dur?fmt(st.dur):'0:00');frame();widgetSchedule();},st.playing?(calm&&!ly?960:80):1000);}
+document.addEventListener('visibilitychange',widgetSchedule);widgetSchedule();
 // бегущая строка для длинных названий
 function marq() { const t = $('t'); t.classList.remove('run'); if (!cfg.marquee) return; requestAnimationFrame(() => { if (t.scrollWidth > t.clientWidth + 4) { t.style.setProperty('--mq', -(t.scrollWidth - t.clientWidth + 12) + 'px'); t.classList.add('run'); } }); }
 $('play').onclick = () => pulse.command('toggle');
@@ -174,8 +173,14 @@ $('edit').onclick = () => pulse.win('edit-widget');
 $('hide').onclick = () => pulse.win('widget-hide');
 $('size').onclick = () => { const n = SIZES[(SIZES.indexOf(cfg.size) + 1) % SIZES.length]; pulse.command('widgetSize', n); };
 $('cover').ondblclick = () => pulse.win('open');
-$('bar').onclick = (e) => { const r = $('bar').getBoundingClientRect(); pulse.command('seek', (e.clientX - r.left) / r.width); };
-$('vbar').onclick = (e) => { const r = $('vbar').getBoundingClientRect(); const v = Math.round(((e.clientX - r.left) / r.width) * 100); st.volume = v; render(); pulse.command('volume', v); };
+function sliderValue(el, e) { const r=el.getBoundingClientRect(); return r.width ? Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)) : 0; }
+function sliderApply(el,e) { const f=sliderValue(el,e); if(sliderDrag && sliderDrag.last===f)return; if(sliderDrag)sliderDrag.last=f; if(el.id==='vbar'){const v=Math.round(f*100);st.volume=v;$('vfill').style.width=v+'%';pulse.command('volume',v);}else{$('fill').style.width=(f*100)+'%';setTxt('tc',fmt((st.dur||0)*f));pulse.command('seek',f);} }
+for(const el of [$('bar'),$('vbar')]) {
+ el.addEventListener('pointerdown',e=>{if(e.button!==0||PV)return;e.preventDefault();sliderDrag={el,id:e.pointerId};el.setPointerCapture(e.pointerId);sliderApply(el,e);});
+ el.addEventListener('pointermove',e=>{if(sliderDrag?.el===el&&sliderDrag.id===e.pointerId)sliderApply(el,e);});
+ const finish=e=>{if(sliderDrag?.el!==el||sliderDrag.id!==e.pointerId)return;if(e.type==='pointerup')sliderApply(el,e);sliderDrag=null;lastW='';};
+ el.addEventListener('pointerup',finish);el.addEventListener('pointercancel',finish);el.addEventListener('lostpointercapture',finish);
+}
 window.addEventListener('wheel', (e) => { const v = Math.max(0, Math.min(100, (st.volume ?? 80) + (e.deltaY < 0 ? 5 : -5))); st.volume = v; render(); pulse.command('volume', v); });
 window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); pulse.command('toggle'); } if (e.code === 'ArrowRight') pulse.command('next'); if (e.code === 'ArrowLeft') pulse.command('prev'); });
 

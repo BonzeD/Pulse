@@ -1,0 +1,16 @@
+{
+  "version": "1.0.3",
+  "platform": "Windows x64 app; NSIS Unicode setup",
+  "installerBytes": 241614401,
+  "installerSHA256": "919a83cc77f0f5568eb793de3c9b384d2bd5faafb60cbbf4c705f3c5867be0b0",
+  "nsisExtraction": "7-Zip 25.01 full Linux build; CRC/extraction OK",
+  "appPayloadFilesCompared": 225,
+  "appPayloadIdenticalToVerifiedUnpackedBuild": true,
+  "asarSHA256": "48a486a5b852936c7eb55ad10c1951a6c21179abd70fb6831e384df9ce68fadd",
+  "unsigned": true,
+  "nativeInstallationTested": false,
+  "nativeAudioTested": false,
+  "liveYouTubeTested": false,
+  "artwork": "all 7 default-scale screens and welcome/finish/uninstall at 200% inspected",
+  "installerUI": "existing branded design, regenerated for 1.0.3 and 680 MB displayed installed size"
+}

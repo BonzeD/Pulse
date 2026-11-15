@@ -27,3 +27,7 @@ npm сообщил 8 moderate vulnerabilities; автоматический `aud
 ## Новые EXE
 - `Pulse-1.0.0-portable.exe`: b7ba05a85eb1e1ea401b23cd49e1f1a58c0afc773482d41bfd9af487375db0e2
 - `Pulse-Setup-1.0.0.exe`: 5c796eee3b1ba1615b34ae0d53190b9d474391c065ee5b154497f8a33c723fff
+
+## Current continuation — 1.0.3 audio recorder / background lifecycle
+
+See `verification/BACKGROUND-AUDIOLOG-1.0.3.md` and its JSON companion for current scope, local test results, runtime/package checks and limits. Earlier sections above are historical, not claims about the new binaries. The custom installer and the native media bridge remain unchanged; new first-party code only observes audio and manages hidden visual work. Windows CPU/RAM and live account testing must be performed on a real Windows machine.

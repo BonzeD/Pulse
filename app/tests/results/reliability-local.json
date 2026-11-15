@@ -1,0 +1,41 @@
+{
+  "environment": "Local HTTP + mocked yt-dlp, real Linux Chromium decoder. NOT Windows/live YouTube proof.",
+  "reports": [
+    {
+      "case": "403 first backup -> renewed compatible file",
+      "duration": 3,
+      "position": 0.264916,
+      "error": null,
+      "peak": 225,
+      "paused": false,
+      "backupExtractions": 2
+    },
+    {
+      "case": "selected media headers -> real decoder",
+      "duration": 3,
+      "position": 0.261224,
+      "error": null,
+      "peak": 225,
+      "paused": false,
+      "backupExtractions": 1
+    },
+    {
+      "case": "reject malformed 206 direct response -> consistent alternate",
+      "duration": 3,
+      "position": 0.253062,
+      "error": null,
+      "peak": 225,
+      "paused": false,
+      "backupExtractions": 0
+    },
+    {
+      "case": "reject DVR direct fragment -> yt-dlp song file",
+      "duration": 3,
+      "position": 0.25542,
+      "error": null,
+      "peak": 225,
+      "paused": false,
+      "backupExtractions": 1
+    }
+  ]
+}

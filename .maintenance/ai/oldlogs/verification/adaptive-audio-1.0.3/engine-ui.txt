@@ -1,0 +1,1 @@
+PASS audio engine full renderer: actual WAV -> existing media element -> single AudioContext/analyser, pause during resolver, real transport toggle, no duplicate resolve, offline pause/.4s resume, pending seek, latest-track wins and metadata-listener cleanup. Local fixture only, not real YouTube/Windows latency.

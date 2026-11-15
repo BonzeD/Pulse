@@ -1,0 +1,12 @@
+{
+  "baseline": "Pulse-1.0.3-EmbeddedFirst-source.zip",
+  "sectionSha256": "265012dbff089ef141d8de8b8b220d922099de028db6a177b294fc9aa4b5705a",
+  "sectionBytes": 13733,
+  "baselineEqualsCurrent": true,
+  "runtimeTag": "Atlas-AudioRollback-EmbeddedFirst",
+  "rootTests": {
+    "passed": 613,
+    "failed": 0,
+    "skipped": 0
+  }
+}

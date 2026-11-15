@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 contextBridge.exposeInMainWorld('pulse', {
-  dev: {open:()=>ipcRenderer.invoke('dev:open'),respond:message=>ipcRenderer.send('dev:response',message),inspect:point=>ipcRenderer.send('dev:inspect',point),onCommand:fn=>{const cb=(_e,message)=>fn(message);ipcRenderer.on('dev:command',cb);return()=>ipcRenderer.removeListener('dev:command',cb);},onClosed:fn=>{const cb=()=>fn();ipcRenderer.on('dev:closed',cb);return()=>ipcRenderer.removeListener('dev:closed',cb);}},
+  dev: {audioEvent:message=>ipcRenderer.send('audio:trace',message),audioState:()=>ipcRenderer.invoke('audio:state'),onAudioState:fn=>{const cb=(_e,value)=>fn(value);ipcRenderer.on('audio:trace-state',cb);return()=>ipcRenderer.removeListener('audio:trace-state',cb);},open:()=>ipcRenderer.invoke('dev:open'),respond:message=>ipcRenderer.send('dev:response',message),inspect:point=>ipcRenderer.send('dev:inspect',point),onCommand:fn=>{const cb=(_e,message)=>fn(message);ipcRenderer.on('dev:command',cb);return()=>ipcRenderer.removeListener('dev:command',cb);},onClosed:fn=>{const cb=()=>fn();ipcRenderer.on('dev:closed',cb);return()=>ipcRenderer.removeListener('dev:closed',cb);}},
   spicy: { lyrics: (t) => ipcRenderer.invoke('spicy:lyrics', t) }, // 2.0.4: Spicy Lyrics
   media: {
     list:()=>ipcRenderer.invoke('media:list'), import:()=>ipcRenderer.invoke('media:import'),
@@ -24,9 +24,10 @@ contextBridge.exposeInMainWorld('pulse', {
   lyricsSearch: (q) => ipcRenderer.invoke('lyrics:search', q),
   plugins: { list: () => ipcRenderer.invoke('plugins:list'), open: () => ipcRenderer.send('plugins:open') },
   audius: { track: id => ipcRenderer.invoke('audius:track', id), search: q => ipcRenderer.invoke('audius:search', q), select: (t, mode, manual, key) => ipcRenderer.invoke('audius:select', t, mode, manual, key), cancel: key => ipcRenderer.invoke('audius:cancel', key) },
+  mapYouTube: id => ipcRenderer.invoke('yt:map', id),
   resolve: (id) => ipcRenderer.invoke('yt:resolve', id),
   visualizerTap: (options) => ipcRenderer.invoke('visualizer:tap', options),
-  prefetch: (id) => ipcRenderer.invoke('yt:prefetch', id),
+  prefetch: (id, next=false) => ipcRenderer.invoke('yt:prefetch', id, next===true),
   search: (q) => ipcRenderer.invoke('yt:search', q),
   mix: (v, list) => ipcRenderer.invoke('yt:mix', v, list),
   video: (id) => ipcRenderer.invoke('yt:video', id),
@@ -57,6 +58,8 @@ contextBridge.exposeInMainWorld('pulse', {
   zoom: (f) => webFrame.setZoomFactor(Math.max(0.6, Math.min(1.6, f || 1))),
   version: () => ipcRenderer.invoke('app:version'),
   meta: (url) => ipcRenderer.invoke('yt:meta', url),
+  sendWidgetSpectrum: (bands) => ipcRenderer.send('widget:spectrum', bands),
+  onWidgetSpectrum: (fn) => ipcRenderer.on('widget:spectrum', (_e, bands) => fn(bands)),
   sendState: (st) => ipcRenderer.send('state', st),
   command: (name, arg) => ipcRenderer.send('cmd', name, arg),
   win: (action) => ipcRenderer.send('win', action),

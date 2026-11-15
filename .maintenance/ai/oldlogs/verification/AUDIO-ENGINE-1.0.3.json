@@ -1,0 +1,42 @@
+{
+  "version": "1.0.3",
+  "scope": "audio-engine audit",
+  "unit": {
+    "passed": 462,
+    "failed": 0,
+    "skipped": 0
+  },
+  "new_audio_unit": 23,
+  "integration_passed": [
+    "audio-engine-ui (real WAV and byte ranges)",
+    "audio-signal",
+    "file-video",
+    "lyric-studio",
+    "lyrics-provider",
+    "developer-experience"
+  ],
+  "packaged_first_party_files_matched": 241,
+  "prior_approved_manifests_preserved": 13,
+  "installer_source_and_design_preserved": true,
+  "portable_and_setup_extracted_files_match": [
+    "resources/app.asar",
+    "resources/media-bridge/PulseMediaBridge.exe",
+    "resources/yt-dlp/_internal/base_library.zip"
+  ],
+  "app_asar_sha256": "80c926777c2a2f1c26dcf5af9c755e0cd2250934f208d19c0a7bd636b81fe40a",
+  "files": {
+    "Pulse-Setup-1.0.3-Audio.exe": {
+      "bytes": 242004078,
+      "sha256": "3c7fd989b1795d4e0e8aab4aea6f75c23af08b4c1b6eae5de6dc5027ea7408dd"
+    },
+    "Pulse-1.0.3-Audio-portable.exe": {
+      "bytes": 223646032,
+      "sha256": "d8627ece548079f3ae4644aa90724379f93827cc0dcc3e8f6bc8b38bf7eae403"
+    }
+  },
+  "limits": [
+    "Linux Chromium and mocked service/native APIs, not native Windows execution.",
+    "No authenticated live-service latency benchmark.",
+    "No fixed startup-time promise; format and quality preferences unchanged."
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "package.json": {
+    "sha256": "449b7f8cdb3e68668a1dcf96203a380823c6688ec0d0a2e572a0cbc9a14c6ffd",
+    "originalSha256": "bd97ba72ba1561038f293ff015cf68295c92b08dd2445c155a0d87248bb35c6d",
+    "patches": [
+      {
+        "from": 3,
+        "to": 4,
+        "original": [
+          "  \"version\": \"1.0.2\",\n"
+        ]
+      },
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs\",\n"
+        ]
+      },
+      {
+        "from": 42,
+        "to": 44,
+        "original": [
+          "    \"test:developer\": \"node --test tests/developer-experience.cjs && node tests/developer-experience-ui.cjs\"\n"
+        ]
+      }
+    ]
+  },
+  "package-lock.json": {
+    "sha256": "3682dfb50425f342d8da1a958f294d83274eb44aede3527e0c0bca30190add85",
+    "originalSha256": "0053f7a7acadc1733af8cd340feeb860a4064e562554f0e3dc7adb6bdef8b788",
+    "patches": [
+      {
+        "from": 2,
+        "to": 3,
+        "original": [
+          "  \"version\": \"1.0.2\",\n"
+        ]
+      },
+      {
+        "from": 8,
+        "to": 9,
+        "original": [
+          "      \"version\": \"1.0.2\",\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "a1e98d03aa258f4173100d89a85691934cb74669f6b43cb9b44c8c82072d5f8d",
+    "originalSha256": "06b39791fa05faaebe4b717bfdfdcd416760dc74dbf8f9d506d63514134511c2",
+    "patches": [
+      {
+        "from": 1218,
+        "to": 1219,
+        "original": []
+      },
+      {
+        "from": 1221,
+        "to": 1223,
+        "original": [
+          "  const src = lySrcMode(); // 2.0.2: выбранный источник текста\n"
+        ]
+      },
+      {
+        "from": 1225,
+        "to": 1226,
+        "original": [
+          "  let r = await pulse.lyrics({ id: t.id, title: t.title, author: t.author, dur: realDur || t.dur || 0, src, bgVox: S().ly.bgVox !== false, useSpicy: spicyKeyOn(), artists: (t.artists || []).map((a) => a.name || a) }).catch(() => null);\n"
+        ]
+      },
+      {
+        "from": 1230,
+        "to": 1233,
+        "original": []
+      },
+      {
+        "from": 1234,
+        "to": 1235,
+        "original": []
+      },
+      {
+        "from": 1236,
+        "to": 1237,
+        "original": [
+          "  if (spicyKeyOn()) rec.spTried = true; // 2.0.4: Spicy Lyrics уже спрошен для этой песни\n"
+        ]
+      }
+    ]
+  },
+  "renderer/clients.js": {
+    "sha256": "af681f2e78b7e935422b6a1dc7c3b8e8fcdd0991f267a7e843c90a6733492b9a",
+    "originalSha256": "805759e13f481ecddb1472105ab5b795ed36ffb8dd6ffd95177d057516bd6148",
+    "patches": [
+      {
+        "from": 18,
+        "to": 19,
+        "original": [
+          "const LY_SRC = [['auto', 'Все источники'], ['yt', 'YouTube Music'], ['am', 'Apple Music'], ['sp', 'Spotify'], ['lr', 'LRCLIB'], ['spicy', 'Spicy Lyrics']]; // 2.0.4: Spicy Lyrics — нужен свой ключ // 2.0.4-fix: LRCLIB — отдельный источник\n"
+        ]
+      },
+      {
+        "from": 160,
+        "to": 164,
+        "original": [
+          "    updVizLySrc(); const t = curTrack(); if (t) loadLyricsFor(t); return true;\n"
+        ]
+      },
+      {
+        "from": 169,
+        "to": 171,
+        "original": [
+          "  if (v === 'spicy' && !String((S().spicy || {}).key || '').trim()) { lib.setTab = 'ly'; toast('Для Spicy Lyrics нужен свой ключ — вставь его в «Текст песен → Spicy Lyrics»', 'lyrics'); if (document.body.classList.contains('pp-open') && typeof closePP === 'function') closePP(); go({ r: 'settings' }); return; }\n",
+          "  S().ly.src = v; save(); updVizLySrc();\n",
+          "  const t = curTrack(); if (t) { const L = lib.lyrics[t.id]; if (L && L.picked) { delete L.picked; } loadLyricsFor(t); }\n"
+        ]
+      },
+      {
+        "from": 176,
+        "to": 177,
+        "original": [
+          "  const items = LY_SRC.map(([v, n]) => [v === cur ? 'check' : v === 'auto' ? 'sparkle' : CL_ICO[v] || 'lyrics', n + (v === 'am' && !svcSt.am.user ? ' · нужен вход' : v === 'sp' && !svcSt.sp.user ? ' · нужен вход' : v === 'spicy' && !String((S().spicy || {}).key || '').trim() ? ' · нужен ключ' : ''), () => setLySrc(v)]);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/api.js": {
+    "sha256": "ce7bad0c4cf1f1f29134790941331cbdadfc2615a301111e1c725e16852627c5",
+    "originalSha256": "fea66bcb242347a5bd6aad488705ddcd571f5d585b41295789276948d2300cb3",
+    "patches": [
+      {
+        "from": 14,
+        "to": 15,
+        "original": [
+          "  version: '1.0.2',\n"
+        ]
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "de42d63ce02f8927d4e187c41a35502c9471511a013115262676480a8b41830c",
+    "originalSha256": "3556457a00eeacc917c2146b676be06dddb221e702974b272a098e4f5df7cd68",
+    "patches": [
+      {
+        "from": 27,
+        "to": 28,
+        "original": [
+          "    version: '1.0.2',\n"
+        ]
+      }
+    ]
+  },
+  "build/installer.nsi": {
+    "sha256": "8d9a885d0646228c77e0d739e6f8d162b52c5e98ed01810b7dc88a7c698fee30",
+    "originalSha256": "21fe3769460c15db1d8f940ab80bac6e80c59774e2245420ab2b48455dbd0796",
+    "patches": [
+      {
+        "from": 8,
+        "to": 9,
+        "original": [
+          "  !define VERSION \"1.0.2\"\n"
+        ]
+      }
+    ]
+  }
+}

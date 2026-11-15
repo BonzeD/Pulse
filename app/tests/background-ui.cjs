@@ -1,0 +1,56 @@
+/* Full application UI with an explicit local-only native bridge fixture. */
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'../renderer'),out=process.env.PULSE_SETUP_ARTIFACTS||path.join(__dirname,'artifacts/background');fs.mkdirSync(out,{recursive:true});
+const server=http.createServer((req,res)=>{const u=req.url.split('?')[0],p=path.resolve(root,'.'+(u==='/'?'/index.html':u));if(!p.startsWith(root+path.sep)||!fs.existsSync(p)){res.writeHead(404);return res.end();}res.setHeader('Content-Type',({'.js':'text/javascript','.css':'text/css','.html':'text/html','.png':'image/png'})[path.extname(p)]||'application/octet-stream');fs.createReadStream(p).pipe(res);});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/local/bin/chromium',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});const errors=[];const recorder=require('../audio-diagnostics').create();
+async function setup(options={}){
+ const context=await browser.newContext({viewport:{width:1366,height:900},locale:'ru-RU',...options.context});const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));await page.route('**/*',r=>{if(r.request().url().startsWith(origin))return r.continue();if(r.request().resourceType()==='image')return r.fulfill({contentType:'image/png',body:fs.readFileSync(root+'/logo.png')});return r.fulfill({body:'',contentType:'text/javascript'});});
+ await page.exposeFunction('__audioEvent',message=>recorder.event(message.stage,message.data));await page.exposeFunction('__audioState',()=>recorder.state());
+ await page.addInitScript(({saved,failed,splash})=>{
+  window.__saved=saved;window.__failed=failed;window.__writes=[];window.__flushOK=true;window.__auth=null;window.__copied='';window.__wins=[];
+  const proxy=()=>new Proxy({}, {get(_t,k){return (...args)=>{
+   if(String(k).startsWith('on'))return;
+   if(k==='getLibrary')return __failed?Promise.reject(Error('read failure')):Promise.resolve(__saved);
+   if(k==='flushLibrary'){if(__flushOK)__writes.push(JSON.parse(JSON.stringify(args[0])));return __flushOK;}
+   if(k==='saveLibrary'){__writes.push(JSON.parse(JSON.stringify(args[0])));return;}
+   if(k==='copyText'){__copied=args[0];return Promise.resolve({ok:true});}
+   if(k==='win'){__wins.push(args[0]);return;}
+   if(k==='list'||k==='playlists'||k==='downloads'||k==='displays'||k==='browsers')return Promise.resolve([]);
+   if(k==='offlineList')return Promise.resolve({});
+   if(k==='status')return Promise.resolve({am:{user:false},sp:{user:false}});
+   if(k==='info')return Promise.resolve(__auth);
+   if(k==='version')return Promise.resolve('1.0.3');
+   if(k==='lyrics')return Promise.resolve({none:true});
+   if(k==='feed'||k==='search')return Promise.resolve({shelves:[],chips:[]});
+   if(k==='next')return Promise.resolve({tracks:[]});
+   if(k==='resolve'){window.__resolves ||= [];return new Promise(resolve=>__resolves.push({id:args[0],resolve}));}
+   if(k==='getGlass')return Promise.resolve({});return Promise.resolve({});
+  };}});
+  window.__devResponses={};window.__devOpen=0;window.__devCommand=null;window.__devClosed=null;const p=proxy(),names=['plugins','account','svc','ytm','spicy','discord','custom','editor','wall','accounts','media'];const nested=Object.fromEntries(names.map(n=>[n,proxy()]));nested.dev={audioEvent:m=>__audioEvent(m),audioState:()=>__audioState(),onAudioState:fn=>{window.__audioStateCallback=fn;},open:()=>{__devOpen++;return Promise.resolve(true);},onCommand:fn=>{__devCommand=fn;},onClosed:fn=>{__devClosed=fn;},respond:message=>{const done=__devResponses[message.id];if(done){delete __devResponses[message.id];done(message.data);}},inspect:point=>{window.__inspectPoint=point;}};window.pulse=new Proxy({}, {get(_t,k){return nested[k]||p[k];}});localStorage.setItem('pulse.splash',splash?'on':'off');
+ },{saved:options.saved===undefined?{settings:{app:{language:'ru'},look:{splash:false}}}:options.saved,failed:!!options.failed,splash:!!options.splash});
+ await page.goto(origin);await page.waitForFunction(()=>window.PulseDebug&&typeof lib.settings==='object'&&document.querySelector('.page')&&window.__devCommand);return {page,context};
+}
+const shot=async(page,name)=>{await page.waitForTimeout(380);await page.screenshot({path:out+'/'+name+'.png'});};
+let seq=0;
+const send=(page,action)=>page.evaluate(({id,action})=>new Promise(resolve=>{__devResponses[id]=resolve;__devCommand({id,action});}),{id:++seq,action});
+try{
+ const a=await setup(),page=a.page;await page.waitForFunction(()=>window.PulseBackgroundRuntime&&window.PulseAudioLog);assert.equal(await page.evaluate(()=>PulseAudioLog.enabled()),false);assert.equal(await page.evaluate(()=>typeof PulseBackground.rows),'function');
+ const rate=22050,n=rate*35,data=Buffer.alloc(44+n*2);data.write('RIFF');data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(1,22);data.writeUInt32LE(rate,24);data.writeUInt32LE(rate*2,28);data.writeUInt16LE(2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(n*2,40);for(let i=0;i<n;i++)data.writeInt16LE(Math.sin(i*2*Math.PI*220/rate)*9000,44+i*2);
+ await page.route(/\/offline\//,r=>r.fulfill({status:200,contentType:'audio/wav',body:data}));
+ const unsubscribe=recorder.subscribe(state=>page.evaluate(s=>__audioStateCallback(s),state).catch(()=>{}));
+ const dev=await a.context.newPage();dev.on('pageerror',e=>errors.push(String(e)));let copied='',saved=null;
+ await dev.exposeFunction('__nativeRequest',async action=>{switch(action){case 'audioStart':return recorder.start();case 'audioStop':return recorder.stop();case 'audioRead':return recorder.read();case 'audioCopy':copied=JSON.stringify(recorder.read());return {ok:true};case 'audioClear':return recorder.clear();case 'audioSave':saved=recorder.read();return {ok:true};case 'runtime':return {version:'1.0.3',note:'local fixture'};default:return send(page,action);}});
+ await dev.exposeFunction('__copyAudio',text=>{copied=text;return true;});await dev.addInitScript(()=>window.pulseDev={request:action=>__nativeRequest(action),copy:text=>__copyAudio(text),close:()=>{}});await dev.goto(origin+'/dev.html');await dev.waitForFunction(()=>document.documentElement.lang==='ru');await dev.locator('[data-tab=audio]').click();await dev.locator('[data-action=audioStart]').click();await page.waitForFunction(()=>PulseAudioLog.enabled());
+ await page.evaluate(()=>{const t={id:'local-private-id',title:'PRIVATE SONG',author:'PRIVATE ARTIST',dur:35};lib.queue={tracks:[t],idx:0};off[t.id]={file:'fixture.wav'};lib.known[t.id]=t;E.load(t,true);});await page.waitForFunction(()=>!audio.paused&&audio.currentTime>.1);await dev.locator('[data-action=audioRead]').click();await dev.screenshot({path:out+'/audio-recording.png'});
+ assert.ok(recorder.read().events.some(e=>e.stage==='playing'));assert.ok(recorder.read().events.some(e=>e.stage==='metadata'));await page.evaluate(()=>{E.seek(3);audio.dispatchEvent(new Event('waiting'));audio.dispatchEvent(new Event('stalled'));});await page.waitForFunction(()=>audio.currentTime>=3);
+ // Native hide signal: the actual main RAF is parked, while the same audio element/AudioContext keep running.
+ await page.evaluate(()=>{window.__audioBefore=audio;window.__contextBefore=actx;window.__settingsBefore=JSON.stringify(S());window.__cookiesBefore=document.cookie;for(let i=0;i<9;i++)cache.set('fixture-'+i,{shelves:[]});blurCache.set('fixture',Promise.resolve('unused'));setWinHidden(true);});await page.waitForTimeout(250);const before=await page.evaluate(()=>({stats:PulseBackgroundRuntime.stats(),position:audio.currentTime}));await page.waitForTimeout(1100);const after=await page.evaluate(()=>({stats:PulseBackgroundRuntime.stats(),position:audio.currentTime,state:actx.state,identity:audio===__audioBefore&&actx===__contextBefore}));assert.equal(after.stats.mainFrames,before.stats.mainFrames);assert.equal(after.stats.mainRaf,false);assert.ok(after.position>before.position+.5);assert.equal(after.state,'running');assert.equal(after.identity,true);
+ await page.waitForTimeout(14000);const trimmed=await page.evaluate(()=>({stats:PulseBackgroundRuntime.stats(),width:document.getElementById('viz').width,settings:JSON.stringify(S())===__settingsBefore,cookies:document.cookie===__cookiesBefore}));assert.ok(trimmed.stats.trims>=1);assert.ok(trimmed.stats.catalogPages<=4);assert.equal(trimmed.stats.blurEntries,0);assert.equal(trimmed.width,1);assert.equal(trimmed.settings,true);assert.equal(trimmed.cookies,true);
+ await page.evaluate(()=>window.__restoreFrames=PulseBackgroundRuntime.stats().mainFrames);await page.bringToFront();await page.evaluate(()=>{setWinHidden(false);setWinHidden(false);});await page.waitForFunction(()=>PulseBackgroundRuntime.stats().mainFrames>window.__restoreFrames);await page.waitForTimeout(300);assert.equal(await page.evaluate(()=>PulseBackgroundRuntime.stats().mainRaf),true);assert.ok(await page.evaluate(()=>PulseBackgroundRuntime.stats().mainFrames)>after.stats.mainFrames);assert.ok(await page.evaluate(()=>document.getElementById('viz').width)>1);await page.evaluate(()=>E.pause());
+ await dev.locator('[data-action=audioStop]').click();await page.waitForFunction(()=>!PulseAudioLog.enabled());await dev.locator('[data-action=audioCopy]').click();const captured=JSON.parse(copied);assert.ok(captured.events.some(e=>e.stage==='seek'));assert.ok(captured.events.some(e=>e.stage==='waiting'));assert.ok(captured.events.some(e=>e.stage==='stalled'));assert.ok(!/PRIVATE|local-private|fixture.wav|127\.0\.0\.1/.test(copied));await dev.locator('[data-action=audioSave]').click();assert.equal(saved.pulseAudioLog,1);await dev.screenshot({path:out+'/audio-stopped.png'});
+ for(const language of ['en','ja','uk','ru']){await page.evaluate(l=>PulseI18n.setLanguage(l,false),language);await dev.locator('[data-tab=overview]').click();await dev.locator('[data-action=refresh]').click();await dev.waitForFunction(l=>document.documentElement.lang===l,language);await dev.locator('[data-tab=audio]').click();await dev.setViewportSize({width:390,height:844});assert.equal(await dev.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.ok(await dev.locator('[data-action=audioStart]').innerText());await dev.screenshot({path:out+'/audio-'+language+'-390.png'});}
+ await dev.locator('[data-action=audioClear]').click();assert.equal(recorder.read().events.length,0);unsubscribe();recorder.stop();await dev.close();await a.context.close();assert.deepEqual(errors,[]);
+ console.log('PASS full application: opt-in audio log with real WAV/media events, redacted copy/save, all 4 locales at 390px; native hide parks main RAF without stopping audio/context, delayed graphics/cache release and foreground restore. Local Chromium fixture, not Windows CPU/RAM benchmark.');
+}finally{recorder.stop();await browser.close();server.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

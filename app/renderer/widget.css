@@ -270,3 +270,10 @@ body:not(.theme-neon).size-mini .w:hover .win,body:not(.theme-neon).size-mini .w
 body:not(.no-anim) :is(button,.cover,.info,.lyr){transition:opacity 180ms ease,background-color 140ms ease,color 140ms ease}
 body.no-anim *,body.no-anim *::before,body.no-anim *::after{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){body *,body *::before,body *::after{animation:none!important;transition:none!important}}
+
+html.widget-hidden *,html.widget-hidden *::before,html.widget-hidden *::after{animation-play-state:paused!important}
+
+/* Hide native scrollbar arrow buttons while retaining the scrollbars. */
+*::-webkit-scrollbar-button{display:none!important;width:0!important;height:0!important}
+
+.bar,.vbar{touch-action:none;user-select:none}.eq i{animation:none!important;height:3px;transition:height 100ms linear}html.calm .eq i{animation:none!important}

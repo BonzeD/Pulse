@@ -1,0 +1,12 @@
+{
+  "electron": "44.10.1",
+  "version": "1.0.3",
+  "firstPartyFilesCompared": 253,
+  "resourcesCompared": 7,
+  "platform": "Windows x64",
+  "build": "Atlas-AudioRollback-EmbeddedFirst",
+  "nativeWindowsExecution": false,
+  "liveYouTubeTested": false,
+  "unsigned": true,
+  "nativeMediaBridge": "cross-published from unchanged source with .NET 8.0.427"
+}

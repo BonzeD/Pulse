@@ -1,0 +1,36 @@
+{
+  "version": "1.0.3",
+  "fix": "Direct-stream URL selection regression",
+  "full_unit": {
+    "passed": 470,
+    "failed": 0,
+    "skipped": 0
+  },
+  "direct_stream_tests": 8,
+  "negative_control_reproduces_delivered_502": true,
+  "direct_http_browser_integration": "pass; real HTTP fixture, actual proxy and decoder, first two CDN candidates reject 403, third plays without iframe",
+  "prior_approved_manifests_unchanged": 14,
+  "first_party_asar_files_matched": 241,
+  "original_installer_design_unchanged": true,
+  "both_archives_match_unpacked": {
+    "resources/app.asar": "5b5b05ce8f1dd5c4be7816ea3c685c1c41723503abad32d429a313bacf19c4a9",
+    "resources/media-bridge/PulseMediaBridge.exe": "f01e84f7fed08fb5d64f6f6379e9900e7e542f8e5c9e366744b7c99fe3047890",
+    "resources/yt-dlp/_internal/base_library.zip": "3b7f23abfeb973dd9b737477890199cd8518946122207ece9c7af43d53509c3b"
+  },
+  "pe_versions": "Pulse.exe and custom setup FileVersion/ProductVersion 1.0.3",
+  "files": {
+    "Pulse-Setup-1.0.3-DirectFix.exe": {
+      "bytes": 242005466,
+      "sha256": "bc8091d609091a7c897e8b8556fb8075a9eead0c38bafd03834ac3496de9e644"
+    },
+    "Pulse-1.0.3-DirectFix-portable.exe": {
+      "bytes": 223679999,
+      "sha256": "5b28ec2c9d772e8007306d9d93ccfc09f249e0b17bf1e11a116b701855c954ca"
+    }
+  },
+  "live_youtube": "LOGIN_REQUIRED / bot confirmation for all guest clients; no successful live playback proof",
+  "limits": [
+    "No Windows native execution",
+    "No guarantee for the user network; request failing track/status if failure persists"
+  ]
+}

@@ -1,0 +1,1 @@
+PASS full application: saved identity is unverified, no avatar/active dot or sync; explicit retry confirms sign-in; playlist auth denial becomes reauth. All 4 locales at 390px. Synthetic native bridge, no live Google account.

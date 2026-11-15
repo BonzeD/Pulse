@@ -40,6 +40,7 @@ const makeViz = (opts = {}) => {
     if (!G) { gcv = document.createElement('canvas'); G = PulseGPU.create(gcv); if (!G) { gpuOff = true; return null; } }
     return G.ok() ? G : null;
   }
+  let surfacesReleased=false;
   function init(c) { if(cv&&cv!==c)destroy(); if (ro) try { ro.disconnect(); } catch {} cv = c; ctx = c.getContext('2d', { alpha: true, desynchronized: true }); blankCv=false;lastNow=performance.now(); resize(); ro = new ResizeObserver(resize); ro.observe(c.parentElement); }
   function destroy() {
     hideDirect();if(gcv&&gcv.parentNode)gcv.remove();
@@ -58,7 +59,7 @@ const makeViz = (opts = {}) => {
   let lowQ = false, autoLow = false, cost = 0, goodSince = 0, flips = 0;
   // The overscan bitmap is NOT the musical viewport. Keep every preset in stage coordinates.
   function resize() {
-    if (!cv) return;
+    if (!cv || (surfacesReleased && (document.hidden || window.pulseWinHidden))) return;
     const d = lowQ ? 1 : Math.min(opts.maxDpr || 1.5, devicePixelRatio || 1), r = cv.getBoundingClientRect();
     const main = cv.id === 'viz' && cv.parentElement.id === 'stage', st = main ? cv.parentElement.getBoundingClientRect() : r;
     W = st.width; H = st.height; OX = main ? st.left - r.left : 0; OY = main ? st.top - r.top : 0; DPR = d;
@@ -136,7 +137,10 @@ const makeViz = (opts = {}) => {
     return out;
   }
 
+  
+  function releaseSurfaces(){hideDirect();if(gcv){try{gcv.getContext('webgl2')?.getExtension('WEBGL_lose_context')?.loseContext();}catch{}gcv.remove();}G=null;gcv=null;gpuOff=false;for(const c of [glowCanvas,bloomCanvas,...Object.values(state).map(s=>s.c)])if(c){c.width=1;c.height=1;}for(const key of Object.keys(state))delete state[key];glowCanvas=glowContext=bloomCanvas=bloomContext=null;if(cv){cv.width=1;cv.height=1;}surfacesReleased=true;renderStats.samples.length=0;}
   function draw(o) {
+    if(surfacesReleased){surfacesReleased=false;resize();}
     if (!ctx) return; if (!W||!H) resize(); if (!(W>0&&H>0&&Number.isFinite(W)&&Number.isFinite(H))) return;
     const now = performance.now(), dt = Math.min(0.05, (now - lastNow) / 1000); lastNow = now;
     SENS = o.sens || 1; if (o.sr) SR = o.sr;
@@ -730,6 +734,6 @@ const makeViz = (opts = {}) => {
       img.onerror = () => res(null); img.src = src;
     });
   }
-  return { init, destroy, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => opts.gpu !== false && !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };
+  return { init, destroy, releaseSurfaces, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => opts.gpu !== false && !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };
 };
 const Viz = makeViz();

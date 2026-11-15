@@ -140,3 +140,17 @@ body.ui-clean .settings-workspace .set-side{min-height:0;z-index:4}
  body.ui-clean.main-bar:has(.settings-workspace) #bar .b-meta{grid-row:1!important;grid-column:2/5!important}
  body.ui-clean.main-bar:has(.settings-workspace) #bar #btnCleanActions{grid-row:1!important;grid-column:5!important}
 }
+
+/* Unconfirmed sign-in is explicit without crowding native window controls. */
+@media(max-width:760px){
+ body:has(#accBtn[data-auth="unverified"]) .top-l,body:has(#accBtn[data-auth="reauth"]) .top-l{width:auto;min-width:0}
+ body:has(#accBtn[data-auth="unverified"]) .top-c,body:has(#accBtn[data-auth="reauth"]) .top-c{display:none}
+ body:has(#accBtn[data-auth="unverified"]) .top-r,body:has(#accBtn[data-auth="reauth"]) .top-r{margin-left:auto;gap:6px}
+ body:has(#accBtn[data-auth="unverified"]) .win button,body:has(#accBtn[data-auth="reauth"]) .win button{width:32px;min-width:32px}
+ #accBtn[data-auth="unverified"],#accBtn[data-auth="reauth"]{max-width:150px;min-width:36px;position:relative}
+ #accBtn[data-auth="unverified"]>span,#accBtn[data-auth="reauth"]>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:520px){
+ #accBtn[data-auth="unverified"]>span,#accBtn[data-auth="reauth"]>span{display:none}
+ #accBtn[data-auth="unverified"]::after,#accBtn[data-auth="reauth"]::after{content:"!";position:absolute;right:-3px;top:-3px;width:13px;height:13px;border-radius:50%;background:#e6c07b;color:#151218;font-size:10px;line-height:13px;text-align:center;font-weight:700}
+}

@@ -1,0 +1,24 @@
+✔ previous account code loses session-only cookies across a cold restart (22.525107ms)
+✔ cold startup restores encrypted active snapshot before account request, without browser or network (9.364772ms)
+✔ existing rotated auth cookies are not overwritten by stale snapshot (2.071149ms)
+✔ expired saved credentials cannot resurrect a session (2.757853ms)
+✔ explicit logout clears saved active pointer and survives next cold start (6.148669ms)
+✔ unexpected account menu never deletes valid cookies; strict verification remains strict (3.41187ms)
+✔ transient network failure retains cached identity, explicit HTTP denial does not claim verified login (2.834777ms)
+✔ verified login snapshots and flushes immediately, not only when manager opens (4.272125ms)
+✔ late account response cannot reactivate an explicitly logged-out session (4.125618ms)
+✔ concurrent local restore and logout end with no auth cookies and no active snapshot (3.261252ms)
+✔ failed decryption on a read never rewrites encrypted snapshot (3.03573ms)
+✔ previous one-byte check accepts a URL which rejects actual playback range (180.613534ms)
+✔ normal-sized probe rejects one-byte-only URLs and reaches playable third candidate (740.831382ms)
+✔ two real upstream rejections reach backup within the same HTTP request (68.788854ms)
+✔ unsuccessful proxy response is logged as error, never a successful 502 (741.00715ms)
+✔ all changes invert exactly to the delivered AudioBackground source (14.956696ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1967.636119

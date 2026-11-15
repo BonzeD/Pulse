@@ -3,6 +3,7 @@
 // автомикс по долям/фразам с подгонкой темпа и фазы, выбор треков из очереди/поиска/плейлистов.
 // Деки — decks[0] и decks[1] из app.js. «В эфире» та, что сейчас в audio.
 const dj = {
+  epoch:0,pendingStart:null,metaCleanup:null,
   busy: false, from: null, fromNodes: null, fromId: null, timer: null, next: null, prepId: null, skipId: null, t0: 0, X: 0,
   rate: 1, rates: [1, 1], rateT: null, xf: 0, xfAnim: null, load: null, loops: [null, null], brake: [null, null],
   anFrom: null, anTo: null, plan: null, tab: 'queue', q: '', res: null, resQ: '', lists: null, fx: { echo: 0, rev: 0, eTo: 'both', rTo: 'both', fb: 45, beat: 0.75 },
@@ -91,7 +92,7 @@ function djNextPick() {
 function djPrepare() {
   const n = djNextPick(); if (!n) return; dj.next = n; if (dj.prepId === n.t.id) return; dj.prepId = n.t.id;
   const go = off[n.t.id] ? Promise.resolve({ ok: true }) : online() ? pulse.resolve(n.t.id) : Promise.resolve(null);
-  go.then((r) => { if (r && r.ok) getAnalysis(n.t); });
+  go.then(r=>{if(r?.ok&&dj.prepId===n.t.id)return getAnalysis(n.t);}).catch(()=>{});
 }
 function djTick(tm) {
   const s = S().dj; if (!s.on) return; djLoops(); if (dj.from) djPhaseLock();
@@ -140,19 +141,23 @@ async function djStart(manual) {
   if (dj.busy) return;
   const n = djNextPick(); if (!n) { if (manual) toast('В очереди нет следующего трека'); return; }
   const t = n.t, url = audioUrl(t); if (!url) { if (manual) toast('Следующий трек недоступен офлайн'); return; }
-  dj.busy = true; const curId = curTrack()?.id, s = S().dj;
+  dj.busy = true; const curId = curTrack()?.id, s = S().dj, tok=loadTok, epoch=++dj.epoch;
+  const request=dj.pendingStart={cancel:null};const valid=()=>dj.pendingStart===request&&dj.epoch===epoch&&loadTok===tok&&curTrack()?.id===curId&&S().dj.on;
   try {
-    initAudioGraph(); actx.resume();
+    initAudioGraph(); actx.resume().catch(()=>{});
     const od = audio, oi = djA(), ni = 1 - oi, nd = decks[ni], O = deckNodes[oi], N = deckNodes[ni];
     const preloaded = dj.load && dj.load.t.id === t.id && nd.src;
+    let startedNew=false,cancelDone=false,envelopeArmed=false;request.cancel=()=>{if(cancelDone)return;cancelDone=true;request.waitCancel?.();
+      if(envelopeArmed&&dj.pendingStart===request&&audio===od){for(const x of [O,N]){[x.g.gain,x.low.gain,x.hp.frequency].forEach(a=>a.cancelScheduledValues(0));x.low.gain.value=0;x.hp.frequency.value=10;}djSetXf(oi?1:0,0.005);}
+      if((startedNew||!preloaded)&&nd!==audio){nd.pause();nd.removeAttribute('src');nd.load();}};
     if (!preloaded) {
       if (!off[t.id]) { const r = await pulse.resolve(t.id); if (!r || !r.ok) throw new Error(r ? r.error : 'нет звука'); }
-      if (curTrack()?.id !== curId) throw new Error('cancel');
+      if (!valid()) throw new Error('cancel');
       N.g.gain.cancelScheduledValues(0); N.g.gain.value = 0; nd.src = url;
-      await new Promise((res) => { nd.addEventListener('canplay', res, { once: true }); nd.addEventListener('error', res, { once: true }); setTimeout(res, 9000); });
-      if (nd.error || curTrack()?.id !== curId) throw new Error('cancel');
+      await new Promise((resolve,reject)=>{let timer;const finish=e=>{clearTimeout(timer);nd.removeEventListener('canplay',ok);nd.removeEventListener('error',bad);request.waitCancel=null;e?reject(e):resolve();};const ok=()=>finish(),bad=()=>finish(new Error('нет звука'));request.waitCancel=()=>finish(new Error('cancel'));nd.addEventListener('canplay',ok,{once:true});nd.addEventListener('error',bad,{once:true});timer=setTimeout(()=>finish(new Error('Истекло время загрузки деки')),9000);if(nd.readyState>=3)ok();});
+      if (!valid()) throw new Error('cancel');
     }
-    const anN = await djAn(t), anC = beatState.an, wasPlaying = preloaded && !nd.paused;
+    const anN = await djAn(t);if(!valid())throw new Error('cancel');const anC = beatState.an, wasPlaying = preloaded && !nd.paused;
     let startAt = preloaded ? nd.currentTime : s.trim ? djEdges(anN, nd.duration).start : 0, rate = 1, delay = 0;
     const effC = anC && anC.bpm ? anC.bpm * ((od.playbackRate || 1) / (+S().audio.speed || 1)) : 0;
     if (s.beat && effC && anN && anN.bpm) {
@@ -164,23 +169,24 @@ async function djStart(manual) {
     if (!wasPlaying) nd.currentTime = startAt;
     dj.rates[ni] = wasPlaying ? dj.rates[ni] : rate; djK[ni].pitch = wasPlaying ? djK[ni].pitch : 0; djSetRate(ni);
     if (delay) await djSleep(delay * 1000 - 12);
-    if (curTrack()?.id !== curId) throw new Error('cancel');
+    if (!valid()) throw new Error('cancel');
     const style = manual && s.style === 'cut' ? 'cut' : s.style;
     const X0 = manual ? Math.max(djLen(anC, 1), 2) : (dj.plan && dj.plan.X) || djLen(anC, 1);
+    envelopeArmed=true;
     const X = djEnvelope(O, N, oi, ni, actx.currentTime + 0.02, X0, style);
-    if (!wasPlaying) await nd.play().catch(() => {});
+    if (!wasPlaying) {startedNew=true;await nd.play();}if(!valid())throw new Error('cancel');
     if (style === 'brake') djBrake(oi, Math.min(X, 1.6), false);
     if (style === 'echo') { const F = dj.fx, e0 = F.echo, to = F.eTo; F.echo = 70; F.eTo = String(oi); djApplySends(); setTimeout(() => { F.echo = e0; F.eTo = to; djApplySends(); }, X * 1000 + 2500); }
     // текущим становится новый трек
     const q = lib.queue; if (q.idx >= 0 && q.idx !== n.i) hist.push(q.idx); q.idx = n.i; remember(t);
     dj.anFrom = anC; dj.anTo = anN; dj.fromId = curId;
-    audio = nd; audioTrackId = t.id; dj.from = od; dj.fromNodes = O; dj.next = null; dj.prepId = null; dj.load = null; dj.plan = null; dj.t0 = performance.now(); dj.X = X; dj.xfFrom = dj.xf; dj.xfTo = ni;
+    audio = nd; audioTrackId = t.id;++loadTok;if(typeof beginAudioLoad==='function')beginAudioLoad(!nd.paused,nd.currentTime); dj.from = od; dj.fromNodes = O; dj.next = null; dj.prepId = null; dj.load = null; dj.plan = null; dj.t0 = performance.now(); dj.X = X; dj.xfFrom = dj.xf; dj.xfTo = ni;
     onTrackChange(); playing = !nd.paused; onPlayState(); onStarted();
     clearTimeout(dj.timer); dj.timer = setTimeout(() => djFinish(), X * 1000 + 250);
     setTimeout(djRender, 50);
   } catch (e) {
-    dj.busy = false; if (e.message !== 'cancel') { dj.skipId = curId; if (manual) toast('Не получилось свести: ' + e.message, 'alert'); }
-  }
+    request.cancel?.();if(dj.pendingStart!==request)return;dj.busy = false; if (e.message !== 'cancel') { dj.skipId = curId; if (manual) toast('Не получилось свести: ' + e.message, 'alert'); }
+  } finally {if(dj.pendingStart===request)dj.pendingStart=null;}
 }
 // во время перехода держим доли обеих дек вместе (мягко подкручивая темп новой)
 function djPhaseLock() {
@@ -191,6 +197,7 @@ function djPhaseLock() {
   nd.playbackRate = Math.abs(es) < 0.008 ? base : base * (1 - djClamp(es * 0.9, -0.04, 0.04)); void i;
 }
 function djFinish(hard) {
+  ++dj.epoch;dj.pendingStart?.cancel?.();dj.pendingStart=null;if(!dj.from)dj.busy=false;
   if (hard) djUnload();
   if (!dj.from) { if (hard && actx && deckNodes.length) djSetXf(djA() ? 1 : 0, 0.005); return; } clearTimeout(dj.timer);
   const od = dj.from, O = dj.fromNodes, ni = djA(), N = deckNodes[ni];
@@ -217,24 +224,30 @@ async function djLoad(i, target) {
   if (dj.from) djFinish();
   if (i === q.idx) return toast('Этот трек уже в эфире');
   const url = audioUrl(t); if (!url) return toast('Трек недоступен офлайн');
-  initAudioGraph(); actx.resume();
+  initAudioGraph(); actx.resume().catch(()=>{});
   const d = djO(), a = decks[d];
   if (dj.load && dj.load.d === d) djUnload();
-  dj.loading = { d, t }; djRender();
-  if (!off[t.id]) { const r = await pulse.resolve(t.id); if (!r || !r.ok) { dj.loading = null; djRender(); return toast(r ? r.error : 'нет звука', 'alert'); } }
-  dj.loading = null;
-  if (decks.indexOf(audio) === d) return djRender();
-  try { a.pause(); } catch {} a.src = url; dj.load = { i, t, d }; dj.rates[d] = 1; djK[d].pitch = 0; djSetRate(d); dj.loops[d] = null; dj.plan = null;
-  a.addEventListener('loadedmetadata', () => { djAn(t).then((an) => { if (dj.load && dj.load.t.id === t.id && S().dj.trim) { const st = djEdges(an, a.duration).start; if (a.paused && a.currentTime < 0.5) a.currentTime = st; } djRender(); }); }, { once: true });
+  dj.metaCleanup?.();dj.metaCleanup=null;
+  const request=dj.loading={d,t,tok:loadTok};djRender();
+  try {
+    if(!off[t.id]){const r=await pulse.resolve(t.id);if(dj.loading!==request||request.tok!==loadTok)return;if(!r?.ok)throw Error(r?.error||'нет звука');}
+    if(dj.loading!==request||request.tok!==loadTok||!S().dj.on)return;
+    dj.loading=null;
+    if(decks.indexOf(audio)===d)return djRender();
+    a.pause();a.src=url;const loaded=dj.load={i,t,d};dj.rates[d]=1;djK[d].pitch=0;djSetRate(d);dj.loops[d]=null;dj.plan=null;
+    const metadata=()=>{if(dj.load!==loaded)return;dj.metaCleanup?.();dj.metaCleanup=null;djAn(t).then(an=>{if(dj.load!==loaded)return;if(S().dj.trim&&a.paused&&a.currentTime<.5)a.currentTime=djEdges(an,a.duration).start;djRender();}).catch(()=>{});};
+    a.addEventListener('loadedmetadata',metadata,{once:true});dj.metaCleanup=()=>a.removeEventListener('loadedmetadata',metadata);
+  }catch(e){if(dj.loading!==request)return;dj.loading=null;djRender();return toast(e.message,'alert');}
+
   toast(`Дека ${d + 1}: ${t.title}`, 'dj'); djRender();
 }
-function djUnload() { const L = dj.load; if (!L) return; const a = decks[L.d]; dj.load = null; if (a !== audio) try { a.pause(); a.removeAttribute('src'); a.load(); } catch {} }
+function djUnload() { dj.loading=null;dj.metaCleanup?.();dj.metaCleanup=null;const L = dj.load; if (!L) return; const a = decks[L.d]; dj.load = null; if (a !== audio) try { a.pause(); a.removeAttribute('src'); a.load(); } catch {} }
 // кроссфейдер дошёл до загруженной деки — она становится «в эфире»
 function djCommit() {
   const L = dj.load; if (!L) return; const a = decks[L.d]; if (a === audio || a.paused) return;
   const q = lib.queue; if (!q.tracks[L.i] || q.tracks[L.i].id !== L.t.id) { const j = q.tracks.findIndex((x) => x.id === L.t.id); if (j < 0) return; L.i = j; }
   const od = audio; if (q.idx >= 0) hist.push(q.idx); q.idx = L.i; remember(L.t);
-  audio = a; audioTrackId = L.t.id; dj.load = null; dj.plan = null; dj.next = null; dj.prepId = null;
+  audio = a; audioTrackId = L.t.id;++loadTok;if(typeof beginAudioLoad==='function')beginAudioLoad(!a.paused,a.currentTime); dj.load = null; dj.plan = null; dj.next = null; dj.prepId = null;
   onTrackChange(); playing = !a.paused; onPlayState(); onStarted();
   // старая дека доигрывает беззвучно и останавливается, если кроссфейдер так и остался на новой
   setTimeout(() => { const oi = decks.indexOf(od); if (od !== audio && djCurve(dj.xf)[oi] < 0.02 && !(dj.load && dj.load.d === oi)) { try { od.pause(); od.removeAttribute('src'); od.load(); } catch {} dj.loops[oi] = null; djRender(); } }, 1500);
@@ -249,7 +262,7 @@ const djTrackOf = (i) => (decks[i] === audio ? curTrack() : dj.load && dj.load.d
 const djAnOf = (i) => { const t = djTrackOf(i); if (!t) return null; if (decks[i] === audio && beatState.an) return beatState.an; const p = anCache.get(t.id); if (p && !p.done) p.then((an) => (p.done = an || true)); return p && p.done && p.done !== true ? p.done : null; };
 function djPlay(i) {
   const a = decks[i]; if (a === audio) return playing ? E.pause() : E.play();
-  if (!a.src) return djLoadNext(); initAudioGraph(); actx.resume();
+  if (!a.src) return djLoadNext(); initAudioGraph(); actx.resume().catch(()=>{});
   if (a.paused) a.play().catch(() => {}); else a.pause();
 }
 function djLoadNext() { if (dj.load) djUnload(); const n = djNextPick(); if (n) djLoad(n.i); else toast('В очереди нет следующего трека'); }

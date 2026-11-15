@@ -1,0 +1,5 @@
+npm test: 568 tests; 567 passed; 0 failed; 1 skipped.
+Local Chromium scenarios: reliability, background/developer, direct-stream, session-stream, adaptive-stream, audio-engine, startup-latency: all passed.
+Windows payload: x64 portable only, unsigned, no native Windows/live YouTube execution.
+app.asar: 246 first-party source files compared; 7 critical external resources compared; yt-dlp runtime completeness checked.
+Historical approved manifests retained; new reliability exact inverse and pinned 1.0.2 offline.js fixture included.

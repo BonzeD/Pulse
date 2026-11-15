@@ -1,0 +1,11 @@
+{
+  "desktopDrum": "PASS cylindrical projection, centered current line, karaoke retained",
+  "manualScroll": "PASS return-to-current visible and readable",
+  "narrow390": "PASS two-row header, navigation/search/visual-return no overlap; lyrics remain accessible",
+  "reducedMotion": "PASS flat projection",
+  "mineradioDesktop": "PASS real WebGL console, preset controls and Pulse footer",
+  "mineradio390": "PASS vertically scrollable console and footer, horizontal console tabs",
+  "testNature": "synthetic YouTube/IPC; native Windows tray and live service not tested",
+  "upstreamCommit": "4c7897231c67eff6a6f60dc895388783e5fc943d",
+  "upstreamCoreModified": false
+}

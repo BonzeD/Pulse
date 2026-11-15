@@ -1,0 +1,576 @@
+{
+  "dev-window.js": {
+    "sha256": "83e32a2d39a8ed3af36b1359600bcc4d737127e6ca202be691568bda67e3b4b2",
+    "originalSha256": "59e4764d1063c1c55333a3aa46ad669287d9c777c2ed2dd6e429c7ae2ce009e8",
+    "patches": [
+      {
+        "from": 2,
+        "to": 6,
+        "original": [
+          "module.exports=function createDeveloper({app,BrowserWindow,ipcMain,clipboard,path,safety,getMain,getPort}){\n"
+        ]
+      },
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          " function clear(){for(const [,p]of pending){clearTimeout(p.timer);p.resolve({error:'disconnected'});}pending.clear();const w=getMain();if(w&&!w.isDestroyed())w.webContents.send('dev:closed');}\n"
+        ]
+      },
+      {
+        "from": 21,
+        "to": 23,
+        "original": []
+      },
+      {
+        "from": 27,
+        "to": 32,
+        "original": []
+      },
+      {
+        "from": 44,
+        "to": 45,
+        "original": [
+          " app.on('before-quit',()=>{clear();if(win&&!win.isDestroyed())win.destroy();});\n"
+        ]
+      }
+    ]
+  },
+  "main.js": {
+    "sha256": "2fa0e5d594b04adc05a679176dc19508d3da0eb3bc812dbc6a0c8d38ffdf7c87",
+    "originalSha256": "42a275d098f9cabb7a3334bc56ce276bb1fc2f45996990b6bc231a2f8d15601d",
+    "patches": [
+      {
+        "from": 6,
+        "to": 7,
+        "original": []
+      },
+      {
+        "from": 272,
+        "to": 273,
+        "original": [
+          "  for (const event of ['show','hide']) widget.on(event, () => { if (widget && !widget.isDestroyed()) widget.webContents.send('widget-visible', event === 'show'); });\n"
+        ]
+      },
+      {
+        "from": 448,
+        "to": 455,
+        "original": [
+          "ipcHandle('yt:resolve', async (_e, id) => { try { if (isAudius(id)) return { ok: !!(await audius.getTrack(id)), source: 'ad' }; const v = svc.isSvc(id) ? await svc.ytFor(id) : id; await off.resolveStream(v); return { ok: true, vid: v }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });\n"
+        ]
+      },
+      {
+        "from": 653,
+        "to": 655,
+        "original": [
+          "  if (widget && !widget.isDestroyed()) widget.webContents.send('state', st);\n",
+          "  if (tray && st.title) tray.setToolTip(`Pulse — ${st.title}`.slice(0, 120));\n"
+        ]
+      },
+      {
+        "from": 656,
+        "to": 657,
+        "original": [
+          "ipcOn('lyrics', (_e, l) => { lastLyrics = l; if (!quitting && widget && !widget.isDestroyed()) widget.webContents.send('lyrics', l); });\n"
+        ]
+      },
+      {
+        "from": 686,
+        "to": 687,
+        "original": [
+          "require('./dev-window')({app,BrowserWindow,ipcMain,clipboard,path,safety,getMain:()=>win,getPort:()=>port});\n"
+        ]
+      }
+    ]
+  },
+  "offline.js": {
+    "sha256": "7dfa5d7d32467b76ec3caf9eb3e1abb3e7cbc5a5d917ee9c806b37cbb48a0526",
+    "originalSha256": "f72e08037c021e3703235a15ae0f2fa093a5b00bddec8aaedbbf923c4d883a91",
+    "patches": [
+      {
+        "from": 253,
+        "to": 256,
+        "original": [
+          "async function probeAudio(url, ua, signal) {\n"
+        ]
+      },
+      {
+        "from": 264,
+        "to": 265,
+        "original": [
+          "    return !chunk.done && chunk.value?.byteLength > 0;\n"
+        ]
+      },
+      {
+        "from": 266,
+        "to": 267,
+        "original": [
+          "  finally { if(reader)await reader.cancel().catch(()=>{});else await response?.body?.cancel().catch(()=>{}); }\n"
+        ]
+      },
+      {
+        "from": 269,
+        "to": 273,
+        "original": []
+      },
+      {
+        "from": 280,
+        "to": 281,
+        "original": [
+          "  const j = await r.json();\n"
+        ]
+      },
+      {
+        "from": 289,
+        "to": 290,
+        "original": [
+          "  if (!await probeAudio(f.url, C.ua, signal)) return null;\n"
+        ]
+      },
+      {
+        "from": 339,
+        "to": 343,
+        "original": []
+      },
+      {
+        "from": 345,
+        "to": 346,
+        "original": []
+      },
+      {
+        "from": 352,
+        "to": 354,
+        "original": [
+          "    const backup = await ytdlpResolve(id);\n",
+          "    if (!await probeAudio(backup.url, backup.ua)) throw new Error('YouTube не отдал рабочий аудиопоток');\n"
+        ]
+      },
+      {
+        "from": 375,
+        "to": 376,
+        "original": []
+      },
+      {
+        "from": 385,
+        "to": 388,
+        "original": [
+          "      try { response = await upstream(url, req, entry?.ua, controller.signal); }\n",
+          "      catch (e) { if(closed())return; if(attempt)throw e; }\n"
+        ]
+      },
+      {
+        "from": 404,
+        "to": 405,
+        "original": []
+      },
+      {
+        "from": 406,
+        "to": 407,
+        "original": []
+      }
+    ]
+  },
+  "package.json": {
+    "sha256": "3c03dc035f1a2fdca21e768ab40b86fac2ba44bc7237410694ffa5d0fdf0e1dd",
+    "originalSha256": "c9babe8fe264aca2a31898aca9cf573c636935e4742db470531aed8887055430",
+    "patches": [
+      {
+        "from": 11,
+        "to": 12,
+        "original": [
+          "    \"test\": \"node --test tests/regression.cjs tests/release-version.cjs tests/audio-tap.cjs tests/beat-onset.cjs tests/native-locale.cjs tests/neon-geometry.cjs tests/about-unit.cjs tests/clean-ui-unit.cjs tests/panel13-unit.cjs tests/audit.cjs tests/media-session.cjs tests/localization.cjs tests/motion-unit.cjs tests/player-modes-unit.cjs tests/ui-fixes-unit.cjs tests/mr-setup-unit.cjs tests/local-library.cjs tests/download-clipboard.cjs tests/primary-preset.cjs tests/spicy-project.cjs tests/editor-release.cjs tests/discord-album.cjs tests/immersion.cjs tests/immersion-graphics.cjs tests/pointer.cjs tests/widget-hit-regions.cjs tests/file-video.cjs tests/glass-material.cjs tests/glass-editor.cjs tests/home-settings.cjs tests/theme-background.cjs tests/final-release.cjs tests/kinetic-motion.cjs tests/settings-art.cjs tests/frame-pacing.cjs tests/release-101.cjs tests/timecode.cjs tests/lyric-studio.cjs tests/wave-instrumental.cjs tests/widget-lifecycle.cjs tests/graphics-102.cjs tests/audius.cjs tests/audius-runtime.cjs tests/prism-signal.cjs tests/setup-debug.cjs tests/developer-experience.cjs tests/lyrics-provider.cjs tests/audio-engine.cjs tests/direct-stream.cjs\",\n"
+        ]
+      },
+      {
+        "from": 45,
+        "to": 47,
+        "original": [
+          "    \"test:audio-engine\": \"node --test tests/audio-engine.cjs && node tests/audio-engine-ui.cjs\"\n"
+        ]
+      },
+      {
+        "from": 54,
+        "to": 55,
+        "original": []
+      }
+    ]
+  },
+  "preload.js": {
+    "sha256": "108a100b01f5b6efd28220b885052247add447f529b0245a7d310ef373eabf18",
+    "originalSha256": "7b8d5dfff3f0159161e27816c2b0f6c7f41d5d8f6fff34456406275f5c688855",
+    "patches": [
+      {
+        "from": 2,
+        "to": 3,
+        "original": [
+          "  dev: {open:()=>ipcRenderer.invoke('dev:open'),respond:message=>ipcRenderer.send('dev:response',message),inspect:point=>ipcRenderer.send('dev:inspect',point),onCommand:fn=>{const cb=(_e,message)=>fn(message);ipcRenderer.on('dev:command',cb);return()=>ipcRenderer.removeListener('dev:command',cb);},onClosed:fn=>{const cb=()=>fn();ipcRenderer.on('dev:closed',cb);return()=>ipcRenderer.removeListener('dev:closed',cb);}},\n"
+        ]
+      }
+    ]
+  },
+  "renderer/app.js": {
+    "sha256": "acc3d3c37f97becc870228f1258b132fb62520e57ce14f4b0d365821d870a6ae",
+    "originalSha256": "7ea1bbc1849d332aa4a859b4efc701d996a043d405b6fdb77921e7d8fac84e51",
+    "patches": [
+      {
+        "from": 177,
+        "to": 178,
+        "original": []
+      },
+      {
+        "from": 244,
+        "to": 245,
+        "original": []
+      },
+      {
+        "from": 253,
+        "to": 254,
+        "original": []
+      },
+      {
+        "from": 730,
+        "to": 731,
+        "original": [
+          "  const v = await fn(); if (v && !v.error) cache.set(key, { v, at: Date.now() }); return v;\n"
+        ]
+      },
+      {
+        "from": 1626,
+        "to": 1627,
+        "original": [
+          "let hiddenNow = document.hidden; document.addEventListener('visibilitychange', () => (hiddenNow = document.hidden || winHiddenIpc));\n"
+        ]
+      },
+      {
+        "from": 1632,
+        "to": 1639,
+        "original": []
+      },
+      {
+        "from": 1640,
+        "to": 1641,
+        "original": [
+          "  document.body.classList.toggle('win-hidden', v);\n",
+          "  if (typeof mrSync === 'function') try { mrSync(); } catch (e) {}\n",
+          "  if (!v && typeof lys !== 'undefined' && lys.on && !lys.raf) lys.raf = requestAnimationFrame(lysLoop);\n",
+          "  if (!v) { lastFrame = 0; mainFramePacer.reset(); }\n"
+        ]
+      },
+      {
+        "from": 1653,
+        "to": 1655,
+        "original": [
+          "setInterval(() => { if (!hiddenNow) return; if (playing && typeof djTick === 'function') djTick(E.time()); if (typeof extFrame === 'function') extFrame(performance.now(), null, null, beat, null, E.time(), true); }, 120);\n"
+        ]
+      },
+      {
+        "from": 1672,
+        "to": 1674,
+        "original": []
+      },
+      {
+        "from": 1675,
+        "to": 1676,
+        "original": [
+          "  requestAnimationFrame(frame);\n"
+        ]
+      },
+      {
+        "from": 1764,
+        "to": 1765,
+        "original": [
+          "requestAnimationFrame(frame);\n"
+        ]
+      },
+      {
+        "from": 1774,
+        "to": 1775,
+        "original": []
+      },
+      {
+        "from": 1777,
+        "to": 1778,
+        "original": []
+      },
+      {
+        "from": 1786,
+        "to": 1787,
+        "original": [
+          "setInterval(sendState, 700);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/developer-bridge.js": {
+    "sha256": "3cdde09bf5ea9f71ac7020924f6b038f426e5cdf101f025d7087f714eb0f54e1",
+    "originalSha256": "224c396f6b5b90da4694ecf4e8f7e45ea6b0d7d798543e651e7452b887e1191d",
+    "patches": [
+      {
+        "from": 16,
+        "to": 17,
+        "original": [
+          "  return {...state,language:PulseI18n.language(),viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},dom:{elements:document.querySelectorAll('*').length,canvases:document.querySelectorAll('canvas').length,dialogs:document.querySelectorAll('[role=dialog]').length},audio:{contextState:typeof actx!=='undefined'?actx?.state:'unknown',sampleRate:signal?.sampleRate||null,fftSize:signal?.fftSize||null,paused:a?.paused??true,readyState:a?.readyState??0,currentSeconds:Math.round((a?.currentTime||0)*100)/100,durationSeconds:Number.isFinite(a?.duration)?Math.round(a.duration):null,volume:a?.volume??null,playbackRate:a?.playbackRate??null},storage:{playlists:Array.isArray(lib.playlists)?lib.playlists.length:0,knownItems:Object.keys(lib.known||{}).length,likes:Object.keys(lib.likes||{}).length},heap:performance.memory?{usedMB:+(performance.memory.usedJSHeapSize/1048576).toFixed(1),limitMB:Math.round(performance.memory.jsHeapSizeLimit/1048576)}:null,tools:{outlines:document.documentElement.hasAttribute('data-dev-outlines'),guides:!!document.getElementById('pulseDevGuides'),recording:!!frames}};\n"
+        ]
+      }
+    ]
+  },
+  "renderer/developer.css": {
+    "sha256": "c4e42ff9166f3f4993c143ab4a1cf4669e45c0e46f5d487056e96edb556588be",
+    "originalSha256": "8356561183c5da4535b4a7e5743c64431a92d46cc03a771a2c5168a6082a0381",
+    "patches": [
+      {
+        "from": 4,
+        "to": 6,
+        "original": []
+      }
+    ]
+  },
+  "renderer/developer.js": {
+    "sha256": "e5905ef60d8f8db4acd1f52624397684302b12442b427b50d00ef111d54e292c",
+    "originalSha256": "4408baefe37a8dab96051999ef76bf3e7c4307d6d55d68864272e82d4b86473e",
+    "patches": [
+      {
+        "from": 2,
+        "to": 3,
+        "original": [
+          " const table={framesTab:['Кадры','Frames','フレーム','Кадри'],\n"
+        ]
+      },
+      {
+        "from": 20,
+        "to": 21,
+        "original": [
+          " let language='en',tab='overview',snapshot=null,runtime=null,record=null,checks=null,live=false,poll=0,refreshing=false,recording=false,logs=[];\n"
+        ]
+      },
+      {
+        "from": 27,
+        "to": 28,
+        "original": [
+          " function render(){localize();const tabs=['overview','inspect','performance','actions'];document.querySelector('nav').innerHTML=tabs.map((x,i)=>`<button role=\"tab\" aria-selected=\"${tab===x}\" tabindex=\"${tab===x?0:-1}\" data-tab=\"${x}\"><span>0${i+1}</span>${h(t(x==='performance'?'framesTab':x))}</button>`).join('');document.querySelector('h1').textContent=t(tab);document.getElementById('section-number').textContent='0'+(tabs.indexOf(tab)+1);document.querySelector('.dev-intro').textContent=t(tab+'Desc');let body='';\n"
+        ]
+      },
+      {
+        "from": 32,
+        "to": 33,
+        "original": []
+      },
+      {
+        "from": 35,
+        "to": 38,
+        "original": []
+      },
+      {
+        "from": 39,
+        "to": 42,
+        "original": [
+          " function schedule(){clearTimeout(poll);poll=0;if(live&&!document.hidden&&tab==='overview')poll=setTimeout(async()=>{await refresh();schedule();},1000);}\n",
+          " async function action(name,button){if(name==='refresh'){await refresh();return;}if(name==='frames'&&recording)return;if(button)button.disabled=true;if(name==='frames'){recording=true;record=null;render();}try{const result=await api.request(name);if(name==='frames'){recording=false;record=result;}if(name==='checks')checks=result;logs.unshift({time:new Date().toLocaleTimeString(),action:name,state:result?.error?'error':'ok'});logs=logs.slice(0,80);if(result?.error)feedback('failed');else if(result?.opened===false&&name==='setup')feedback('blocked');else feedback('done');if(['outlines','guides'].includes(name)){if(snapshot)snapshot.tools[name]=result.active;}if(['checks','frames','cancelFrames','guides','outlines'].includes(name))render();}catch{recording=false;feedback('failed');}finally{if(button?.isConnected)button.disabled=false;}}\n",
+          " document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el||el.disabled)return;if(el.dataset.tab){tab=el.dataset.tab;render();schedule();document.querySelector(`[data-tab=\"${tab}\"]`).focus();return;}if(el.dataset.action){action(el.dataset.action,el);return;}if(el.id==='copy-report'){api.copy(JSON.stringify({pulseDeveloper:1,snapshot,runtime,frames:record,checks},null,2)).then(ok=>feedback(ok?'copied':'failed')).catch(()=>feedback('failed'));}});\n"
+        ]
+      },
+      {
+        "from": 43,
+        "to": 44,
+        "original": [
+          " document.addEventListener('visibilitychange',schedule);window.addEventListener('pagehide',()=>{clearTimeout(poll);});render();refresh();\n"
+        ]
+      }
+    ]
+  },
+  "renderer/extras.js": {
+    "sha256": "0a626d391d2649e28280174b7e250489afb08b947ff7d3ad4be30dcc3f70b6d1",
+    "originalSha256": "08e69d817aa7a11b854b427f5f9939818024ed8588fd35eabe087e3a4a20938c",
+    "patches": [
+      {
+        "from": 509,
+        "to": 510,
+        "original": [
+          "  pvCleanup();\n"
+        ]
+      }
+    ]
+  },
+  "renderer/immersion.js": {
+    "sha256": "d6b5f3f4152c02822a10a6bc45023ec55c3ba9df472629111fd1576bee887ea1",
+    "originalSha256": "0228da5dbc574465e73e79b129ed424619c1592d12f47b24ec43978445775082",
+    "patches": [
+      {
+        "from": 57,
+        "to": 59,
+        "original": []
+      },
+      {
+        "from": 78,
+        "to": 79,
+        "original": [
+          "    stop(); token++; scene?.destroy(); scene = null; canvas?.remove(); error?.remove();\n"
+        ]
+      },
+      {
+        "from": 105,
+        "to": 108,
+        "original": [
+          "  document.addEventListener('visibilitychange', () => { if (hidden()) stop(); else start(); });\n",
+          "  window.addEventListener('pulse-prism-visibility', () => { if (hidden()) stop(); else start(); });\n",
+          "  // Electron can hide/minimize without changing document.visibilityState.\n",
+          "  setInterval(() => { if (hidden()) stop(); else if (active() && !raf) start(); }, 600);\n"
+        ]
+      }
+    ]
+  },
+  "renderer/index.html": {
+    "sha256": "81dce5da512982e7081eb959b02357e413bde8162ad8af8fe78494e559eeafbb",
+    "originalSha256": "86a63d904f9eb3a88def368481470a661ad60369beac6f3d338c8e71eaf3aa84",
+    "patches": [
+      {
+        "from": 374,
+        "to": 376,
+        "original": []
+      }
+    ]
+  },
+  "renderer/lystage.js": {
+    "sha256": "9d8811df2ba61e5c0120abffc2ff42d54a140aec7ca49bba0fb95416627018bd",
+    "originalSha256": "125dadd842781c915eb2897f9c75549e8a73973fdc718d32da3ca927aa715233",
+    "patches": [
+      {
+        "from": 281,
+        "to": 282,
+        "original": [
+          "  if (window.PulsePrism?.active()) { lys.raf = 0; return; }\n"
+        ]
+      }
+    ]
+  },
+  "renderer/mineradio-host.js": {
+    "sha256": "2bd730567875527904395f04f5220d4e0b0fc12584727257fb3475f113f9a148",
+    "originalSha256": "de42d63ce02f8927d4e187c41a35502c9471511a013115262676480a8b41830c",
+    "patches": [
+      {
+        "from": 10,
+        "to": 11,
+        "original": [
+          "  const want = () => !window.PulsePrism?.active() && !window.PulseImmersion?.active() && typeof lys !== 'undefined' && lys.on && !lys.idle && isMr() && !window.pulseWinHidden; // 2.0.12: окно спрятано — сцена спит\n"
+        ]
+      },
+      {
+        "from": 105,
+        "to": 106,
+        "original": [
+          "    if (!w && !window.PulsePrism?.active() && !window.pulseWinHidden && MR.box && !MR.unloadT && Y().mrKeep !== true) MR.unloadT = setTimeout(unload, 60000);\n"
+        ]
+      },
+      {
+        "from": 107,
+        "to": 108,
+        "original": []
+      }
+    ]
+  },
+  "renderer/spicy.js": {
+    "sha256": "81fc4eca211f474ac4951ae500a5a3e3accb1f3584fb3217fb12dab5e6502d3d",
+    "originalSha256": "928907ef22e569658c269f21329aed59f773d652a26b57d9da2b7f5195335c79",
+    "patches": [
+      {
+        "from": 128,
+        "to": 129,
+        "original": [
+          "  if (!SP.on) return; SP.raf = requestAnimationFrame(spFrame);\n"
+        ]
+      },
+      {
+        "from": 306,
+        "to": 307,
+        "original": [
+          "function spStageOn() { return spStageFx() && typeof lys !== 'undefined' && lys.on && !SP.on; }\n"
+        ]
+      },
+      {
+        "from": 349,
+        "to": 352,
+        "original": []
+      }
+    ]
+  },
+  "renderer/viz.js": {
+    "sha256": "92b24fa4c170e97595c542011016d0a31e1bd111064a3def5a70d163e832e5c4",
+    "originalSha256": "b6febe54f091dcd0c08c6f158cf698359c6ff1cbe7fa4d5109d247b36a623547",
+    "patches": [
+      {
+        "from": 42,
+        "to": 43,
+        "original": []
+      },
+      {
+        "from": 61,
+        "to": 62,
+        "original": [
+          "    if (!cv) return;\n"
+        ]
+      },
+      {
+        "from": 139,
+        "to": 141,
+        "original": []
+      },
+      {
+        "from": 142,
+        "to": 143,
+        "original": []
+      },
+      {
+        "from": 736,
+        "to": 737,
+        "original": [
+          "  return { init, destroy, draw, palette, resize, register, canDirect, hideDirect, stats, setDpr: (v) => { if (opts.maxDpr !== v) { opts.maxDpr = v; resize(); } }, isLow: () => lowQ, setGpu: (v) => { opts.gpu = v !== false; }, gpuOn: () => opts.gpu !== false && !!(G && G.ok()), setReact: (r) => (REACT = Math.max(0, Math.min(1, r))), setPalette: (p) => (pal = p), get STYLES() { return REG; }, onChange: (f) => (onChange = f), bands: () => bands };\n"
+        ]
+      }
+    ]
+  },
+  "renderer/widget.css": {
+    "sha256": "119c76f948e6ceb7b21bb513ac64c55f7331078e61a21bd2f1cfb2e55e801bcd",
+    "originalSha256": "7c44edc714b53d4c97b6b741ef94c901ed5b3d68c4ed1d029f9a403a4b469b10",
+    "patches": [
+      {
+        "from": 272,
+        "to": 274,
+        "original": []
+      }
+    ]
+  },
+  "renderer/widget.js": {
+    "sha256": "a9b8e9cfb1f180cd87eca2171dc1b57cea040ed50aa7da02fc383e1d18ca4991",
+    "originalSha256": "486a52896d5e3aaea07b2f92c5c4a6615fd0747772296eb7d3173eb2c8b09544",
+    "patches": [
+      {
+        "from": 8,
+        "to": 10,
+        "original": [
+          "pulse.onState((s) => { st = s; last = Date.now(); render(); });\n"
+        ]
+      },
+      {
+        "from": 12,
+        "to": 14,
+        "original": [
+          "if (pulse.onWidgetVisibility) pulse.onWidgetVisibility(v => { if(v) window.PulseMotion?.enter($('w')); else window.PulseMotion?.stop(); });\n"
+        ]
+      },
+      {
+        "from": 156,
+        "to": 159,
+        "original": [
+          "setInterval(() => {\n",
+          "  if (document.hidden) return;\n",
+          "  if (calm && ++calmN % 12) { frame(); return; }\n",
+          "  const c = now(), w = st.dur ? Math.min(100, (c / st.dur) * 100).toFixed(2) + '%' : '0';\n",
+          "  if (w !== lastW) { lastW = w; $('fill').style.width = w; }\n",
+          "  setTxt('tc', fmt(c)); setTxt('td', st.dur ? fmt(st.dur) : '0:00');\n",
+          "  frame();\n",
+          "}, 80);\n"
+        ]
+      }
+    ]
+  }
+}
